@@ -1,0 +1,8 @@
+{
+  "Quartz": {
+    "ServiceFolder": "D:\\Users\\username\\src\\personal\\.net.core.quartz.template\\NonWebAppTemplate\\bin\\Debug\\netcoreapp3.1\\",
+    "Jobs": {
+      "Scheduler.ServiceTemplate.HelloWorldJob, Scheduler.ServiceTemplate": "0 * * * * ?"
+    }
+  }
+}

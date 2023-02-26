@@ -1,0 +1,15 @@
+{
+  "Mail": {
+    "Server": "smtp.gmail.com",
+    "EnableSsl": true,
+    "Port": 465,
+    "NetworkCredentials": {
+      "userName": "user@mail.server",
+      "password": ""
+    },
+    "ToEmails": [
+      "user@someother.mail.server",
+      "anotheruser@someanother.mail.server"
+    ]
+  }
+}

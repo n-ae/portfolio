@@ -1,0 +1,4 @@
+{
+  "HubUrl": "https://localhost:5001/MessagingHub",
+  "NeedsToBeSecure": false
+}
