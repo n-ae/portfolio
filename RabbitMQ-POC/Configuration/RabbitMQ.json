@@ -1,0 +1,6 @@
+{
+  "HostName": "the domain name the broker resides in, for example www.example.org",
+  "ServerName": "the expected servername to validate in certificate like *.example.org or www.example.org",
+  "UserName": "create-a-user-in-the-rabbitmq-broker",
+  "Password": "user's password"
+}
