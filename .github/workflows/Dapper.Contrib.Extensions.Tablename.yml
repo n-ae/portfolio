@@ -1,0 +1,32 @@
+name: Dapper.Contrib.Extensions.Tablename
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    defaults:
+      run:
+        working-directory: ./Dapper.Contrib.Extensions.Tablename
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.301
+      - name: Install dependencies
+        run: dotnet restore Dapper.Contrib.Extensions.Tablename/Dapper.Contrib.Extensions.Tablename.csproj
+      - name: Build
+        run: dotnet build --configuration Release --no-restore Dapper.Contrib.Extensions.Tablename/Dapper.Contrib.Extensions.Tablename.csproj
+      - name: Test
+        run: dotnet test --no-restore --verbosity normal Dapper.Contrib.Extensions.Tablename/Dapper.Contrib.Extensions.Tablename.csproj
+      - name: Publish
+        uses: brandedoutcast/publish-nuget@v2.5.2
+        with:
+          PROJECT_FILE_PATH: Dapper.Contrib.Extensions.Tablename/Dapper.Contrib.Extensions.Tablename.csproj
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}

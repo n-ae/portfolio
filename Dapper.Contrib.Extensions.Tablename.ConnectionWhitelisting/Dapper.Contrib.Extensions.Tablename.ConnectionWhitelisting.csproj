@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Authors>İbrahim Bali</Authors>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <Description>Whitelist tablenames using information schema</Description>
+    <Version>1.1.1</Version>
+    <AssemblyVersion>1.1.0.1</AssemblyVersion>
+    <FileVersion>1.1.0.1</FileVersion>
+    <PackageReleaseNotes>fix: stop quoting identifier in the delegate</PackageReleaseNotes>
+    <RepositoryUrl>https://github.com/bali-ibrahim/Dapper.Contrib.Extensions.Tablename.ConnectionWhitelisting</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/bali-ibrahim/Dapper.Contrib.Extensions.Tablename.ConnectionWhitelisting</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Connection.Identifier.Quoting" Version="1.0.2" />
+    <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
+    <PackageReference Include="Dapper.Contrib.Extensions.Tablename" Version="1.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

@@ -18,13 +18,13 @@ jobs:
       with:
         dotnet-version: 3.1.301
     - name: Install dependencies
-      run: dotnet restore Service.Scheduler/Service.Scheduler.csproj
+      run: dotnet restore AspNetCore.Scheduler.Quartz/AspNetCore.Scheduler.Quartz.csproj
     - name: Build
-      run: dotnet build --configuration Release --no-restore Service.Scheduler/Service.Scheduler.csproj
+      run: dotnet build --configuration Release --no-restore AspNetCore.Scheduler.Quartz/AspNetCore.Scheduler.Quartz.csproj
     - name: Test
-      run: dotnet test --no-restore --verbosity normal Service.Scheduler/Service.Scheduler.csproj
+      run: dotnet test --no-restore --verbosity normal AspNetCore.Scheduler.Quartz/AspNetCore.Scheduler.Quartz.csproj
     - name: Publish
       uses: brandedoutcast/publish-nuget@v2.5.2
       with:
-          PROJECT_FILE_PATH: Service.Scheduler/Service.Scheduler.csproj
+          PROJECT_FILE_PATH: AspNetCore.Scheduler.Quartz/AspNetCore.Scheduler.Quartz.csproj
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}
