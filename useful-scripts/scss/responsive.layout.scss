@@ -1,0 +1,23 @@
+$xs-min: 0px;
+$sm-min: 600px;
+$md-min: 900px;
+$lg-min: 1200px;
+$xl-min: 1536px;
+
+@mixin lg($comparator: above) {
+  @if $comparator == above {
+    @media (min-width: #{$lg-min}) {
+      @content;
+    }
+  } @else if $comparator == below {
+    @media (max-width: #{$lg-min}) {
+      @content;
+    }
+  } @else if $comparator == exactly {
+    @media (min-width: #{$lg-min}) and (max-width: #{$xl-min}) {
+      @content;
+    }
+  } @else {
+    @error "Unknown comparator `#{$comparator}`";
+  }
+}
