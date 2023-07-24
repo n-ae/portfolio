@@ -1,0 +1,46 @@
+@use "sass:math";
+
+// This script assumes that the sprite sheet is a vertical strip of square sprites.
+
+$square_side_length: 32px;
+$sprite_count: 7;
+$modulo_2_remainder: $sprite_count % 2;
+
+@function round_so($value, $fractionDigits: 0) {
+  $power: math.pow(10, $fractionDigits);
+  @return math.div(math.round($power * $value), $power);
+}
+
+$sprites_away_from_middle: round_so(math.div($sprite_count, 2)) -
+  ($modulo_2_remainder);
+
+@function margin_top($order) {
+  @return (2 * ($sprites_away_from_middle - $order) - (1 - $modulo_2_remainder)) *
+    $square_side_length;
+}
+
+@function clip_path_bottom($order) {
+  @return (($sprite_count - 1 - $order) * $square_side_length);
+}
+
+@function clip_path_top($order) {
+  @return $order * $square_side_length;
+}
+
+@mixin sprite_selector($order) {
+  width: $square_side_length;
+  margin-top: margin_top($order);
+  clip-path: inset(clip_path_top($order) 0px clip_path_bottom($order) 0px);
+}
+
+.top_sprite {
+  @include sprite_selector(0);
+}
+
+.vertical_square_sprite_sheet_image_1 {
+  @include sprite_selector(1);
+}
+
+.bottom_sprite {
+  @include sprite_selector(6);
+}
