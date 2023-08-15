@@ -16,6 +16,7 @@ brew install git
 brew install terraform
 brew install awscli
 brew install jq
+brew install docker
 brew install colima
 brew install --cask postman
 
