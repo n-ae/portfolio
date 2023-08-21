@@ -15,18 +15,25 @@ brew install --cask visual-studio-code
 brew install git
 brew install terraform
 brew install awscli
+brew install cloudflared
 brew install jq
 brew install docker
 brew install colima
 brew install --cask postman
 
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+. "$HOME/.cargo/env"
+# yew:
 rustup target add wasm32-unknown-unknown
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
-nvm install node # "node" is an alias for the latest version
-
-brew install --cask ngrok
 cargo install --locked trunk
 cargo install --locked wasm-bindgen-cli
+# yew
+
+# node:
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
+nvm install node # "node" is an alias for the latest version
+# node
+
+brew install --cask ngrok
 brew tap cargo-lambda/cargo-lambda
 brew install cargo-lambda
