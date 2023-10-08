@@ -1,13 +1,19 @@
 {
     "manifest_version": 3,
     "name": "Ban Vendors",
-    "description": "This is a chrome extension written in Go",
-    "version": "0.2.0",
+    "description": "Let's you mark vendors. Works only for Yemeksepeti for the time being.",
+    "version": "0.3.0",
     "permissions": [
         "activeTab",
         "contextMenus",
         "storage"
     ],
+    "icons": {
+        "256": "assets/icons/256.png",
+        "128": "assets/icons/128.png",
+        "48": "assets/icons/48.png",
+        "16": "assets/icons/16.png"
+    },
     "background": {
         "service_worker": "service_worker.js",
         "type": "module"
