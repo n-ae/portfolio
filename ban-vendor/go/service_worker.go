@@ -17,8 +17,18 @@ var (
 
 func main() {
 	c.ContextMenus.Create(chrome.Object{
-		"id":    "b66ec23a-7ec3-42bd-a2ce-b17934c38bd6",
-		"title": "Add to the banned vendors",
+		"id":    "add",
+		"title": "Add",
+		"contexts": []string{
+			"link",
+		},
+	}, func() {
+		console.Call("debug", "enter.context_menu.callback")
+	})
+
+	c.ContextMenus.Create(chrome.Object{
+		"id":    "remove",
+		"title": "Remove",
 		"contexts": []string{
 			"link",
 		},
@@ -29,22 +39,26 @@ func main() {
 	c.ContextMenus.OnClicked(func(info chrome.Object, tab chrome.Tab) {
 		console.Call("debug", "enter.onclicked")
 		console.Call("debug", info)
-
-		vendor_id, err := getVendorId(info)
-		if err {
-			return
-		}
-
-		c.Tabs.SendMessage(
-			tab.Id,
-			chrome.Object{
-				"vendor_id": vendor_id,
-			},
-			func(response chrome.Object) {
-				console.Call("debug", "sw received", response)
-			},
-		)
+		setBanList(info, tab)
 	})
+}
+
+func setBanList(info chrome.Object, tab chrome.Tab) {
+	vendor_id, err := getVendorId(info)
+	if err {
+		return
+	}
+
+	c.Tabs.SendMessage(
+		tab.Id,
+		chrome.Object{
+			"operation": info["menuItemId"],
+			"vendor_id": vendor_id,
+		},
+		func(response chrome.Object) {
+			console.Call("debug", "sw received", response)
+		},
+	)
 }
 
 func getVendorId(info chrome.Object) (result string, errored bool) {

@@ -14,6 +14,10 @@ var (
 	c       *chrome.Chrome = chrome.NewChrome()
 )
 
+const (
+	css_class_name string = "aa101509-5489-4495-91ec-11d02d5e061a"
+)
+
 func main() {
 	createBannedVendorSetIfNotExists()
 	console.Call("debug", "extension_id", c.Runtime.Id)
@@ -26,36 +30,62 @@ func main() {
 		}
 
 		bannedVendorIds := getBannedVendorsIds()
-		receivedVendorIdBoxed := message.(map[string]interface{})["vendor_id"]
+		messageBoxed := message.(map[string]interface{})
+		receivedVendorIdBoxed := messageBoxed["vendor_id"]
 		receivedVendorId := fmt.Sprintf("%v", receivedVendorIdBoxed)
-		for i := 0; i < len(bannedVendorIds); i++ {
-			if bannedVendorIds[i] == receivedVendorId {
-				return
+		receivedOperationBoxed := messageBoxed["operation"]
+		receivedOperation := fmt.Sprintf("%v", receivedOperationBoxed)
+		switch receivedOperation {
+		case "add":
+			bannedVendorIds = addIfNotExists(bannedVendorIds, receivedVendorId)
+			break
+
+		case "remove":
+			for i := 0; i < len(bannedVendorIds); i++ {
+				if bannedVendorIds[i] == receivedVendorId {
+					bannedVendorIds = unorderedRemove(bannedVendorIds, i)
+				}
 			}
 		}
-
-		bannedVendorIds = append(bannedVendorIds, receivedVendorId)
 		setBannedVendorIds(bannedVendorIds)
 	})
 
 	for true {
-		removeVens(getBannedVendors())
+		banVendors(getBannedVendors())
 		time.Sleep(1 * time.Second)
 	}
 }
 
-func removeVens(banned_vendors []string) {
-	if len(banned_vendors) < 1 {
-		return
+func unorderedRemove(bannedVendorIds []string, i int) []string {
+	newLength := len(bannedVendorIds) - 1
+	bannedVendorIds[i] = bannedVendorIds[newLength]
+	bannedVendorIds = bannedVendorIds[:newLength]
+	return bannedVendorIds
+}
+
+func addIfNotExists(bannedVendorIds []string, receivedVendorId string) []string {
+	for i := 0; i < len(bannedVendorIds); i++ {
+		if bannedVendorIds[i] == receivedVendorId {
+			return bannedVendorIds
+		}
 	}
+
+	return append(bannedVendorIds, receivedVendorId)
+}
+
+func banVendors(bannedVendors []string) {
+	// if len(banned_vendors) < 1 {
+	// 	return
+	// }
 
 	vendors := dom.GetWindow().Document().DocumentElement().GetElementsByClassName("vendor-tile-wrapper")
 	console.Call("debug", "vendors", vendors)
 	for i := 0; i < len(vendors); i++ {
+		vendors[i].Class().Remove(css_class_name)
 		value := vendors[i].GetAttribute("data-testid")
-		for j := 0; j < len(banned_vendors); j++ {
-			if banned_vendors[j] == value {
-				vendors[i].Remove()
+		for j := 0; j < len(bannedVendors); j++ {
+			if bannedVendors[j] == value {
+				vendors[i].Class().Add(css_class_name)
 			}
 		}
 	}
