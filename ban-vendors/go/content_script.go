@@ -50,6 +50,7 @@ func main() {
 		setBannedVendorIds(bannedVendorIds)
 	})
 
+	// TODO[PRIO-0]: make this eventful
 	for true {
 		banVendors(getBannedVendors())
 		time.Sleep(1 * time.Second)
