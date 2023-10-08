@@ -1,4 +1,4 @@
-module ban-vendor
+module ban-vendors
 
 go 1.18
 

@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Ban Vendors",
     "description": "Let's you mark vendors. Works only for Yemeksepeti for the time being.",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "permissions": [
         "contextMenus",
         "storage"
