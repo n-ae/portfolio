@@ -2,10 +2,16 @@
     "manifest_version": 3,
     "name": "Ban Vendors",
     "description": "This is a chrome extension written in Go",
-    "version": "0.0.1",
+    "version": "0.2.0",
     "permissions": [
-        "activeTab"
+        "activeTab",
+        "contextMenus",
+        "storage"
     ],
+    "background": {
+        "service_worker": "service_worker.js",
+        "type": "module"
+    },
     "content_scripts": [
         {
             "matches": [
