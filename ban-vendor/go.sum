@@ -1,0 +1,8 @@
+github.com/fabioberger/chrome v0.0.0-20170111141010-e67b78149de7 h1:M4lehsy7Xf07QeeKurHXE+JxxcrEzKZQa7aEoIMcCoY=
+github.com/fabioberger/chrome v0.0.0-20170111141010-e67b78149de7/go.mod h1:/7lyfXlRARh8rK422k3o9yrh1Buwy4zZefwPragPrtw=
+github.com/gopherjs/gopherjs v1.17.2 h1:fQnZVsXk8uxXIStYb0N4bGk7jeyTalG/wsZjQ25dO0g=
+github.com/gopherjs/gopherjs v1.17.2/go.mod h1:pRRIvn/QzFLrKfvEz3qUuEhtE/zLCWfreZ6J5gM2i+k=
+golang.org/x/exp v0.0.0-20231006140011-7918f672742d h1:jtJma62tbqLibJ5sFQz8bKtEM8rJBtfilJ2qTU199MI=
+golang.org/x/exp v0.0.0-20231006140011-7918f672742d/go.mod h1:ldy0pHrwJyGW56pPQzzkH36rKxoZW1tw7ZJpeKx+hdo=
+honnef.co/go/js/dom v0.0.0-20230808055721-96db8f4d5e3b h1:xXAdf0+OXZAdmc4cewENXYdfry1u03Fax3ucj3F9Duw=
+honnef.co/go/js/dom v0.0.0-20230808055721-96db8f4d5e3b/go.mod h1:sUMDUKNB2ZcVjt92UnLy3cdGs+wDAcrPdV3JP6sVgA4=

@@ -1,0 +1,20 @@
+{
+    "manifest_version": 3,
+    "name": "Ban Vendors",
+    "description": "This is a chrome extension written in Go",
+    "version": "0.0.1",
+    "permissions": [
+        "activeTab"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "http://*.yemeksepeti.com/*",
+                "https://*.yemeksepeti.com/*"
+            ],
+            "js": [
+                "content_script.js"
+            ]
+        }
+    ]
+}
