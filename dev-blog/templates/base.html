@@ -57,7 +57,8 @@
       {% block content %} {% endblock %}
     </main>
     <footer class="footer">
-      <span class="copyright">©</span>&nbsp;{{ config.extra.years }} - {{ config.extra.city }}
+      <span class="copyright">©</span>&nbsp;<script>document.write(new Date().getFullYear())</script>
+      - {{ config.extra.city }}
     </footer>
   </div>
 </body>
