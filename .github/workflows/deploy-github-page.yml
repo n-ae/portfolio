@@ -39,7 +39,7 @@ jobs:
       - name: Checkout Theme
         uses: actions/checkout@v4
         with:
-          path: ./dev-blog/themes
+          path: ./dev-blog/themes/ntun
           repository: netoun/ntun
           sparse-checkout: .
       - name: DEBUG
