@@ -57,7 +57,7 @@ jobs:
           cwd: ./dev-blog
           files: |
             ./dist
-          outPath: ../dist.tar.gz
+          outPath: ./dist.tar.gz
       - name: DEBUG
         run: |
           pwd
