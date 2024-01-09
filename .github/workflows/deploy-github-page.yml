@@ -41,7 +41,7 @@ jobs:
         with:
           path: ./dev-blog/themes/ntun
           repository: netoun/ntun
-          sparse-checkout: .
+          # sparse-checkout: .
       - name: DEBUG
         run: |
           pwd
