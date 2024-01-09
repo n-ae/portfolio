@@ -42,11 +42,6 @@ jobs:
           path: ./dev-blog/themes/ntun
           repository: netoun/ntun
           # sparse-checkout: .
-      # - name: DEBUG
-      #   run: |
-      #     pwd
-      #     ls -l1
-      #     ls -l1 themes/ntun
       - uses: taiki-e/install-action@v2
         with:
           tool: zola@0.17.1
@@ -63,6 +58,11 @@ jobs:
           files: |
             ./dist
           outPath: ./dist.tar.gz
+      - name: DEBUG
+        run: |
+          pwd
+          ls -l1
+          ls -l1 themes/ntun
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
