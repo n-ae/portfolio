@@ -1,5 +1,5 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+name: Deploy Dev Blog
 
 on:
   # Runs on pushes targeting the default branch
@@ -39,7 +39,7 @@ jobs:
       - name: Checkout Theme
         uses: actions/checkout@v4
         with:
-          path: ./themes
+          path: ./dev-blog/themes
           repository: netoun/ntun
           sparse-checkout: .
       - uses: taiki-e/install-action@v2
