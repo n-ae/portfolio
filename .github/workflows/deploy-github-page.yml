@@ -42,11 +42,11 @@ jobs:
           path: ./dev-blog/themes/ntun
           repository: netoun/ntun
           # sparse-checkout: .
-      - name: DEBUG
-        run: |
-          pwd
-          ls -l1
-          ls -l1 themes/ntun
+      # - name: DEBUG
+      #   run: |
+      #     pwd
+      #     ls -l1
+      #     ls -l1 themes/ntun
       - uses: taiki-e/install-action@v2
         with:
           tool: zola@0.17.1
@@ -54,12 +54,22 @@ jobs:
         run: |
           zola build --base-url /${GITHUB_REPOSITORY#*/} -o dist
         shell: sh
+      - name: Compress action step
+        uses: a7ul/tar-action@v1.1.0
+        id: compress
+        with:
+          command: c
+          cwd: ./dev-blog
+          files: |
+            ./dist
+          outPath: dist.tar.gz
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "./dev-blog/dist"
+          path: "./dev-blog/dist.tar.gz"
+          # path: "./dev-blog/dist"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
