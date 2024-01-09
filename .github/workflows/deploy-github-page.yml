@@ -41,7 +41,7 @@ jobs:
           tool: zola@0.17.1
       - name: Build release
         run: |
-          zola build --public-url /${GITHUB_REPOSITORY#*/} -o dist
+          zola build --base-url /${GITHUB_REPOSITORY#*/} -o dist
         shell: sh
       - name: Setup Pages
         uses: actions/configure-pages@v4
