@@ -57,19 +57,21 @@ jobs:
           cwd: ./dev-blog
           files: |
             ./dist
-          outPath: ./dist.tar.gz
+          outPath: dist.tar.gz
       - name: DEBUG
         run: |
           pwd
           ls -l1
           ls -l1 ./dist
-          ls -l1 ./dist.tar.gz
+          # ls -l1 ./dist.tar.gz
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "./dev-blog/dist.tar.gz"
+          name: github-pages
+          # path: "./dev-blog/dist.tar.gz"
+          path: dist.tar.gz
           # path: "./dev-blog/dist"
       - name: Deploy to GitHub Pages
         id: deployment
