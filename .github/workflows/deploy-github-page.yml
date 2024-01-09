@@ -36,6 +36,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Checkout Theme
+        uses: actions/checkout@v4
+        with:
+          path: themes
+          repository: netoun/ntun
+          sparse-checkout: .
       - uses: taiki-e/install-action@v2
         with:
           tool: zola@0.17.1
