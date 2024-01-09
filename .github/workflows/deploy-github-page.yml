@@ -63,8 +63,7 @@ jobs:
           pwd
           ls -l1
           ls -l1 ./dist
-          ls -l1 ./dev-blog/dist
-          ls -l1 ./dev-blog/dist.tar.gz
+          ls -l1 ./dist.tar.gz
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
