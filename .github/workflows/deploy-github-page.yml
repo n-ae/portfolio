@@ -49,29 +49,12 @@ jobs:
         run: |
           zola build --base-url /${GITHUB_REPOSITORY#*/} -o dist
         shell: sh
-      - name: Compress action step
-        uses: a7ul/tar-action@v1.1.0
-        id: compress
-        with:
-          command: c
-          cwd: ./dev-blog
-          files: |
-            ./dist
-          outPath: dist.tar.gz
-      - name: DEBUG
-        run: |
-          pwd
-          ls -l1
-          ls -l1 ./dist
-          # ls -l1 ./dist.tar.gz
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
           name: github-pages
-          # path: "./dev-blog/dist.tar.gz"
-          # path: ./dist
           path: "./dev-blog/dist"
       - name: Deploy to GitHub Pages
         id: deployment
