@@ -71,7 +71,7 @@ jobs:
         with:
           name: github-pages
           # path: "./dev-blog/dist.tar.gz"
-          path: dist.tar.gz
+          path: ./dist
           # path: "./dev-blog/dist"
       - name: Deploy to GitHub Pages
         id: deployment
