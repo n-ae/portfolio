@@ -39,7 +39,7 @@ jobs:
       - name: Checkout Theme
         uses: actions/checkout@v4
         with:
-          path: themes
+          path: ./themes
           repository: netoun/ntun
           sparse-checkout: .
       - uses: taiki-e/install-action@v2
