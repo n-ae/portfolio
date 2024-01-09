@@ -44,7 +44,9 @@ jobs:
           sparse-checkout: .
       - name: DEBUG
         run: |
+          pwd
           ls -l1
+          ls -l1 themes
       - uses: taiki-e/install-action@v2
         with:
           tool: zola@0.17.1
