@@ -62,7 +62,7 @@ jobs:
           cwd: ./dev-blog
           files: |
             ./dist
-          outPath: dist.tar.gz
+          outPath: ./dist.tar.gz
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
