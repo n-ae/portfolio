@@ -43,3 +43,6 @@ nvm install node # "node" is an alias for the latest version
 defaults write com.apple.dock wvous-br-corner -int 0 && \
 defaults write com.apple.dock wvous-br-modifier -int 0 && \
 killall Dock
+
+# lock when the lid is closed
+sysadminctl -screenLock immediate -password -
