@@ -6,6 +6,8 @@ return {
   dependencies = {
     'rcarriga/nvim-dap-ui',
     'mxsdev/nvim-dap-vscode-js',
+    'theHamsta/nvim-dap-virtual-text',
+    'Samsung/netcoredbg',
     -- build debugger from source
     {
       'microsoft/vscode-js-debug',
@@ -58,12 +60,14 @@ return {
       },
     }
 
+    local dap = require 'dap'
+
     for _, language in ipairs {
       'typescript',
       'javascript',
       'svelte',
     } do
-      require('dap').configurations[language] = {
+      dap.configurations[language] = {
         -- attach to a node process that has been started with
         -- `--inspect` for longrunning tasks or `--inspect-brk` for short tasks
         -- npm script -> `node --inspect-brk ./node_modules/.bin/vite dev`
@@ -134,8 +138,27 @@ return {
       }
     end
 
+    -- C#
+    dap.adapters.coreclr = {
+      type = 'executable',
+      -- command = vim.fn.stdpath 'data' .. '/usr/local/netcoredbg',
+      command = '/usr/local/netcoredbg',
+      args = { '--interpreter=vscode' },
+    }
+    dap.configurations.cs = {
+      {
+        type = 'coreclr',
+        name = 'launch - netcoredbg',
+        request = 'launch',
+        program = function() -- Ask the user what executable wants to debug
+          -- return vim.fn.input('Path to dll: ', vim.fn.getcwd() .. '/bin/Program.exe', 'file')
+          return vim.fn.input('Path to dll: ', vim.fn.getcwd() .. '/bin/Program.dll', 'file')
+        end,
+      },
+    }
+
     require('dapui').setup()
-    local dap, dapui = require 'dap', require 'dapui'
+    local dapui = require 'dapui'
     dap.listeners.after.event_initialized['dapui_config'] = function()
       dapui.open { reset = true }
     end
