@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Model.Data.Interface;
 
 namespace Model.Data

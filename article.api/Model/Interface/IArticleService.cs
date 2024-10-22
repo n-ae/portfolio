@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Model.Data.Interface;
 
 namespace Model.Interface

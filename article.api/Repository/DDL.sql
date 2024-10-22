@@ -1,4 +1,4 @@
-﻿DROP SCHEMA IF EXISTS article;
+DROP SCHEMA IF EXISTS article;
 CREATE SCHEMA article CHAR SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE article;
 DROP TABLE IF EXISTS Meta;
