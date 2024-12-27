@@ -5,8 +5,10 @@ gh repo list ${owner} --no-archived --limit 4000 | while read -r repo _; do
   gh repo clone "$repo" "$repo"
 done
 
-string1="transport-network.api"
-string2="depots"
+# string1="transport-network.api"
+string1="transport-network-client"
+string2="depot"
+# string2="terminal"
 
 # list the files involving the strings
 rg -l ${string1} > results1.txt
