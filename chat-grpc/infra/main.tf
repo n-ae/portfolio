@@ -145,7 +145,6 @@ resource "aws_instance" "grpc_server" {
               # If not, you might need to manually download and install protoc and the plugins.
               # Example for manual installation (uncomment if needed):
               PROTOBUF_VERSION="27.2"
-              GRPC_GO_VERSION="1.64.0" # Check for latest compatible version
 
               # Install protoc
               curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v$${PROTOBUF_VERSION}/protoc-$${PROTOBUF_VERSION}-linux-x86_64.zip
@@ -154,8 +153,8 @@ resource "aws_instance" "grpc_server" {
 
               # Install Go gRPC plugins
               export PATH=$PATH:/usr/local/go/bin
-              go install google.golang.org/protobuf/cmd/protoc-gen-go@v$${GRPC_GO_VERSION}
-              go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v$${GRPC_GO_VERSION}
+              go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+              go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
               sudo cp ~/go/bin/protoc-gen-go /usr/local/bin/
               sudo cp ~/go/bin/protoc-gen-go-grpc /usr/local/bin/
 
@@ -164,13 +163,13 @@ resource "aws_instance" "grpc_server" {
               REPO_URL="${var.repo_url}"
               APP_DIR="chat-grpc" # The directory your repo clones into
 
-              git clone $REPO_URL $APP_DIR
+              git clone --depth 1 $REPO_URL
+              cd portfolio
               cd $APP_DIR
 
               # Initialize Go modules and download dependencies
               # Ensure your go.mod file is correctly set up as per previous steps
               go mod tidy
-              go get ./...
 
               # Generate protobuf Go files
               # This assumes chat.proto is in the root of your cloned repository
@@ -191,4 +190,10 @@ resource "aws_instance" "grpc_server" {
   tags = {
     Name = "grpc-chat-server"
   }
+}
+
+
+resource "local_file" "private_key" {
+    content  = tls_private_key.grpc_ssh_key.private_key_pem
+    filename = "chat-grpc.private.pem"
 }

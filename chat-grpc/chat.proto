@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package chat;
 
-option go_package = "./chat"; // Specifies the Go package name for generated code
+option go_package = "./generated/chat"; // Specifies the Go package name for generated code
 
 // ChatMessage represents a single chat message
 message ChatMessage {
