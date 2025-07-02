@@ -147,9 +147,9 @@ resource "aws_instance" "grpc_server" {
               PROTOBUF_VERSION="27.2"
 
               # Install protoc
-              curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v$${PROTOBUF_VERSION}/protoc-$${PROTOBUF_VERSION}-linux-x86_64.zip
-              sudo unzip protoc-$${PROTOBUF_VERSION}-linux-x86_64.zip -d /usr/local
-              rm protoc-$${PROTOBUF_VERSION}-linux-x86_64.zip
+              curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOBUF_VERSION/protoc-$PROTOBUF_VERSION-linux-x86_64.zip
+              sudo unzip protoc-$PROTOBUF_VERSION-linux-x86_64.zip -d /usr/local
+              rm protoc-$PROTOBUF_VERSION-linux-x86_64.zip
 
               # Install Go gRPC plugins
               export PATH=$PATH:/usr/local/go/bin

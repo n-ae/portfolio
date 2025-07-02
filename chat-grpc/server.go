@@ -104,7 +104,7 @@ func (s *chatServer) ChatStream(stream pb.ChatService_ChatStreamServer) error {
 
 func main() {
 	// Listen on TCP port 50051
-	lis, err := net.Listen("tcp", ":80")
+	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
@@ -115,7 +115,7 @@ func main() {
 	// Register our chatServer implementation with the gRPC server
 	pb.RegisterChatServiceServer(s, NewChatServer())
 
-	log.Println("Chat server listening on :80")
+	log.Println("Chat server listening on :50051")
 	// Start serving gRPC requests
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)

@@ -32,7 +32,7 @@ variable "key_pair_name" {
 variable "grpc_port" {
   description = "The port on which the gRPC server will listen."
   type        = number
-  default     = 80
+  default     = 50051
 }
 
 variable "repo_url" {
