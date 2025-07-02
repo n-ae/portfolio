@@ -144,20 +144,20 @@ resource "aws_instance" "grpc_server" {
               # For Amazon Linux 2023, golang package includes protoc-gen-go and protoc-gen-go-grpc
               # If not, you might need to manually download and install protoc and the plugins.
               # Example for manual installation (uncomment if needed):
-              # PROTOBUF_VERSION="27.2"
-              # GRPC_GO_VERSION="1.64.0" # Check for latest compatible version
-              #
-              # # Install protoc
-              # curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-x86_64.zip
-              # sudo unzip protoc-${PROTOBUF_VERSION}-linux-x86_64.zip -d /usr/local
-              # rm protoc-${PROTOBUF_VERSION}-linux-x86_64.zip
-              #
-              # # Install Go gRPC plugins
-              # export PATH=$PATH:/usr/local/go/bin
-              # go install google.golang.org/protobuf/cmd/protoc-gen-go@v${GRPC_GO_VERSION}
-              # go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v${GRPC_GO_VERSION}
-              # sudo cp ~/go/bin/protoc-gen-go /usr/local/bin/
-              # sudo cp ~/go/bin/protoc-gen-go-grpc /usr/local/bin/
+              PROTOBUF_VERSION="27.2"
+              GRPC_GO_VERSION="1.64.0" # Check for latest compatible version
+
+              # Install protoc
+              curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v$${PROTOBUF_VERSION}/protoc-$${PROTOBUF_VERSION}-linux-x86_64.zip
+              sudo unzip protoc-$${PROTOBUF_VERSION}-linux-x86_64.zip -d /usr/local
+              rm protoc-$${PROTOBUF_VERSION}-linux-x86_64.zip
+
+              # Install Go gRPC plugins
+              export PATH=$PATH:/usr/local/go/bin
+              go install google.golang.org/protobuf/cmd/protoc-gen-go@v$${GRPC_GO_VERSION}
+              go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v$${GRPC_GO_VERSION}
+              sudo cp ~/go/bin/protoc-gen-go /usr/local/bin/
+              sudo cp ~/go/bin/protoc-gen-go-grpc /usr/local/bin/
 
               # Clone your Go gRPC chat application repository
               # IMPORTANT: Replace with your actual public repository URL

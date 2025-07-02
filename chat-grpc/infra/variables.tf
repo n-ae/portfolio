@@ -22,10 +22,11 @@ variable "instance_type" {
 }
 
 variable "key_pair_name" {
-  description = "The name of your existing EC2 Key Pair for SSH access."
+  description = "The name of Key Pair for SSH access."
   type        = string
   # IMPORTANT: Replace with the actual name of your SSH key pair in AWS
   # Example: default = "my-ssh-key"
+  default = "chat-grpc"
 }
 
 variable "grpc_port" {
