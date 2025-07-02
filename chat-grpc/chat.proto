@@ -1,0 +1,19 @@
+// chat.proto
+syntax = "proto3";
+
+package chat;
+
+option go_package = "./chat"; // Specifies the Go package name for generated code
+
+// ChatMessage represents a single chat message
+message ChatMessage {
+  string user = 1;
+  string text = 2;
+  int64 timestamp = 3; // Unix timestamp
+}
+
+// ChatService defines the bidirectional streaming RPC for chat
+service ChatService {
+  // ChatStream allows for bidirectional streaming of chat messages
+  rpc ChatStream(stream ChatMessage) returns (stream ChatMessage);
+}
