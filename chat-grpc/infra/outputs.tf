@@ -13,11 +13,7 @@ output "public_dns" {
 
 output "ssh_command" {
   description = "SSH command to connect to the EC2 instance. Remember to save the private key to a .pem file and set permissions (chmod 400)."
-  value       = "chmod 400 chat-grpc.private.pem && ssh -i chat-grpc.private.pem ec2-user@${aws_instance.grpc_server.public_ip}"
+  value       = <<-EOF
+    chmod 400 chat-grpc.private.pem && ssh -i chat-grpc.private.pem ${local.username}@${aws_instance.grpc_server.public_ip}
+  EOF
 }
-
-# output "private_key" {
-#   description = "The private key for SSH access. SAVE THIS TO A FILE (e.g., grpc-chat-key.pem) AND SET PERMISSIONS (chmod 400)."
-#   value       = tls_private_key.grpc_ssh_key.private_key_pem
-#   sensitive   = true # Mark as sensitive to prevent it from being displayed in logs
-# }

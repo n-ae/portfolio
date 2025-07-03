@@ -18,7 +18,8 @@ import (
 
 func main() {
 	// Set up a connection to the server.
-	conn, err := grpc.Dial("ec2-54-76-37-202.eu-west-1.compute.amazonaws.com:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	const endpoint = "ec2-54-171-218-250.eu-west-1.compute.amazonaws.com"
+	conn, err := grpc.Dial(endpoint+":50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Did not connect: %v", err)
 	}

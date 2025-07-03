@@ -12,13 +12,16 @@ variable "ami_id" {
   type        = string
   # Find latest Amazon Linux 2023 AMI for your region:
   # aws ec2 describe-images --owners amazon --filters "Name=name,Values=al2023-ami-*-kernel-6.1-x86_64" "Name=state,Values=available" --query "sort_by(Images, &CreationDate)[-1].ImageId" --output text
-  default = "ami-0a7f9fa6f8781184d"
+  # aws linux
+  default = "ami-0803576f0c0169402"
+  # debian 12 
+  # default = "ami-0fbb72557598f5284"
 }
 
 variable "instance_type" {
   description = "The EC2 instance type."
   type        = string
-  default     = "t3.micro" # Free tier eligible, good for testing
+  default     = "t3a.nano"
 }
 
 variable "key_pair_name" {
