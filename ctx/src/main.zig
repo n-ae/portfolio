@@ -471,10 +471,11 @@ const ContextManager = struct {
         return commands.toOwnedSlice();
     }
 
-    pub fn parseName(self: *Self, args: []const [:0]const u8) ![]const u8 {
+    pub fn parseName(self: *Self, args: []const [:0]const u8, command: []const u8) ![]const u8 {
         _ = self;
         if (args.len < 3) {
-            std.debug.print("❌ Context name required. Usage: {s}", .{saveHelp});
+            std.debug.print("❌ Context name required for {s} command" ++ eol, .{command});
+            std.debug.print("Usage: {s} {s} <name>" ++ eol, .{ build_options.package.name, command });
             return error.MissingName;
         }
         return args[2];
@@ -563,18 +564,18 @@ pub fn main() !void {
 
     switch (subcommand) {
         .save => {
-            const name = try ctx_manager.parseName(args);
+            const name = ctx_manager.parseName(args, "save") catch return;
             try ctx_manager.saveContext(name);
         },
         .restore => {
-            const name = try ctx_manager.parseName(args);
+            const name = ctx_manager.parseName(args, "restore") catch return;
             try ctx_manager.restoreContext(name);
         },
         .list => {
             try ctx_manager.listContexts();
         },
         .delete => {
-            const name = try ctx_manager.parseName(args);
+            const name = ctx_manager.parseName(args, "delete") catch return;
             try ctx_manager.deleteContext(name);
         },
         .version => {
