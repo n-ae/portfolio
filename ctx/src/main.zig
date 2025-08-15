@@ -14,6 +14,14 @@ const eol = switch (@import("builtin").os.tag) {
     else => "\n",
 };
 
+// Constants for validation limits
+const MAX_CONTEXT_NAME_LENGTH = 255;
+const MIN_CONTEXT_NAME_LENGTH = 1;
+const MAX_ENV_KEY_LENGTH = 1024;
+const MAX_ENV_VALUE_LENGTH = 4096;
+const MAX_FILE_SIZE = 1024 * 1024;
+const MAX_BRANCH_NAME_LENGTH = 255;
+
 const Command = enum {
     save,
     restore,
@@ -75,6 +83,26 @@ const ContextManager = struct {
 
     const Self = @This();
 
+    fn getContextFilePath(self: *Self, name: []const u8) ![]const u8 {
+        return try std.fmt.allocPrint(self.allocator, "{s}/{s}.json", .{ self.contexts_dir, name });
+    }
+
+    fn openContextFile(self: *Self, name: []const u8) !fs.File {
+        const context_file = try self.getContextFilePath(name);
+        defer self.allocator.free(context_file);
+
+        return fs.cwd().openFile(context_file, .{}) catch |err| switch (err) {
+            error.FileNotFound => {
+                std.debug.print("❌ Context '{s}' not found" ++ eol, .{name});
+                return error.FileNotFound;
+            },
+            else => {
+                std.debug.print("❌ Failed to open context file: {}" ++ eol, .{err});
+                return err;
+            },
+        };
+    }
+
     pub fn init(allocator: Allocator) !Self {
         const home_dir = getEnv("HOME") orelse "/tmp";
         const contexts_dir = try std.fmt.allocPrint(allocator, "{s}/.{s}", .{ home_dir, build_options.package.name });
@@ -104,8 +132,8 @@ const ContextManager = struct {
 
     pub fn saveContext(self: *Self, name: []const u8) !void {
         // Validate context name
-        if (name.len == 0 or name.len > 255) {
-            std.debug.print("❌ Context name must be 1-255 characters" ++ eol, .{});
+        if (name.len < MIN_CONTEXT_NAME_LENGTH or name.len > MAX_CONTEXT_NAME_LENGTH) {
+            std.debug.print("❌ Context name must be {d}-{d} characters" ++ eol, .{ MIN_CONTEXT_NAME_LENGTH, MAX_CONTEXT_NAME_LENGTH });
             return error.InvalidName;
         }
 
@@ -137,7 +165,7 @@ const ContextManager = struct {
         const temp_file = try std.fmt.allocPrint(self.allocator, "{s}/.{s}.tmp", .{ self.contexts_dir, name });
         defer self.allocator.free(temp_file);
 
-        const final_file = try std.fmt.allocPrint(self.allocator, "{s}/{s}.json", .{ self.contexts_dir, name });
+        const final_file = try self.getContextFilePath(name);
         defer self.allocator.free(final_file);
 
         // Write to temporary file
@@ -174,22 +202,10 @@ const ContextManager = struct {
             return error.InvalidName;
         }
 
-        const context_file = try std.fmt.allocPrint(self.allocator, "{s}/{s}.json", .{ self.contexts_dir, name });
-        defer self.allocator.free(context_file);
-
-        const file = fs.cwd().openFile(context_file, .{}) catch |err| switch (err) {
-            error.FileNotFound => {
-                std.debug.print("❌ Context '{s}' not found" ++ eol, .{name});
-                return;
-            },
-            else => {
-                std.debug.print("❌ Failed to open context file: {}" ++ eol, .{err});
-                return err;
-            },
-        };
+        const file = self.openContextFile(name) catch return;
         defer file.close();
 
-        const content = file.readToEndAlloc(self.allocator, 1024 * 1024) catch |err| {
+        const content = file.readToEndAlloc(self.allocator, MAX_FILE_SIZE) catch |err| {
             std.debug.print("❌ Failed to read context file: {}" ++ eol, .{err});
             return err;
         };
@@ -203,7 +219,7 @@ const ContextManager = struct {
         const context = parsed.value;
 
         // Validate context data
-        if (!self.validateContext(&context)) {
+        if (!self.isContextValid(&context)) {
             std.debug.print("❌ Context '{s}' contains invalid data" ++ eol, .{name});
             return error.InvalidContext;
         }
@@ -229,7 +245,7 @@ const ContextManager = struct {
 
         // Restore environment vars with validation
         for (context.environment_vars) |env_var| {
-            if (self.validateEnvVar(env_var)) {
+            if (self.isEnvVarValid(env_var)) {
                 const shell_type = self.detectShell();
                 switch (shell_type) {
                     .bash, .zsh, .fish => {
@@ -257,18 +273,18 @@ const ContextManager = struct {
         }
     }
 
-    fn validateContext(self: *Self, context: *const Context) bool {
+    fn isContextValid(self: *Self, context: *const Context) bool {
         _ = self;
 
         // Basic validation
-        if (context.name.len == 0 or context.name.len > 255) return false;
+        if (context.name.len < MIN_CONTEXT_NAME_LENGTH or context.name.len > MAX_CONTEXT_NAME_LENGTH) return false;
         if (context.working_directory.len == 0) return false;
         if (context.timestamp < 0) return false;
 
         // Validate each component
         for (context.environment_vars) |env_var| {
-            if (env_var.key.len == 0 or env_var.key.len > 1024) return false;
-            if (env_var.value.len > 4096) return false; // Reasonable limit
+            if (env_var.key.len == 0 or env_var.key.len > MAX_ENV_KEY_LENGTH) return false;
+            if (env_var.value.len > MAX_ENV_VALUE_LENGTH) return false;
         }
 
         return true;
@@ -297,19 +313,19 @@ const ContextManager = struct {
         _ = self;
 
         // Basic branch name validation - just ensure it's not empty and reasonable length
-        if (branch.len == 0 or branch.len > 255) return error.InvalidBranch;
+        if (branch.len == 0 or branch.len > MAX_BRANCH_NAME_LENGTH) return error.InvalidBranch;
 
         // For resilience, we don't validate git repository state here
         // The git checkout command will fail gracefully if there are issues
         // This keeps the restore operation more resilient
     }
 
-    fn validateEnvVar(self: *Self, env_var: EnvVar) bool {
+    fn isEnvVarValid(self: *Self, env_var: EnvVar) bool {
         _ = self;
 
         // Basic validation
-        if (env_var.key.len == 0 or env_var.key.len > 1024) return false;
-        if (env_var.value.len > 4096) return false;
+        if (env_var.key.len == 0 or env_var.key.len > MAX_ENV_KEY_LENGTH) return false;
+        if (env_var.value.len > MAX_ENV_VALUE_LENGTH) return false;
 
         // Key should not contain null bytes or '=' characters
         for (env_var.key) |c| {
@@ -405,7 +421,7 @@ const ContextManager = struct {
     }
 
     pub fn deleteContext(self: *Self, name: []const u8) !void {
-        const context_file = try std.fmt.allocPrint(self.allocator, "{s}/{s}.json", .{ self.contexts_dir, name });
+        const context_file = try self.getContextFilePath(name);
         defer self.allocator.free(context_file);
 
         fs.cwd().deleteFile(context_file) catch |err| switch (err) {
@@ -527,7 +543,7 @@ pub fn main() !void {
             // Get the raw arguments to show the invalid command
             const args = try process.argsAlloc(allocator);
             defer process.argsFree(allocator, args);
-            
+
             if (args.len > 1) {
                 std.debug.print("❌ Unknown command: '{s}'" ++ eol, .{args[1]});
                 std.debug.print("" ++ eol, .{});
