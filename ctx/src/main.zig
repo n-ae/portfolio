@@ -14,7 +14,7 @@ const eol = switch (@import("builtin").os.tag) {
     else => "\n",
 };
 
-const SubCommand = enum {
+const Command = enum {
     save,
     restore,
     list,
@@ -513,7 +513,7 @@ pub fn main() !void {
     );
 
     const parsers = comptime .{
-        .command = clap.parsers.enumeration(SubCommand),
+        .command = clap.parsers.enumeration(Command),
     };
 
     var diag = clap.Diagnostic{};
@@ -521,9 +521,25 @@ pub fn main() !void {
         .diagnostic = &diag,
         .allocator = allocator,
         .terminating_positional = 0,
-    }) catch |err| {
-        diag.report(std.io.getStdErr().writer(), err) catch {};
-        return err;
+    }) catch |err| switch (err) {
+        error.NameNotPartOfEnum => {
+            // Get the raw arguments to show the invalid command
+            const args = try process.argsAlloc(allocator);
+            defer process.argsFree(allocator, args);
+            
+            if (args.len > 1) {
+                std.debug.print("❌ Unknown command: '{s}'" ++ eol, .{args[1]});
+                std.debug.print("" ++ eol, .{});
+                printHelp();
+            } else {
+                printHelp();
+            }
+            return;
+        },
+        else => {
+            diag.report(std.io.getStdErr().writer(), err) catch {};
+            return err;
+        },
     };
     defer res.deinit();
 
@@ -531,7 +547,6 @@ pub fn main() !void {
         printHelp();
         return;
     }
-
 
     if (res.positionals.len == 0 or res.positionals[0] == null) {
         printHelp();
