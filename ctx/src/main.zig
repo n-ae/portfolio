@@ -19,6 +19,7 @@ const SubCommand = enum {
     restore,
     list,
     delete,
+    version,
 };
 
 const EnvVar = struct {
@@ -489,11 +490,13 @@ fn printHelp() void {
         \\  {0s} restore <name>   Restore a saved context
         \\  {0s} list             List all saved contexts
         \\  {0s} delete <name>    Delete a context
+        \\  {0s} version          Show version information
         \\
         \\EXAMPLES:
         \\  {0s} save feature-auth
         \\  {0s} restore bugfix-payment
         \\  {0s} list
+        \\  {0s} version
         \\
     , .{ build_options.package.name, saveHelp });
 }
@@ -505,7 +508,6 @@ pub fn main() !void {
 
     const params = comptime clap.parseParamsComptime(
         \\-h, --help             Display this help and exit.
-        \\-v, --version          Show version info.
         \\<command>
         \\
     );
@@ -525,13 +527,14 @@ pub fn main() !void {
     };
     defer res.deinit();
 
-    if (res.args.help != 0 or res.positionals.len == 0 or res.positionals[0] == null) {
+    if (res.args.help != 0) {
         printHelp();
         return;
     }
 
-    if (res.args.version != 0) {
-        std.debug.print(build_options.package.name ++ "-v" ++ build_options.package.version ++ eol, .{});
+
+    if (res.positionals.len == 0 or res.positionals[0] == null) {
+        printHelp();
         return;
     }
 
@@ -558,6 +561,9 @@ pub fn main() !void {
         .delete => {
             const name = try ctx_manager.parseName(args);
             try ctx_manager.deleteContext(name);
+        },
+        .version => {
+            std.debug.print(build_options.package.name ++ " v" ++ build_options.package.version ++ eol, .{});
         },
     }
 }
