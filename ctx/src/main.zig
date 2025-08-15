@@ -481,6 +481,22 @@ const ContextManager = struct {
 };
 
 const saveHelp = build_options.package.name ++ " save <name>";
+fn printHelp() void {
+    std.debug.print(
+        \\{0s} - Context Session Manager
+        \\USAGE:
+        \\  {1s}      Save current context
+        \\  {0s} restore <name>   Restore a saved context
+        \\  {0s} list             List all saved contexts
+        \\  {0s} delete <name>    Delete a context
+        \\
+        \\EXAMPLES:
+        \\  {0s} save feature-auth
+        \\  {0s} restore bugfix-payment
+        \\  {0s} list
+        \\
+    , .{ build_options.package.name, saveHelp });
+}
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -509,31 +525,13 @@ pub fn main() !void {
     };
     defer res.deinit();
 
-    if (res.args.help != 0) {
-        std.debug.print(
-            \\{0s} - Context Session Manager
-            \\USAGE:
-            \\  {1s}      Save current context
-            \\  {0s} restore <name>   Restore a saved context
-            \\  {0s} list             List all saved contexts
-            \\  {0s} delete <name>    Delete a context
-            \\
-            \\EXAMPLES:
-            \\  {0s} save feature-auth
-            \\  {0s} restore bugfix-payment
-            \\  {0s} list
-            \\
-        , .{ build_options.package.name, saveHelp });
+    if (res.args.help != 0 or res.positionals.len == 0 or res.positionals[0] == null) {
+        printHelp();
         return;
     }
 
     if (res.args.version != 0) {
         std.debug.print(build_options.package.name ++ "-v" ++ build_options.package.version ++ eol, .{});
-        return;
-    }
-
-    if (res.positionals.len == 0 or res.positionals[0] == null) {
-        debugLine("❌ No command specified. Use --help for usage.");
         return;
     }
 
