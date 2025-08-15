@@ -8,6 +8,12 @@ const build_options = @import("build_options");
 
 const clap = @import("clap");
 
+// OS-specific end-of-line character
+const eol = switch (@import("builtin").os.tag) {
+    .windows => "\r\n",
+    else => "\n",
+};
+
 const SubCommand = enum {
     save,
     restore,
@@ -57,11 +63,8 @@ inline fn getEnv(key: []const u8) ?[:0]const u8 {
     return std.posix.getenv(key);
 }
 
-inline fn debugLine(comptime s: []const u8) void {
-    std.debug.print(
-        \\{s}
-        \\
-    , .{s});
+fn debugLine(comptime s: []const u8) void {
+    std.debug.print(s ++ eol, .{});
 }
 
 const ContextManager = struct {
@@ -113,7 +116,7 @@ const ContextManager = struct {
 
         try json.stringify(context, .{}, file.writer());
         context.deinit(self.allocator);
-        std.debug.print("✅ Context '{s}' saved!\n", .{name});
+        std.debug.print("✅ Context '{s}' saved!" ++ eol, .{name});
     }
 
     pub fn restoreContext(self: *Self, name: []const u8) !void {
@@ -122,7 +125,7 @@ const ContextManager = struct {
 
         const file = fs.cwd().openFile(context_file, .{}) catch |err| switch (err) {
             error.FileNotFound => {
-                std.debug.print("❌ Context '{s}' not found\n", .{name});
+                std.debug.print("❌ Context '{s}' not found" ++ eol, .{name});
                 return;
             },
             else => return err,
@@ -145,10 +148,10 @@ const ContextManager = struct {
         }
 
         // TODO: Restore open files, environment vars, etc.
-        std.debug.print("🔄 Context '{s}' restored! (Directory: {s})\n", .{ name, context.working_directory });
+        std.debug.print("🔄 Context '{s}' restored! (Directory: {s})" ++ eol, .{ name, context.working_directory });
 
         if (context.git_branch) |branch| {
-            std.debug.print("📂 Git branch: {s}\n", .{branch});
+            std.debug.print("📂 Git branch: {s}" ++ eol, .{branch});
         }
     }
 
@@ -165,7 +168,7 @@ const ContextManager = struct {
         var iterator = dir.iterate();
         var found_any = false;
 
-        std.debug.print("📋 Saved contexts:\n", .{});
+        std.debug.print("📋 Saved contexts:" ++ eol, .{});
         while (try iterator.next()) |entry| {
             if (entry.kind == .file and std.mem.endsWith(u8, entry.name, ".json")) {
                 found_any = true;
@@ -184,12 +187,12 @@ const ContextManager = struct {
                         defer parsed.deinit();
                         const context = parsed.value;
                         const time_ago = std.time.timestamp() - context.timestamp;
-                        std.debug.print("  • {s} (saved {d}s ago)\n", .{ name, time_ago });
+                        std.debug.print("  • {s} (saved {d}s ago)" ++ eol, .{ name, time_ago });
                     } else |_| {
-                        std.debug.print("  • {s}\n", .{name});
+                        std.debug.print("  • {s}" ++ eol, .{name});
                     }
                 } else |_| {
-                    std.debug.print("  • {s}\n", .{name});
+                    std.debug.print("  • {s}" ++ eol, .{name});
                 }
             }
         }
@@ -205,13 +208,13 @@ const ContextManager = struct {
 
         fs.cwd().deleteFile(context_file) catch |err| switch (err) {
             error.FileNotFound => {
-                std.debug.print("❌ Context '{s}' not found\n", .{name});
+                std.debug.print("❌ Context '{s}' not found" ++ eol, .{name});
                 return;
             },
             else => return err,
         };
 
-        std.debug.print("🗑️  Context '{s}' deleted\n", .{name});
+        std.debug.print("🗑️  Context '{s}' deleted" ++ eol, .{name});
     }
 
     fn getCurrentGitBranch(self: *Self) !?[]const u8 {
@@ -226,9 +229,9 @@ const ContextManager = struct {
 
         if (stdout.len == 0) return null;
 
-        // Trim newline and duplicate the result to return owned memory
-        const trimmed = if (stdout.len > 0 and stdout[stdout.len - 1] == '\n')
-            stdout[0 .. stdout.len - 1]
+        // Trim OS-specific newline and duplicate the result to return owned memory
+        const trimmed = if (std.mem.endsWith(u8, stdout, eol))
+            stdout[0 .. stdout.len - eol.len]
         else
             stdout;
 
@@ -335,22 +338,17 @@ pub fn main() !void {
     }
 
     if (res.args.version != 0) {
-        std.debug.print("{s} v{s}\n", .{ build_options.package.name, build_options.package.version });
+        std.debug.print(build_options.package.name ++ "-v" ++ build_options.package.version ++ eol, .{});
         return;
     }
 
-    if (res.positionals.len == 0) {
+    if (res.positionals.len == 0 or res.positionals[0] == null) {
         debugLine("❌ No command specified. Use --help for usage.");
         return;
     }
 
     var ctx_manager = try ContextManager.init(allocator);
     defer ctx_manager.deinit();
-
-    if (res.positionals.len == 0) {
-        debugLine("❌ No command specified. Use --help for usage.");
-        return;
-    }
 
     const subcommand = res.positionals[0].?;
 
