@@ -28,6 +28,29 @@ const Context = struct {
     open_files: [][]const u8,
     environment_vars: []EnvVar,
     terminal_commands: [][]const u8,
+
+    pub fn deinit(self: *const Context, allocator: Allocator) void {
+        if (self.git_branch) |branch| {
+            allocator.free(branch);
+        }
+        allocator.free(self.working_directory);
+
+        for (self.open_files) |file| {
+            allocator.free(file);
+        }
+        allocator.free(self.open_files);
+
+        for (self.environment_vars) |env_var| {
+            allocator.free(env_var.key);
+            allocator.free(env_var.value);
+        }
+        allocator.free(self.environment_vars);
+
+        for (self.terminal_commands) |cmd| {
+            allocator.free(cmd);
+        }
+        allocator.free(self.terminal_commands);
+    }
 };
 
 inline fn getEnv(key: []const u8) ?[:0]const u8 {
@@ -89,6 +112,7 @@ const ContextManager = struct {
         defer file.close();
 
         try json.stringify(context, .{}, file.writer());
+        context.deinit(self.allocator);
         std.debug.print("✅ Context '{s}' saved!\n", .{name});
     }
 
@@ -197,15 +221,18 @@ const ContextManager = struct {
 
         try child.spawn();
         const stdout = try child.stdout.?.readToEndAlloc(self.allocator, 1024);
+        defer self.allocator.free(stdout);
         _ = try child.wait();
 
         if (stdout.len == 0) return null;
 
-        // Trim newline
-        return if (stdout.len > 0 and stdout[stdout.len - 1] == '\n')
+        // Trim newline and duplicate the result to return owned memory
+        const trimmed = if (stdout.len > 0 and stdout[stdout.len - 1] == '\n')
             stdout[0 .. stdout.len - 1]
         else
             stdout;
+
+        return try self.allocator.dupe(u8, trimmed);
     }
 
     fn switchGitBranch(self: *Self, branch: []const u8) !void {
