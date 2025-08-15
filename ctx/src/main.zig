@@ -288,9 +288,7 @@ const ContextManager = struct {
     }
 };
 
-const saveHelp = std.fmt.comptimePrint(
-    \\{s} save <name>
-, .{build_options.package.name});
+const saveHelp = build_options.package.name ++ " save <name>";
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
