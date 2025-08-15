@@ -34,9 +34,10 @@ inline fn getEnv(key: []const u8) ?[:0]const u8 {
     return std.posix.getenv(key);
 }
 
-fn debugLine(comptime s: []const u8) void {
+inline fn debugLine(comptime s: []const u8) void {
     std.debug.print(
         \\{s}
+        \\
     , .{s});
 }
 
@@ -48,7 +49,7 @@ const ContextManager = struct {
 
     pub fn init(allocator: Allocator) !Self {
         const home_dir = getEnv("HOME") orelse "/tmp";
-        const contexts_dir = try std.fmt.allocPrint(allocator, "{s}/.ctx", .{home_dir});
+        const contexts_dir = try std.fmt.allocPrint(allocator, "{s}/.{s}", .{ home_dir, build_options.package.name });
 
         // Ensure contexts directory exists
         fs.cwd().makeDir(contexts_dir) catch |err| switch (err) {
@@ -130,7 +131,7 @@ const ContextManager = struct {
     pub fn listContexts(self: *Self) !void {
         var dir = fs.cwd().openDir(self.contexts_dir, .{}) catch |err| switch (err) {
             error.FileNotFound => {
-                debugLine("No contexts saved yet. Use 'ctx save <name>' to create one.");
+                std.debug.print("No contexts saved yet. Use '{s}' to create one.", .{saveHelp});
                 return;
             },
             else => return err,
@@ -170,7 +171,7 @@ const ContextManager = struct {
         }
 
         if (!found_any) {
-            debugLine("  (none yet - use 'ctx save <name>' to create one)");
+            std.debug.print("  (none yet - use '{s}' to create one)", .{saveHelp});
         }
     }
 
@@ -250,12 +251,16 @@ const ContextManager = struct {
     pub fn parseName(self: *Self, args: []const [:0]const u8) ![]const u8 {
         _ = self;
         if (args.len < 3) {
-            debugLine("❌ Context name required. Usage: ctx save <name>");
+            std.debug.print("❌ Context name required. Usage: {s}", .{saveHelp});
             return error.MissingName;
         }
         return args[2];
     }
 };
+
+const saveHelp = std.fmt.comptimePrint(
+    \\{s} save <name>
+, .{build_options.package.name});
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -286,18 +291,19 @@ pub fn main() !void {
 
     if (res.args.help != 0) {
         std.debug.print(
-            \\ctx - Context Session Manager
+            \\{0s} - Context Session Manager
             \\USAGE:
-            \\  ctx save <name>      Save current context
-            \\  ctx restore <name>   Restore a saved context
-            \\  ctx list             List all saved contexts
-            \\  ctx delete <name>    Delete a context
+            \\  {1s}      Save current context
+            \\  {0s} restore <name>   Restore a saved context
+            \\  {0s} list             List all saved contexts
+            \\  {0s} delete <name>    Delete a context
             \\
             \\EXAMPLES:
-            \\  ctx save feature-auth
-            \\  ctx restore bugfix-payment
-            \\  ctx list
-        , .{});
+            \\  {0s} save feature-auth
+            \\  {0s} restore bugfix-payment
+            \\  {0s} list
+            \\
+        , .{ build_options.package.name, saveHelp });
         return;
     }
 
