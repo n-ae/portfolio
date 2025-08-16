@@ -12,6 +12,8 @@ const Config = struct {
     no_cleanup: bool = false,
     shell_type: ?[]const u8 = null,
     mount_source: bool = false,
+    csv_output: bool = false,
+    output_file: ?[]const u8 = null,
     help: bool = false,
 };
 
@@ -44,6 +46,7 @@ fn showUsage() void {
         \\TEST TYPES:
         \\    unit        Run unit tests only
         \\    blackbox    Run blackbox/integration tests only
+        \\    performance Run performance benchmarks
         \\    csv         Run CSV output tests
         \\    all         Run all tests (default)
         \\    interactive Run interactive testing session
@@ -57,12 +60,16 @@ fn showUsage() void {
         \\    --no-cleanup        Don't cleanup containers before running
         \\    --shell SHELL       Test with specific shell (bash, zsh, fish)
         \\    --mount-source      Mount source code for development testing
+        \\    --csv               Output results in CSV format
+        \\    --output FILE       Write results to file instead of stdout
         \\
         \\EXAMPLES:
-        \\    zig run podman_test.zig                          # Run all tests
-        \\    zig run podman_test.zig -- unit                 # Run unit tests only
-        \\    zig run podman_test.zig -- --verbose csv        # Run CSV tests with verbose output
-        \\    zig run podman_test.zig -- --keep interactive   # Interactive session, keep container
+        \\    zig run podman_test.zig                              # Run all tests
+        \\    zig run podman_test.zig -- unit                     # Run unit tests only
+        \\    zig run podman_test.zig -- --csv unit               # Run unit tests with CSV output
+        \\    zig run podman_test.zig -- --csv --output results.csv blackbox # CSV output to file
+        \\    zig run podman_test.zig -- performance              # Run performance benchmarks
+        \\    zig run podman_test.zig -- --keep interactive       # Interactive session, keep container
         \\
     , .{});
 }
@@ -91,7 +98,7 @@ fn cleanupContainers(allocator: std.mem.Allocator, config: Config) !void {
     }
 
     const container_names = std.mem.trim(u8, list_result.stdout, " \n\r\t");
-    
+
     // Stop containers
     const stop_cmd = try std.fmt.allocPrint(allocator, "echo '{s}' | xargs -r podman stop", .{container_names});
     defer allocator.free(stop_cmd);
@@ -133,7 +140,7 @@ fn runTestInContainer(allocator: std.mem.Allocator, config: Config, test_command
 
     // Set working directory to builder project location
     try podman_args.appendSlice(&[_][]const u8{ "--workdir", "/build" });
-    
+
     // Mount source code if requested (for development)
     if (config.mount_source) {
         const project_root = try std.fs.cwd().realpathAlloc(allocator, ".");
@@ -334,7 +341,16 @@ fn parseArgs(args: [][:0]u8) !Config {
             config.shell_type = args[i];
         } else if (std.mem.eql(u8, arg, "--mount-source")) {
             config.mount_source = true;
-        } else if (std.mem.eql(u8, arg, "unit") or std.mem.eql(u8, arg, "blackbox") or std.mem.eql(u8, arg, "csv") or std.mem.eql(u8, arg, "all") or std.mem.eql(u8, arg, "interactive")) {
+        } else if (std.mem.eql(u8, arg, "--csv")) {
+            config.csv_output = true;
+        } else if (std.mem.eql(u8, arg, "--output")) {
+            if (i + 1 >= args.len) {
+                logError("--output requires a value", .{});
+                return error.InvalidArgs;
+            }
+            i += 1;
+            config.output_file = args[i];
+        } else if (std.mem.eql(u8, arg, "unit") or std.mem.eql(u8, arg, "blackbox") or std.mem.eql(u8, arg, "csv") or std.mem.eql(u8, arg, "all") or std.mem.eql(u8, arg, "interactive") or std.mem.eql(u8, arg, "performance")) {
             config.test_type = arg;
         } else {
             logError("Unknown option: {s}", .{arg});
@@ -411,3 +427,4 @@ pub fn main() !void {
         std.process.exit(1);
     }
 }
+

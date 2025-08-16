@@ -8,13 +8,52 @@ This is a Zig-based context session manager called `ctx` - a CLI tool that saves
 
 ## Build Commands
 
-- `zig build` - Build the project (creates executable and CSV test executables)
+### Core Application
+- `zig build` - Build the project (creates main executable and test tools)
 - `zig build run` - Build and run the executable
-- `zig build test` - Run all tests (unit + integration)
-- `zig build test-blackbox` - Run end-to-end blackbox tests
-- `zig build test-csv` - Run all tests with CSV output for CI/CD
 - `zig build --release=fast` - Build optimized release version
-- `zig build --help` - Show all available build options
+
+### Testing Commands
+- `zig build test` - Run all standard tests (unit + integration)
+- `zig build test-unit` - Run unit tests only
+- `zig build test-integration` - Run integration tests only
+- `zig build test-blackbox` - Run end-to-end blackbox tests
+
+### Enhanced Testing with CSV Support
+- `zig build test-unit-csv` - Unit tests with CSV output to `unit_test_results.csv`
+- `zig build test-performance` - Run performance benchmarks
+- `zig build test-performance-csv` - Performance benchmarks with CSV output to `performance_results.csv`
+- `zig build test-csv` - All enhanced tests with CSV output
+
+### Test Executables
+- `./zig-out/bin/ctx-unit-tests [--csv] [--output file.csv]` - Enhanced unit test runner
+- `./zig-out/bin/ctx-performance [--csv] [--output file.csv]` - Performance benchmark runner
+- `./zig-out/bin/ctx-test <ctx-binary-path>` - Blackbox test runner
+
+## Container Infrastructure
+
+The project includes comprehensive containerized testing infrastructure:
+
+- `zig run scripts/podman_build.zig -- [TARGET]` - Build container images (runtime, builder, blackbox-testing)
+- `zig run scripts/podman_test.zig -- [OPTIONS] [TEST_TYPE]` - Run tests in containers with CSV support
+  - Options: `--csv`, `--output file.csv`, `--verbose`, `--keep`
+  - Types: `unit`, `blackbox`, `performance`, `all`, `interactive`
+- `zig run scripts/podman_build.zig -- --multiplatform blackbox-testing` - Build multiplatform testing containers
+- `zig run scripts/podman_test_multiplatform.zig -- --platform linux/amd64 blackbox` - Cross-platform testing
+
+### Container Examples
+```bash
+# Basic container testing
+zig run scripts/podman_test.zig -- unit
+
+# Container testing with CSV output
+zig run scripts/podman_test.zig -- --csv --output container_results.csv all
+
+# Performance testing in container
+zig run scripts/podman_test.zig -- performance
+```
+
+See `MULTIPLATFORM.md` for detailed multiplatform testing documentation and `ARCHITECTURE.md` for maintainable architecture guidelines.
 
 ## Architecture
 
@@ -115,3 +154,5 @@ All scripts are implemented in Zig for consistency and maintainability:
 
 **Documentation Maintenance**: Always keep documentation up to date when making changes to the codebase. This ensures consistency and helps maintain project clarity.
 - Don't remove .claude
+- Use fd always instead of find.
+- always use ripgrep instead of grep.

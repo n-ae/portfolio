@@ -10,6 +10,9 @@ const Config = struct {
     no_cache: bool = false,
     push: bool = false,
     multi_arch: bool = false,
+    multiplatform: bool = false,
+    platform: ?[]const u8 = null,
+    containerfile: []const u8 = "Containerfile",
     help: bool = false,
 };
 
@@ -40,22 +43,29 @@ fn showUsage() void {
         \\Build ctx CLI container images using Podman
         \\
         \\TARGETS:
-        \\    runtime     Build production runtime image (default)
-        \\    builder     Build builder image with Zig and source code  
-        \\    all         Build all images
+        \\    runtime         Build production runtime image (default)
+        \\    builder         Build builder image with Zig and source code  
+        \\    blackbox-testing Build cross-platform testing image
+        \\    all             Build all images
         \\
         \\OPTIONS:
-        \\    -h, --help      Show this help message
-        \\    -t, --tag TAG   Tag for the image (default: latest)
-        \\    -r, --registry  Registry prefix (default: localhost)
-        \\    --no-cache      Build without cache
-        \\    --push          Push images to registry after build
-        \\    --multi-arch    Build for multiple architectures
+        \\    -h, --help          Show this help message
+        \\    -t, --tag TAG       Tag for the image (default: latest)
+        \\    -r, --registry REG  Registry prefix (default: localhost)
+        \\    --no-cache          Build without cache
+        \\    --push              Push images to registry after build
+        \\    --multi-arch        Build for multiple architectures (linux/amd64,linux/arm64)
+        \\    --multiplatform     Use multiplatform Containerfile for cross-platform support
+        \\    --platform PLAT     Target specific platform (linux/amd64, windows/amd64, darwin/amd64, etc.)
+        \\    -f, --file FILE     Use specific Containerfile (default: Containerfile)
         \\
         \\EXAMPLES:
-        \\    zig run podman_build.zig                          # Build runtime image
-        \\    zig run podman_build.zig -- builder              # Build builder image
-        \\    zig run podman_build.zig -- --tag v1.0.0 all    # Build all images with tag v1.0.0
+        \\    zig run podman_build.zig                                    # Build runtime image
+        \\    zig run podman_build.zig -- builder                        # Build builder image
+        \\    zig run podman_build.zig -- --tag v1.0.0 all              # Build all images with tag v1.0.0
+        \\    zig run podman_build.zig -- --multiplatform blackbox-testing # Build cross-platform testing image
+        \\    zig run podman_build.zig -- --platform linux/amd64 builder  # Build for specific platform
+        \\    zig run podman_build.zig -- --multi-arch --push runtime     # Build and push multi-arch runtime
         \\
     , .{});
 }
@@ -103,7 +113,15 @@ fn buildImage(allocator: std.mem.Allocator, config: Config) !bool {
     const image_tag = try std.fmt.allocPrint(allocator, "{s}/{s}:{s}-{s}", .{ config.registry, config.image_name, config.target, config.tag });
     defer allocator.free(image_tag);
 
-    logInfo("Building {s} image: {s}", .{ config.target, image_tag });
+    if (config.multiplatform) {
+        logInfo("Building {s} image (multiplatform): {s}", .{ config.target, image_tag });
+        logInfo("Using Containerfile: {s}", .{config.containerfile});
+    } else {
+        logInfo("Building {s} image: {s}", .{ config.target, image_tag });
+    }
+    if (config.platform) |platform| {
+        logInfo("Target platform: {s}", .{platform});
+    }
 
     var build_args = ArrayList([]const u8).init(allocator);
     defer build_args.deinit();
@@ -114,12 +132,20 @@ fn buildImage(allocator: std.mem.Allocator, config: Config) !bool {
         try build_args.append("--no-cache");
     }
 
-    if (config.multi_arch) {
+    if (config.multi_arch and !config.multiplatform) {
         try build_args.appendSlice(&[_][]const u8{ "--platform", "linux/amd64,linux/arm64" });
     }
 
+    if (config.multiplatform and config.platform == null) {
+        try build_args.appendSlice(&[_][]const u8{ "--platform", "linux/amd64,windows/amd64,darwin/amd64" });
+    }
+
+    if (config.platform) |platform| {
+        try build_args.appendSlice(&[_][]const u8{ "--platform", platform });
+    }
+
     try build_args.appendSlice(&[_][]const u8{ "--target", config.target });
-    try build_args.appendSlice(&[_][]const u8{ "-f", "Containerfile" });
+    try build_args.appendSlice(&[_][]const u8{ "-f", config.containerfile });
     try build_args.appendSlice(&[_][]const u8{ "-t", image_tag });
     try build_args.append(".");
 
@@ -186,7 +212,10 @@ fn buildImage(allocator: std.mem.Allocator, config: Config) !bool {
 fn buildAll(allocator: std.mem.Allocator, config: Config) !bool {
     logInfo("Building all ctx CLI images...", .{});
 
-    const targets = [_][]const u8{ "runtime", "builder" };
+    const targets: []const []const u8 = if (config.multiplatform)
+        &[_][]const u8{ "runtime", "builder", "blackbox-testing" }
+    else
+        &[_][]const u8{ "runtime", "builder" };
     var failed = ArrayList([]const u8).init(allocator);
     defer failed.deinit();
 
@@ -255,7 +284,24 @@ fn parseArgs(args: [][:0]u8) !Config {
             config.push = true;
         } else if (std.mem.eql(u8, arg, "--multi-arch")) {
             config.multi_arch = true;
-        } else if (std.mem.eql(u8, arg, "runtime") or std.mem.eql(u8, arg, "builder") or std.mem.eql(u8, arg, "all")) {
+        } else if (std.mem.eql(u8, arg, "--multiplatform")) {
+            config.multiplatform = true;
+            config.containerfile = "Containerfile.multiplatform";
+        } else if (std.mem.eql(u8, arg, "--platform")) {
+            if (i + 1 >= args.len) {
+                logError("--platform requires a value", .{});
+                return error.InvalidArgs;
+            }
+            i += 1;
+            config.platform = args[i];
+        } else if (std.mem.eql(u8, arg, "-f") or std.mem.eql(u8, arg, "--file")) {
+            if (i + 1 >= args.len) {
+                logError("--file requires a value", .{});
+                return error.InvalidArgs;
+            }
+            i += 1;
+            config.containerfile = args[i];
+        } else if (std.mem.eql(u8, arg, "runtime") or std.mem.eql(u8, arg, "builder") or std.mem.eql(u8, arg, "blackbox-testing") or std.mem.eql(u8, arg, "all")) {
             config.target = arg;
         } else {
             logError("Unknown option: {s}", .{arg});
@@ -314,5 +360,3 @@ pub fn main() !void {
         std.process.exit(1);
     }
 }
-
-
