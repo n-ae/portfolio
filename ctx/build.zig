@@ -101,6 +101,21 @@ pub fn build(b: *std.Build) void {
     // step when running `zig build`).
     b.installArtifact(exe);
 
+    // Create test executable
+    const test_mod = b.createModule(.{
+        .root_source_file = b.path("src/test.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const test_exe = b.addExecutable(.{
+        .name = "ctx-test",
+        .root_module = test_mod,
+    });
+
+    test_exe.root_module.addImport("build_options", options.createModule());
+    b.installArtifact(test_exe);
+
     // This *creates* a Run step in the build graph, to be executed when another
     // step is evaluated that depends on it. The next line below will establish
     // such a dependency.
@@ -144,4 +159,12 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run unit tests");
     // test_step.dependOn(&run_lib_unit_tests.step);
     test_step.dependOn(&run_exe_unit_tests.step);
+
+    // Create blackbox test step
+    const blackbox_cmd = b.addRunArtifact(test_exe);
+    blackbox_cmd.addArg("./zig-out/bin/ctx");
+    blackbox_cmd.step.dependOn(b.getInstallStep()); // Ensure ctx binary is built first
+
+    const blackbox_step = b.step("test-blackbox", "Run blackbox tests");
+    blackbox_step.dependOn(&blackbox_cmd.step);
 }

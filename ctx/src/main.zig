@@ -61,7 +61,7 @@ pub fn main() !void {
             // Get the raw arguments to show the invalid command
             const args = try process.argsAlloc(allocator);
             defer process.argsFree(allocator, args);
-            
+
             if (args.len > 1) {
                 std.debug.print("❌ Unknown command: '{s}'" ++ eol, .{args[1]});
                 std.debug.print("" ++ eol, .{});
