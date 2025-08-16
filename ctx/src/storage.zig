@@ -95,7 +95,7 @@ pub const Storage = struct {
         var contexts = std.ArrayList(ContextInfo).init(self.allocator);
         defer contexts.deinit();
 
-        var dir = fs.cwd().openDir(self.contexts_dir, .{}) catch |err| switch (err) {
+        var dir = fs.cwd().openDir(self.contexts_dir, .{ .iterate = true }) catch |err| switch (err) {
             error.FileNotFound => return try contexts.toOwnedSlice(),
             else => return err,
         };
