@@ -41,8 +41,7 @@ fn showUsage() void {
         \\
         \\TARGETS:
         \\    runtime     Build production runtime image (default)
-        \\    testing     Build testing image with test tools
-        \\    development Build development image with dev tools
+        \\    builder     Build builder image with Zig and source code  
         \\    all         Build all images
         \\
         \\OPTIONS:
@@ -55,7 +54,7 @@ fn showUsage() void {
         \\
         \\EXAMPLES:
         \\    zig run podman_build.zig                          # Build runtime image
-        \\    zig run podman_build.zig -- testing              # Build testing image
+        \\    zig run podman_build.zig -- builder              # Build builder image
         \\    zig run podman_build.zig -- --tag v1.0.0 all    # Build all images with tag v1.0.0
         \\
     , .{});
@@ -187,7 +186,7 @@ fn buildImage(allocator: std.mem.Allocator, config: Config) !bool {
 fn buildAll(allocator: std.mem.Allocator, config: Config) !bool {
     logInfo("Building all ctx CLI images...", .{});
 
-    const targets = [_][]const u8{ "runtime", "testing", "development" };
+    const targets = [_][]const u8{ "runtime", "builder" };
     var failed = ArrayList([]const u8).init(allocator);
     defer failed.deinit();
 
@@ -256,7 +255,7 @@ fn parseArgs(args: [][:0]u8) !Config {
             config.push = true;
         } else if (std.mem.eql(u8, arg, "--multi-arch")) {
             config.multi_arch = true;
-        } else if (std.mem.eql(u8, arg, "runtime") or std.mem.eql(u8, arg, "testing") or std.mem.eql(u8, arg, "development") or std.mem.eql(u8, arg, "all")) {
+        } else if (std.mem.eql(u8, arg, "runtime") or std.mem.eql(u8, arg, "builder") or std.mem.eql(u8, arg, "all")) {
             config.target = arg;
         } else {
             logError("Unknown option: {s}", .{arg});
@@ -315,4 +314,5 @@ pub fn main() !void {
         std.process.exit(1);
     }
 }
+
 

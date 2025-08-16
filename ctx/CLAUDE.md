@@ -83,21 +83,25 @@ Contexts are saved as JSON files in `~/.ctx/` directory. Each context file conta
 The project includes comprehensive container support for isolated testing:
 
 **Containerfile**:
-- Multi-stage builds for runtime (57.8 MB), testing (824 MB), and development (1.32 GB) environments
+- Multi-stage builds for runtime (~60 MB) and builder (~200 MB) environments
 - Uses Alpine Linux with package manager Zig installation for reliability
 - Non-root user setup for security best practices
 - Optimized for both Docker and Podman with proper caching
 
 **Container Images**:
 - `runtime` - Minimal production deployment with ctx CLI only
-- `testing` - Includes debugging tools (vim, tmux, htop, strace, valgrind, gdb)
-- `development` - Full development environment with clang, make, cmake
+- `builder` - Development/testing environment with Zig, source code, and built binaries
 
 **Build Commands**:
 - `zig run scripts/podman_build.zig -- runtime` - Build runtime image
-- `zig run scripts/podman_build.zig -- testing` - Build testing image
-- `zig run scripts/podman_build.zig -- development` - Build development image
+- `zig run scripts/podman_build.zig -- builder` - Build builder image  
 - `zig run scripts/podman_build.zig -- all` - Build all images
+
+**Testing Commands**:
+- `zig run scripts/podman_test.zig -- unit` - Run unit tests in container
+- `zig run scripts/podman_test.zig -- blackbox` - Run blackbox tests in container
+- `zig run scripts/podman_test.zig -- all` - Run all tests in container
+- `zig run scripts/podman_test.zig -- interactive` - Interactive container session
 
 ## Scripts Directory
 

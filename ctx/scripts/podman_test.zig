@@ -115,7 +115,7 @@ fn runTestInContainer(allocator: std.mem.Allocator, config: Config, test_command
     const container_name = try std.fmt.allocPrint(allocator, "ctx-test-{s}-{d}", .{ config.test_type, std.time.timestamp() });
     defer allocator.free(container_name);
 
-    const image = try std.fmt.allocPrint(allocator, "{s}/{s}:testing-{s}", .{ config.registry, config.image_name, config.tag });
+    const image = try std.fmt.allocPrint(allocator, "{s}/{s}:builder-{s}", .{ config.registry, config.image_name, config.tag });
     defer allocator.free(image);
 
     logInfo("Creating test container: {s}", .{container_name});
@@ -131,14 +131,17 @@ fn runTestInContainer(allocator: std.mem.Allocator, config: Config, test_command
         try podman_args.append("-it");
     }
 
-    // Mount source code if requested
+    // Set working directory to builder project location
+    try podman_args.appendSlice(&[_][]const u8{ "--workdir", "/build" });
+    
+    // Mount source code if requested (for development)
     if (config.mount_source) {
         const project_root = try std.fs.cwd().realpathAlloc(allocator, ".");
         defer allocator.free(project_root);
-        const volume_mount = try std.fmt.allocPrint(allocator, "{s}:/home/tester/ctx-source:Z", .{project_root});
+        const volume_mount = try std.fmt.allocPrint(allocator, "{s}:/build:Z", .{project_root});
         defer allocator.free(volume_mount);
 
-        try podman_args.appendSlice(&[_][]const u8{ "--volume", volume_mount, "--workdir", "/home/tester/ctx-source" });
+        try podman_args.appendSlice(&[_][]const u8{ "--volume", volume_mount });
         logInfo("Mounting source code from: {s}", .{project_root});
     }
 
@@ -152,7 +155,7 @@ fn runTestInContainer(allocator: std.mem.Allocator, config: Config, test_command
 
     // Add image and command
     try podman_args.append(image);
-    try podman_args.appendSlice(&[_][]const u8{ "bash", "-c", test_command });
+    try podman_args.appendSlice(&[_][]const u8{ "sh", "-c", test_command });
 
     if (config.verbose) {
         const cmd_str = try std.mem.join(allocator, " ", podman_args.items);
@@ -186,7 +189,7 @@ fn runUnitTests(allocator: std.mem.Allocator, config: Config) !bool {
     const test_command =
         \\set -e
         \\echo '🧪 Running unit tests...'
-        \\zig build test-unit
+        \\zig build test
         \\echo '📊 Running CSV unit tests...'
         \\./zig-out/bin/ctx-unit-csv
         \\echo '✅ Unit tests completed successfully!'
@@ -289,7 +292,7 @@ fn runInteractive(allocator: std.mem.Allocator, config: Config) !bool {
     logInfo("  - ctx --help           # Test CLI", .{});
     logInfo("  - exit                 # Exit container", .{});
 
-    return try runTestInContainer(allocator, config, "bash");
+    return try runTestInContainer(allocator, config, "sh");
 }
 
 fn parseArgs(args: [][:0]u8) !Config {

@@ -74,14 +74,24 @@ const OutputSelector = struct {
     }
 
     fn hasValidExitCode(result: std.process.Child.RunResult) bool {
-        return result.term.Exited == 0;
+        return switch (result.term) {
+            .Exited => |code| code == 0,
+            else => false,
+        };
     }
 
     fn formatError(allocator: std.mem.Allocator, result: std.process.Child.RunResult, error_type: []const u8) ![]const u8 {
+        const exit_info = switch (result.term) {
+            .Exited => |code| try std.fmt.allocPrint(allocator, "exit code {d}", .{code}),
+            .Signal => |sig| try std.fmt.allocPrint(allocator, "signal {d}", .{sig}),
+            else => try std.fmt.allocPrint(allocator, "unknown termination", .{}),
+        };
+        defer allocator.free(exit_info);
+        
         return switch (error_type[0]) {
-            's' => std.fmt.allocPrint(allocator, "Expected success but got exit code {d}. Stderr: {s}", .{ result.term.Exited, result.stderr }),
+            's' => std.fmt.allocPrint(allocator, "Expected success but got {s}. Stderr: {s}", .{ exit_info, result.stderr }),
             'f' => std.fmt.allocPrint(allocator, "Expected failure but command succeeded. Stdout: {s}", .{result.stdout}),
-            'c' => std.fmt.allocPrint(allocator, "Command failed with exit code {d}. Stderr: {s}", .{ result.term.Exited, result.stderr }),
+            'c' => std.fmt.allocPrint(allocator, "Command failed with {s}. Stderr: {s}", .{ exit_info, result.stderr }),
             else => std.fmt.allocPrint(allocator, "Unexpected error type: {s}", .{error_type}),
         };
     }
