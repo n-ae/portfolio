@@ -36,7 +36,7 @@ FROM ${BASE_IMAGE} AS runtime
 
 LABEL org.opencontainers.image.title="ctx"
 LABEL org.opencontainers.image.description="Context Session Manager - CLI tool for saving and restoring development contexts"
-LABEL org.opencontainers.image.source="https://github.com/n-ae/ctx"
+LABEL org.opencontainers.image.source="https://github.com/n-ae/portfolio"
 LABEL org.opencontainers.image.vendor="n-ae"
 
 # Create non-root user for security
