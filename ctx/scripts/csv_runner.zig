@@ -25,7 +25,13 @@ fn parseCSVLine(allocator: std.mem.Allocator, line: []const u8) !?TestResult {
     }
 
     var fields = std.ArrayList([]const u8).init(allocator);
-    defer fields.deinit();
+    defer {
+        // Clean up temporary field allocations
+        for (fields.items) |field| {
+            allocator.free(field);
+        }
+        fields.deinit();
+    }
 
     var in_quotes = false;
     var field_start: usize = 0;

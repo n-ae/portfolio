@@ -188,6 +188,7 @@ const TestRunner = struct {
             TestCase{ .name = "version_shows_version_string", .args = &[_][]const u8{"version"}, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "ctx v" } },
             TestCase{ .name = "invalid_command_shows_error", .args = &[_][]const u8{"invalid"}, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "Unknown command: 'invalid'" } },
             TestCase{ .name = "no_arguments_shows_help", .args = &[_][]const u8{}, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "Context Session Manager" } },
+            TestCase{ .name = "list_empty_shows_message", .args = &[_][]const u8{"list"}, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "(none yet" } },
             TestCase{ .name = "save_valid_context_succeeds", .args = &[_][]const u8{ "save", "test-context" }, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "Context 'test-context' saved!" } },
             TestCase{ .name = "save_with_slash_fails", .args = &[_][]const u8{ "save", "invalid/name" }, .expectation = TestExpectation{ .expectation_type = .failure } },
             TestCase{ .name = "save_with_empty_name_fails", .args = &[_][]const u8{ "save", "" }, .expectation = TestExpectation{ .expectation_type = .failure } },
@@ -210,7 +211,6 @@ const TestRunner = struct {
         // Simple additional tests
         const additional_tests = [_]TestCase{
             TestCase{ .name = "save_with_long_name_fails", .args = &[_][]const u8{ "save", "a" ** 300 }, .expectation = TestExpectation{ .expectation_type = .failure } },
-            TestCase{ .name = "list_empty_shows_message", .args = &[_][]const u8{"list"}, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "(none yet" } },
         };
 
         for (additional_tests) |test_case| {
