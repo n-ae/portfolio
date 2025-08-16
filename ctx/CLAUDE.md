@@ -10,7 +10,11 @@ This is a Zig-based context session manager called `ctx` - a CLI tool that saves
 
 - `zig build` - Build the project (creates both library and executable)
 - `zig build run` - Build and run the executable
-- `zig build test` - Run unit tests for both library and executable modules
+- `zig build test` - Run all tests (unit + integration)
+- `zig build test-unit` - Run fast unit tests only
+- `zig build test-integration` - Run integration tests only
+- `zig build test-blackbox` - Run end-to-end blackbox tests
+- `./scripts/run_csv_tests.sh` - Generate CSV test results for CI/CD
 - `zig build --release=fast` - Build optimized release version
 - `zig build --help` - Show all available build options
 
@@ -38,10 +42,30 @@ The project follows standard Zig conventions:
 
 Contexts are saved as JSON files in `~/.ctx/` directory. Each context file contains serialized Context struct data.
 
+## Testing Structure
+
+**Unit Tests** (`src/unit_tests.zig`):
+- Fast-running tests for individual modules (validation, shell, context, main)
+- Test validation logic, shell detection, context management, and module integration
+- Run with: `zig build test-unit`
+
+**Integration Tests** (built into main module):
+- Test complete module integration and ensure all components work together
+- Run with: `zig build test-integration`
+
+**Blackbox Tests** (`src/test.zig`):
+- End-to-end tests that run the actual binary as subprocess
+- 26 comprehensive tests covering CLI interface, save/restore/list/delete workflows
+- Run with: `zig build test-blackbox`
+
+**Test All**: `zig build test && zig build test-blackbox`
+
 ## Development Notes
 
-- The executable module imports the library module via `exe_mod.addImport("ctx_lib", lib_mod)`
+- Modular architecture with separated concerns (validation.zig, shell.zig, context.zig, main.zig)
 - Uses standard Zig JSON serialization for context persistence
+- Cross-platform shell detection and command generation (bash, zsh, fish, cmd, powershell)
 - Git integration for branch tracking and switching
-- Placeholder functionality exists for editor integration and shell history
+- Resilient context save/restore with atomic file operations
 - All allocations use a GeneralPurposeAllocator with proper cleanup
+- Code follows Martin Fowler refactoring principles for maintainability

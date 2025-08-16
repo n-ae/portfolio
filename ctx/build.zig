@@ -147,20 +147,95 @@ pub fn build(b: *std.Build) void {
     //
     // const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
 
+    // Create unit tests from the source directory (can import other source files)
+    const unit_tests = b.addTest(.{
+        .root_source_file = b.path("src/unit_tests.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    
+    // Unit tests need build options and clap
+    unit_tests.root_module.addImport("build_options", options.createModule());
+    unit_tests.root_module.addImport("clap", clap.module("clap"));
+
+    const run_unit_tests = b.addRunArtifact(unit_tests);
+
+    // Also keep the existing main module tests
     const exe_unit_tests = b.addTest(.{
         .root_module = exe_mod,
     });
 
     const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
 
-    // Similar to creating the run step earlier, this exposes a `test` step to
-    // the `zig build --help` menu, providing a way for the user to request
-    // running the unit tests.
-    const test_step = b.step("test", "Run unit tests");
-    // test_step.dependOn(&run_lib_unit_tests.step);
+    // Create separate test steps
+    const unit_test_step = b.step("test-unit", "Run unit tests");
+    unit_test_step.dependOn(&run_unit_tests.step);
+
+    const integration_test_step = b.step("test-integration", "Run integration tests (main module)");
+    integration_test_step.dependOn(&run_exe_unit_tests.step);
+
+    // Main test step runs both unit and integration tests
+    const test_step = b.step("test", "Run all tests (unit + integration)");
+    test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_exe_unit_tests.step);
 
-    // Create blackbox test step
+    // Create CSV test executables
+    const unit_csv_exe = b.addExecutable(.{
+        .name = "ctx-unit-csv",
+        .root_source_file = b.path("src/unit_tests_csv.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    unit_csv_exe.root_module.addImport("build_options", options.createModule());
+    unit_csv_exe.root_module.addImport("clap", clap.module("clap"));
+    b.installArtifact(unit_csv_exe);
+
+    const blackbox_csv_exe = b.addExecutable(.{
+        .name = "ctx-test-csv",
+        .root_source_file = b.path("src/test_csv.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    blackbox_csv_exe.root_module.addImport("build_options", options.createModule());
+    b.installArtifact(blackbox_csv_exe);
+
+    // Create test runner executable
+    const test_runner_exe = b.addExecutable(.{
+        .name = "test-runner",
+        .root_source_file = b.path("scripts/test_runner.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    b.installArtifact(test_runner_exe);
+
+    // CSV test steps
+    const unit_csv_cmd = b.addRunArtifact(unit_csv_exe);
+    unit_csv_cmd.step.dependOn(b.getInstallStep());
+
+    const blackbox_csv_cmd = b.addRunArtifact(blackbox_csv_exe);
+    blackbox_csv_cmd.addArg("./zig-out/bin/ctx");
+    blackbox_csv_cmd.step.dependOn(b.getInstallStep());
+
+    const combined_csv_cmd = b.addRunArtifact(test_runner_exe);
+    combined_csv_cmd.step.dependOn(b.getInstallStep());
+
+    const unit_csv_step = b.step("test-unit-csv", "Run unit tests with CSV output");
+    unit_csv_step.dependOn(&unit_csv_cmd.step);
+
+    const blackbox_csv_step = b.step("test-blackbox-csv", "Run blackbox tests with CSV output");
+    blackbox_csv_step.dependOn(&blackbox_csv_cmd.step);
+
+    const combined_csv_step = b.step("test-csv", "Run all tests with combined CSV output");
+    combined_csv_step.dependOn(&combined_csv_cmd.step);
+
+    // Simple CSV runner using shell script
+    const csv_script_cmd = b.addSystemCommand(&[_][]const u8{ "./scripts/run_csv_tests.sh", "test_results.csv" });
+    csv_script_cmd.step.dependOn(b.getInstallStep());
+
+    const csv_script_step = b.step("test-csv-simple", "Run CSV tests using shell script (most reliable)");
+    csv_script_step.dependOn(&csv_script_cmd.step);
+
+    // Create blackbox test step (original)
     const blackbox_cmd = b.addRunArtifact(test_exe);
     blackbox_cmd.addArg("./zig-out/bin/ctx");
     blackbox_cmd.step.dependOn(b.getInstallStep()); // Ensure ctx binary is built first
