@@ -12,6 +12,80 @@ const TestResult = struct {
     error_msg: ?[]const u8 = null,
 };
 
+const ExpectationType = enum {
+    success,
+    failure,
+    output,
+};
+
+const TestExpectation = struct {
+    expectation_type: ExpectationType,
+    expected_output: ?[]const u8 = null,
+
+    fn validate(self: TestExpectation, result: std.process.Child.RunResult, allocator: std.mem.Allocator) !?[]const u8 {
+        return switch (self.expectation_type) {
+            .success => {
+                if (!OutputSelector.hasValidExitCode(result)) {
+                    return try OutputSelector.formatError(allocator, result, "success");
+                }
+                return null;
+            },
+            .failure => {
+                if (OutputSelector.hasValidExitCode(result)) {
+                    return try OutputSelector.formatError(allocator, result, "failure");
+                }
+                return null;
+            },
+            .output => {
+                if (!OutputSelector.hasValidExitCode(result)) {
+                    return try OutputSelector.formatError(allocator, result, "command");
+                }
+                const output = OutputSelector.selectOutput(result);
+                if (self.expected_output) |expected| {
+                    if (!std.mem.containsAtLeast(u8, output, 1, expected)) {
+                        return try std.fmt.allocPrint(allocator, "Expected output to contain '{s}' but got stdout: '{s}' stderr: '{s}'", .{ expected, result.stdout, result.stderr });
+                    }
+                }
+                return null;
+            },
+        };
+    }
+};
+
+const TestCase = struct {
+    name: []const u8,
+    args: []const []const u8,
+    expectation: TestExpectation,
+    setup_fn: ?*const fn (*TestRunner) anyerror!void = null,
+
+    fn execute(self: TestCase, runner: *TestRunner) !void {
+        if (self.setup_fn) |setup| {
+            try setup(runner);
+        }
+        const result = try runner.runCommand(self.args);
+        try runner.expectResult(result, self.expectation, self.name);
+    }
+};
+
+const OutputSelector = struct {
+    fn selectOutput(result: std.process.Child.RunResult) []const u8 {
+        return if (result.stdout.len > 0) result.stdout else result.stderr;
+    }
+
+    fn hasValidExitCode(result: std.process.Child.RunResult) bool {
+        return result.term.Exited == 0;
+    }
+
+    fn formatError(allocator: std.mem.Allocator, result: std.process.Child.RunResult, error_type: []const u8) ![]const u8 {
+        return switch (error_type[0]) {
+            's' => std.fmt.allocPrint(allocator, "Expected success but got exit code {d}. Stderr: {s}", .{ result.term.Exited, result.stderr }),
+            'f' => std.fmt.allocPrint(allocator, "Expected failure but command succeeded. Stdout: {s}", .{result.stdout}),
+            'c' => std.fmt.allocPrint(allocator, "Command failed with exit code {d}. Stderr: {s}", .{ result.term.Exited, result.stderr }),
+            else => std.fmt.allocPrint(allocator, "Unexpected error type: {s}", .{error_type}),
+        };
+    }
+};
+
 const TestRunner = struct {
     allocator: std.mem.Allocator,
     ctx_binary: []const u8,
@@ -86,56 +160,48 @@ const TestRunner = struct {
         });
     }
 
+    fn cleanupResult(self: *Self, result: std.process.Child.RunResult) void {
+        self.allocator.free(result.stdout);
+        self.allocator.free(result.stderr);
+    }
+
+    fn recordTestResult(self: *Self, test_name: []const u8, passed: bool, error_msg: ?[]const u8) !void {
+        try self.results.append(TestResult{ .name = test_name, .passed = passed, .error_msg = error_msg });
+    }
+
+    fn expectResult(self: *Self, result: std.process.Child.RunResult, expectation: TestExpectation, test_name: []const u8) !void {
+        defer self.cleanupResult(result);
+
+        const error_msg = try expectation.validate(result, self.allocator);
+        const passed = error_msg == null;
+        try self.recordTestResult(test_name, passed, error_msg);
+    }
+
     fn expectSuccess(self: *Self, result: std.process.Child.RunResult, test_name: []const u8) !void {
-        defer {
-            self.allocator.free(result.stdout);
-            self.allocator.free(result.stderr);
-        }
-
-        if (result.term.Exited != 0) {
-            const error_msg = try std.fmt.allocPrint(self.allocator, "Expected success but got exit code {d}. Stderr: {s}", .{ result.term.Exited, result.stderr });
-            try self.results.append(TestResult{ .name = test_name, .passed = false, .error_msg = error_msg });
-            return;
-        }
-
-        try self.results.append(TestResult{ .name = test_name, .passed = true });
+        try self.expectResult(result, TestExpectation{ .expectation_type = .success }, test_name);
     }
 
     fn expectFailure(self: *Self, result: std.process.Child.RunResult, test_name: []const u8) !void {
-        defer {
-            self.allocator.free(result.stdout);
-            self.allocator.free(result.stderr);
-        }
-
-        if (result.term.Exited == 0) {
-            const error_msg = try std.fmt.allocPrint(self.allocator, "Expected failure but command succeeded. Stdout: {s}", .{result.stdout});
-            try self.results.append(TestResult{ .name = test_name, .passed = false, .error_msg = error_msg });
-            return;
-        }
-
-        try self.results.append(TestResult{ .name = test_name, .passed = true });
+        try self.expectResult(result, TestExpectation{ .expectation_type = .failure }, test_name);
     }
 
     fn expectOutput(self: *Self, result: std.process.Child.RunResult, expected: []const u8, test_name: []const u8) !void {
-        defer {
-            self.allocator.free(result.stdout);
-            self.allocator.free(result.stderr);
-        }
+        try self.expectResult(result, TestExpectation{ .expectation_type = .output, .expected_output = expected }, test_name);
+    }
 
-        if (result.term.Exited != 0) {
-            const error_msg = try std.fmt.allocPrint(self.allocator, "Command failed with exit code {d}. Stderr: {s}", .{ result.term.Exited, result.stderr });
-            try self.results.append(TestResult{ .name = test_name, .passed = false, .error_msg = error_msg });
-            return;
-        }
-
-        const output = if (result.stdout.len > 0) result.stdout else result.stderr;
-        if (!std.mem.containsAtLeast(u8, output, 1, expected)) {
-            const error_msg = try std.fmt.allocPrint(self.allocator, "Expected output to contain '{s}' but got stdout: '{s}' stderr: '{s}'", .{ expected, result.stdout, result.stderr });
-            try self.results.append(TestResult{ .name = test_name, .passed = false, .error_msg = error_msg });
-            return;
-        }
-
-        try self.results.append(TestResult{ .name = test_name, .passed = true });
+    fn getBasicTestCases(self: *Self) []const TestCase {
+        _ = self;
+        return &[_]TestCase{
+            TestCase{ .name = "help shows description", .args = &[_][]const u8{"--help"}, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "Context Session Manager" } },
+            TestCase{ .name = "help -h shows usage", .args = &[_][]const u8{"-h"}, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "USAGE:" } },
+            TestCase{ .name = "version shows version string", .args = &[_][]const u8{"version"}, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "ctx v" } },
+            TestCase{ .name = "invalid command shows error", .args = &[_][]const u8{"invalid"}, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "Unknown command: 'invalid'" } },
+            TestCase{ .name = "no arguments shows help", .args = &[_][]const u8{}, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "Context Session Manager" } },
+            TestCase{ .name = "save valid context succeeds", .args = &[_][]const u8{ "save", "test-context" }, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "Context 'test-context' saved!" } },
+            TestCase{ .name = "save with slash fails", .args = &[_][]const u8{ "save", "invalid/name" }, .expectation = TestExpectation{ .expectation_type = .failure } },
+            TestCase{ .name = "save with empty name fails", .args = &[_][]const u8{ "save", "" }, .expectation = TestExpectation{ .expectation_type = .failure } },
+            TestCase{ .name = "save without name shows error", .args = &[_][]const u8{"save"}, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "Context name required for save command" } },
+        };
     }
 
     // Test Cases
@@ -148,63 +214,26 @@ const TestRunner = struct {
         std.debug.print("Test environment: {s}" ++ eol, .{self.test_dir});
         std.debug.print("" ++ eol, .{});
 
-        // CLI Interface Tests
-        try self.testHelp();
-        try self.testVersion();
-        try self.testInvalidCommand();
-        try self.testNoArguments();
+        // Run basic test cases
+        const basic_tests = self.getBasicTestCases();
+        for (basic_tests) |test_case| {
+            try test_case.execute(self);
+        }
 
-        // Save Command Tests
-        try self.testSaveValidContext();
+        // Advanced tests with custom logic
         try self.testSaveInvalidNames();
-        try self.testSaveMissingName();
-
-        // List Command Tests
         try self.testListEmpty();
         try self.testListWithContexts();
-
-        // Restore Command Tests
         try self.testRestoreValidContext();
         try self.testRestoreNonexistent();
         try self.testRestoreMissingName();
-
-        // Delete Command Tests
         try self.testDeleteValidContext();
         try self.testDeleteNonexistent();
         try self.testDeleteMissingName();
-
-        // Integration Tests
         try self.testFullWorkflow();
         try self.testMultipleContexts();
     }
 
-    fn testHelp(self: *Self) !void {
-        const result = try self.runCommand(&[_][]const u8{"--help"});
-        try self.expectOutput(result, "Context Session Manager", "help shows description");
-
-        const result2 = try self.runCommand(&[_][]const u8{"-h"});
-        try self.expectOutput(result2, "USAGE:", "help -h shows usage");
-    }
-
-    fn testVersion(self: *Self) !void {
-        const result = try self.runCommand(&[_][]const u8{"version"});
-        try self.expectOutput(result, "ctx v", "version shows version string");
-    }
-
-    fn testInvalidCommand(self: *Self) !void {
-        const result = try self.runCommand(&[_][]const u8{"invalid"});
-        try self.expectOutput(result, "Unknown command: 'invalid'", "invalid command shows error");
-    }
-
-    fn testNoArguments(self: *Self) !void {
-        const result = try self.runCommand(&[_][]const u8{});
-        try self.expectOutput(result, "Context Session Manager", "no arguments shows help");
-    }
-
-    fn testSaveValidContext(self: *Self) !void {
-        const result = try self.runCommand(&[_][]const u8{ "save", "test-context" });
-        try self.expectOutput(result, "Context 'test-context' saved!", "save valid context succeeds");
-    }
 
     fn testSaveInvalidNames(self: *Self) !void {
         const result1 = try self.runCommand(&[_][]const u8{ "save", "invalid/name" });
@@ -219,10 +248,6 @@ const TestRunner = struct {
         try self.expectFailure(result3, "save with long name fails");
     }
 
-    fn testSaveMissingName(self: *Self) !void {
-        const result = try self.runCommand(&[_][]const u8{"save"});
-        try self.expectOutput(result, "Context name required for save command", "save without name shows error");
-    }
 
     fn testListEmpty(self: *Self) !void {
         // Clean slate
@@ -326,7 +351,7 @@ const TestRunner = struct {
             self.allocator.free(list_result.stderr);
         }
 
-        const output = if (list_result.stdout.len > 0) list_result.stdout else list_result.stderr;
+        const output = OutputSelector.selectOutput(list_result);
         var all_found = true;
         for (contexts) |ctx_name| {
             if (!std.mem.containsAtLeast(u8, output, 1, ctx_name)) {
