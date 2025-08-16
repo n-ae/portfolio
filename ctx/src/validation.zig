@@ -106,4 +106,3 @@ pub fn validateGitBranch(branch: []const u8) !void {
     // The git checkout command will fail gracefully if there are issues
     // This keeps the restore operation more resilient
 }
-

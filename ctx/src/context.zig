@@ -6,12 +6,12 @@ const fs = std.fs;
 const process = std.process;
 const build_options = @import("build_options");
 
-const validation = @import("validation.zig");
 const shell = @import("shell.zig");
-
+const validation = @import("validation.zig");
 const Context = validation.Context;
 const EnvVar = validation.EnvVar;
 const eol = validation.eol;
+
 const MAX_FILE_SIZE = 1024 * 1024;
 
 inline fn getEnv(key: []const u8) ?[:0]const u8 {
@@ -104,7 +104,7 @@ pub const ContextManager = struct {
     fn writeContextToFile(self: *Self, context: *const Context, name: []const u8) !void {
         const temp_file = try std.fmt.allocPrint(self.allocator, "{s}/.{s}.tmp", .{ self.contexts_dir, name });
         defer self.allocator.free(temp_file);
-        
+
         const final_file = try self.getContextFilePath(name);
         defer self.allocator.free(final_file);
 
@@ -129,7 +129,7 @@ pub const ContextManager = struct {
 
     fn atomicRename(self: *Self, temp_file: []const u8, final_file: []const u8) !void {
         _ = self;
-        
+
         fs.cwd().rename(temp_file, final_file) catch |err| {
             std.debug.print("❌ Failed to finalize context save: {}" ++ eol, .{err});
             fs.cwd().deleteFile(temp_file) catch {}; // Clean up temp file
@@ -204,7 +204,7 @@ pub const ContextManager = struct {
 
     fn ensureDirectoryExists(self: *Self, dir_path: []const u8) !void {
         _ = self;
-        
+
         // Check if directory exists and is accessible
         var dir = fs.cwd().openDir(dir_path, .{}) catch |err| switch (err) {
             error.FileNotFound => {
@@ -346,3 +346,4 @@ pub const ContextManager = struct {
         return args[2];
     }
 };
+

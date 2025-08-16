@@ -193,4 +193,3 @@ test "unit tests: end-of-line constant" {
     const is_unix = std.mem.eql(u8, validation_eol, "\n");
     try testing.expect(is_windows or is_unix);
 }
-

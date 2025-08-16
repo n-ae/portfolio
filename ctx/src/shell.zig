@@ -1,4 +1,5 @@
 const std = @import("std");
+
 const validation = @import("validation.zig");
 const eol = validation.eol;
 const EnvVar = validation.EnvVar;
@@ -23,18 +24,18 @@ pub fn detectShell() ShellType {
         if (std.mem.endsWith(u8, shell_path, "/zsh")) return .zsh;
         if (std.mem.endsWith(u8, shell_path, "/fish")) return .fish;
     }
-    
+
     // Check for Windows shells
     if (getEnv("PSModulePath")) |_| return .powershell;
     if (getEnv("COMSPEC")) |comspec| {
         if (std.mem.endsWith(u8, comspec, "cmd.exe")) return .cmd;
     }
-    
+
     // Platform-specific defaults
     return switch (@import("builtin").os.tag) {
         .windows => .cmd,
-        .macos => .zsh,  // macOS default since Catalina
-        else => .bash,   // Most Linux distributions
+        .macos => .zsh, // macOS default since Catalina
+        else => .bash, // Most Linux distributions
     };
 }
 
@@ -75,3 +76,4 @@ pub fn printDirectoryChangeCommand(directory: []const u8, shell_type: ShellType)
         },
     }
 }
+

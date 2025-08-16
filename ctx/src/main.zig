@@ -3,11 +3,11 @@ const process = std.process;
 const build_options = @import("build_options");
 
 const clap = @import("clap");
-const validation = @import("validation.zig");
-const context = @import("context.zig");
 
-const eol = validation.eol;
+const context = @import("context.zig");
 const ContextManager = context.ContextManager;
+const validation = @import("validation.zig");
+const eol = validation.eol;
 
 const Command = enum {
     save,

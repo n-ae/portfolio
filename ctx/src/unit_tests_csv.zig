@@ -269,4 +269,3 @@ pub fn main() !void {
         printCSVResult(result);
     }
 }
-
