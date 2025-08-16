@@ -234,7 +234,6 @@ const TestRunner = struct {
         try self.testMultipleContexts();
     }
 
-
     fn testSaveInvalidNames(self: *Self) !void {
         const result1 = try self.runCommand(&[_][]const u8{ "save", "invalid/name" });
         try self.expectFailure(result1, "save with slash fails");
@@ -247,7 +246,6 @@ const TestRunner = struct {
         const result3 = try self.runCommand(&[_][]const u8{ "save", long_name });
         try self.expectFailure(result3, "save with long name fails");
     }
-
 
     fn testListEmpty(self: *Self) !void {
         // Clean slate
@@ -429,4 +427,3 @@ pub fn main() !void {
     try test_runner.runAllTests();
     test_runner.printResults();
 }
-

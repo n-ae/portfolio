@@ -14,7 +14,8 @@ This is a Zig-based context session manager called `ctx` - a CLI tool that saves
 - `zig build test-unit` - Run fast unit tests only
 - `zig build test-integration` - Run integration tests only
 - `zig build test-blackbox` - Run end-to-end blackbox tests
-- `./scripts/run_csv_tests.sh` - Generate CSV test results for CI/CD
+- `zig build test-csv` - Generate CSV test results for CI/CD
+- `zig build test-csv-file` - Generate CSV test results and save to test_results.csv
 - `zig build --release=fast` - Build optimized release version
 - `zig build --help` - Show all available build options
 

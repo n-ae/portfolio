@@ -62,20 +62,20 @@ const TestCase = struct {
 
     fn execute(self: TestCase, runner: *TestRunner) !void {
         const start_time = std.time.milliTimestamp();
-        
+
         if (self.setup_fn) |setup| {
             try setup(runner);
         }
-        
+
         const result = try runner.runCommand(self.args);
         const end_time = std.time.milliTimestamp();
         const duration = @as(f64, @floatFromInt(end_time - start_time));
-        
+
         const error_msg = try self.expectation.validate(result, runner.allocator);
         defer if (error_msg) |msg| runner.allocator.free(msg);
-        
+
         const status = if (error_msg == null) "PASS" else "FAIL";
-        
+
         try runner.csv_results.append(CSVTestResult{
             .test_type = "blackbox",
             .test_name = self.name,
@@ -83,7 +83,7 @@ const TestCase = struct {
             .duration_ms = duration,
             .error_message = if (error_msg) |msg| try runner.allocator.dupe(u8, msg) else null,
         });
-        
+
         runner.cleanupResult(result);
     }
 };
@@ -176,8 +176,8 @@ const TestRunner = struct {
     }
 
     fn cleanupResult(self: *Self, result: std.process.Child.RunResult) void {
-        _ = self;
-        _ = result; // Results are automatically cleaned up
+        self.allocator.free(result.stdout);
+        self.allocator.free(result.stderr);
     }
 
     fn getBasicTestCases(self: *Self) []const TestCase {
@@ -196,6 +196,8 @@ const TestRunner = struct {
     }
 
     pub fn runAllTests(self: *Self) !void {
+        // Clean up any existing test environment first
+        self.cleanupTestDir() catch {};
         try self.setupTestEnv();
         defer self.cleanupTestDir() catch {};
 
@@ -210,26 +212,23 @@ const TestRunner = struct {
             TestCase{ .name = "save_with_long_name_fails", .args = &[_][]const u8{ "save", "a" ** 300 }, .expectation = TestExpectation{ .expectation_type = .failure } },
             TestCase{ .name = "list_empty_shows_message", .args = &[_][]const u8{"list"}, .expectation = TestExpectation{ .expectation_type = .output, .expected_output = "(none yet" } },
         };
-        
+
         for (additional_tests) |test_case| {
             try test_case.execute(self);
         }
     }
 
-
-
-
-
     pub fn printCSVResults(self: *Self) void {
-        std.debug.print("test_type,test_name,status,duration_ms,error_message\n", .{});
+        const stdout = std.io.getStdOut().writer();
+        stdout.print("test_type,test_name,status,duration_ms,error_message\n", .{}) catch {};
         for (self.csv_results.items) |result| {
             if (result.error_message) |error_msg| {
                 // Escape quotes in error message
                 const escaped_error = std.mem.replaceOwned(u8, self.allocator, error_msg, "\"", "\"\"") catch error_msg;
                 defer if (escaped_error.ptr != error_msg.ptr) self.allocator.free(escaped_error);
-                std.debug.print("{s},{s},{s},{d:.2},\"{s}\"\n", .{ result.test_type, result.test_name, result.status, result.duration_ms, escaped_error });
+                stdout.print("{s},{s},{s},{d:.2},\"{s}\"\n", .{ result.test_type, result.test_name, result.status, result.duration_ms, escaped_error }) catch {};
             } else {
-                std.debug.print("{s},{s},{s},{d:.2},\n", .{ result.test_type, result.test_name, result.status, result.duration_ms });
+                stdout.print("{s},{s},{s},{d:.2},\n", .{ result.test_type, result.test_name, result.status, result.duration_ms }) catch {};
             }
         }
     }

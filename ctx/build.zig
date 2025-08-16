@@ -199,14 +199,14 @@ pub fn build(b: *std.Build) void {
     blackbox_csv_exe.root_module.addImport("build_options", options.createModule());
     b.installArtifact(blackbox_csv_exe);
 
-    // Create test runner executable
-    const test_runner_exe = b.addExecutable(.{
-        .name = "test-runner",
-        .root_source_file = b.path("scripts/test_runner.zig"),
+    // Create CSV test runner executable
+    const csv_runner_exe = b.addExecutable(.{
+        .name = "csv-runner",
+        .root_source_file = b.path("scripts/csv_runner.zig"),
         .target = target,
         .optimize = optimize,
     });
-    b.installArtifact(test_runner_exe);
+    b.installArtifact(csv_runner_exe);
 
     // CSV test steps
     const unit_csv_cmd = b.addRunArtifact(unit_csv_exe);
@@ -216,7 +216,7 @@ pub fn build(b: *std.Build) void {
     blackbox_csv_cmd.addArg("./zig-out/bin/ctx");
     blackbox_csv_cmd.step.dependOn(b.getInstallStep());
 
-    const combined_csv_cmd = b.addRunArtifact(test_runner_exe);
+    const combined_csv_cmd = b.addRunArtifact(csv_runner_exe);
     combined_csv_cmd.step.dependOn(b.getInstallStep());
 
     const unit_csv_step = b.step("test-unit-csv", "Run unit tests with CSV output");
@@ -228,12 +228,13 @@ pub fn build(b: *std.Build) void {
     const combined_csv_step = b.step("test-csv", "Run all tests with combined CSV output");
     combined_csv_step.dependOn(&combined_csv_cmd.step);
 
-    // Simple CSV runner using shell script
-    const csv_script_cmd = b.addSystemCommand(&[_][]const u8{ "./scripts/run_csv_tests.sh", "test_results.csv" });
-    csv_script_cmd.step.dependOn(b.getInstallStep());
+    // CSV runner with file output
+    const csv_file_cmd = b.addRunArtifact(csv_runner_exe);
+    csv_file_cmd.addArgs(&[_][]const u8{ "--output-file", "test_results.csv" });
+    csv_file_cmd.step.dependOn(b.getInstallStep());
 
-    const csv_script_step = b.step("test-csv-simple", "Run CSV tests using shell script (most reliable)");
-    csv_script_step.dependOn(&csv_script_cmd.step);
+    const csv_file_step = b.step("test-csv-file", "Run CSV tests and save to file");
+    csv_file_step.dependOn(&csv_file_cmd.step);
 
     // Create blackbox test step (original)
     const blackbox_cmd = b.addRunArtifact(test_exe);
