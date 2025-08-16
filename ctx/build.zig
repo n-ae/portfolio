@@ -1,6 +1,5 @@
 const std = @import("std");
 
-// Import build.zig.zon and extract only the fields we need
 const zon_package: struct {
     name: enum { ctx },
     version: []const u8,
@@ -22,71 +21,21 @@ const PackageInfo = struct {
 
 const package = PackageInfo{ .name = @tagName(zon_package.name), .version = zon_package.version };
 
-// Although this function looks imperative, note that its job is to
-// declaratively construct a build graph that will be executed by an external
-// runner.
 pub fn build(b: *std.Build) void {
-    // Standard target options allows the person running `zig build` to choose
-    // what target to build for. Here we do not override the defaults, which
-    // means any target is allowed, and the default is native. Other options
-    // for restricting supported target set are available.
     const target = b.standardTargetOptions(.{});
-
-    // Standard optimization options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
-    // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
     // Create build options to pass package info to the executable
     const options = b.addOptions();
     options.addOption(comptime PackageInfo, "package", package);
-    // options.addOption(comptime []const u8, "package_version", package_version);
 
-    // // This creates a "module", which represents a collection of source files alongside
-    // // some compilation options, such as optimization mode and linked system libraries.
-    // // Every executable or library we compile will be based on one or more modules.
-    // const lib_mod = b.createModule(.{
-    //     // `root_source_file` is the Zig "entry point" of the module. If a module
-    //     // only contains e.g. external object files, you can make this `null`.
-    //     // In this case the main source file is merely a path, however, in more
-    //     // complicated build scripts, this could be a generated file.
-    //     .root_source_file = b.path("src/root.zig"),
-    //     .target = target,
-    //     .optimize = optimize,
-    // });
-
-    // We will also create a module for our other entry point, 'main.zig'.
+    // Main executable module
     const exe_mod = b.createModule(.{
-        // `root_source_file` is the Zig "entry point" of the module. If a module
-        // only contains e.g. external object files, you can make this `null`.
-        // In this case the main source file is merely a path, however, in more
-        // complicated build scripts, this could be a generated file.
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
     });
 
-    // // Modules can depend on one another using the `std.Build.Module.addImport` function.
-    // // This is what allows Zig source code to use `@import("foo")` where 'foo' is not a
-    // // file path. In this case, we set up `exe_mod` to import `lib_mod`.
-    // exe_mod.addImport("ctx_lib", lib_mod);
-    //
-    // // Now, we will create a static library based on the module we created above.
-    // // This creates a `std.Build.Step.Compile`, which is the build step responsible
-    // // for actually invoking the compiler.
-    // const lib = b.addLibrary(.{
-    //     .linkage = .static,
-    //     .name = name,
-    //     .root_module = lib_mod,
-    // });
-    //
-    // // This declares intent for the library to be installed into the standard
-    // // location when the user invokes the "install" step (the default step when
-    // // running `zig build`).
-    // b.installArtifact(lib);
-
-    // This creates another `std.Build.Step.Compile`, but this one builds an executable
-    // rather than a static library.
     const exe = b.addExecutable(.{
         .name = package.name,
         .root_module = exe_mod,
@@ -96,110 +45,53 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("clap", clap.module("clap"));
     exe.root_module.addImport("build_options", options.createModule());
 
-    // This declares intent for the executable to be installed into the
-    // standard location when the user invokes the "install" step (the default
-    // step when running `zig build`).
     b.installArtifact(exe);
 
-    // Create test executable
-    const test_mod = b.createModule(.{
-        .root_source_file = b.path("src/test.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const test_exe = b.addExecutable(.{
-        .name = "ctx-test",
-        .root_module = test_mod,
-    });
-
-    test_exe.root_module.addImport("build_options", options.createModule());
-    b.installArtifact(test_exe);
-
-    // This *creates* a Run step in the build graph, to be executed when another
-    // step is evaluated that depends on it. The next line below will establish
-    // such a dependency.
+    // Run step for the executable
     const run_cmd = b.addRunArtifact(exe);
-
-    // By making the run step depend on the install step, it will be run from the
-    // installation directory rather than directly from within the cache directory.
-    // This is not necessary, however, if the application depends on other installed
-    // files, this ensures they will be present and in the expected location.
     run_cmd.step.dependOn(b.getInstallStep());
-
-    // This allows the user to pass arguments to the application in the build
-    // command itself, like this: `zig build run -- arg1 arg2 etc`
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }
 
-    // This creates a build step. It will be visible in the `zig build --help` menu,
-    // and can be selected like this: `zig build run`
-    // This will evaluate the `run` step rather than the default, which is "install".
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
 
-    // // Creates a step for unit testing. This only builds the test executable
-    // // but does not run it.
-    // const lib_unit_tests = b.addTest(.{
-    //     .root_module = lib_mod,
-    // });
-    //
-    // const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
-
-    // Create unit tests from the source directory (can import other source files)
+    // Testing infrastructure
     const unit_tests = b.addTest(.{
         .root_source_file = b.path("src/unit_tests.zig"),
         .target = target,
         .optimize = optimize,
     });
-    
-    // Unit tests need build options and clap
     unit_tests.root_module.addImport("build_options", options.createModule());
     unit_tests.root_module.addImport("clap", clap.module("clap"));
 
-    const run_unit_tests = b.addRunArtifact(unit_tests);
-
-    // Also keep the existing main module tests
-    const exe_unit_tests = b.addTest(.{
+    const exe_tests = b.addTest(.{
         .root_module = exe_mod,
     });
 
-    const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
+    const blackbox_exe = b.addExecutable(.{
+        .name = "ctx-test",
+        .root_source_file = b.path("src/test.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    blackbox_exe.root_module.addImport("build_options", options.createModule());
+    b.installArtifact(blackbox_exe);
 
-    // Create separate test steps
-    const unit_test_step = b.step("test-unit", "Run unit tests");
-    unit_test_step.dependOn(&run_unit_tests.step);
-
-    const integration_test_step = b.step("test-integration", "Run integration tests (main module)");
-    integration_test_step.dependOn(&run_exe_unit_tests.step);
-
-    // Main test step runs both unit and integration tests
+    // Core test steps
     const test_step = b.step("test", "Run all tests (unit + integration)");
-    test_step.dependOn(&run_unit_tests.step);
-    test_step.dependOn(&run_exe_unit_tests.step);
+    test_step.dependOn(&b.addRunArtifact(unit_tests).step);
+    test_step.dependOn(&b.addRunArtifact(exe_tests).step);
 
-    // Create CSV test executables
-    const unit_csv_exe = b.addExecutable(.{
-        .name = "ctx-unit-csv",
-        .root_source_file = b.path("src/unit_tests_csv.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    unit_csv_exe.root_module.addImport("build_options", options.createModule());
-    unit_csv_exe.root_module.addImport("clap", clap.module("clap"));
-    b.installArtifact(unit_csv_exe);
+    const blackbox_cmd = b.addRunArtifact(blackbox_exe);
+    blackbox_cmd.addArg("./zig-out/bin/ctx");
+    blackbox_cmd.step.dependOn(b.getInstallStep());
 
-    const blackbox_csv_exe = b.addExecutable(.{
-        .name = "ctx-test-csv",
-        .root_source_file = b.path("src/test_csv.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    blackbox_csv_exe.root_module.addImport("build_options", options.createModule());
-    b.installArtifact(blackbox_csv_exe);
+    const blackbox_step = b.step("test-blackbox", "Run blackbox tests");
+    blackbox_step.dependOn(&blackbox_cmd.step);
 
-    // Create CSV test runner executable
+    // CSV test infrastructure
     const csv_runner_exe = b.addExecutable(.{
         .name = "csv-runner",
         .root_source_file = b.path("scripts/csv_runner.zig"),
@@ -208,39 +100,9 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(csv_runner_exe);
 
-    // CSV test steps
-    const unit_csv_cmd = b.addRunArtifact(unit_csv_exe);
-    unit_csv_cmd.step.dependOn(b.getInstallStep());
+    const csv_cmd = b.addRunArtifact(csv_runner_exe);
+    csv_cmd.step.dependOn(b.getInstallStep());
 
-    const blackbox_csv_cmd = b.addRunArtifact(blackbox_csv_exe);
-    blackbox_csv_cmd.addArg("./zig-out/bin/ctx");
-    blackbox_csv_cmd.step.dependOn(b.getInstallStep());
-
-    const combined_csv_cmd = b.addRunArtifact(csv_runner_exe);
-    combined_csv_cmd.step.dependOn(b.getInstallStep());
-
-    const unit_csv_step = b.step("test-unit-csv", "Run unit tests with CSV output");
-    unit_csv_step.dependOn(&unit_csv_cmd.step);
-
-    const blackbox_csv_step = b.step("test-blackbox-csv", "Run blackbox tests with CSV output");
-    blackbox_csv_step.dependOn(&blackbox_csv_cmd.step);
-
-    const combined_csv_step = b.step("test-csv", "Run all tests with combined CSV output");
-    combined_csv_step.dependOn(&combined_csv_cmd.step);
-
-    // CSV runner with file output
-    const csv_file_cmd = b.addRunArtifact(csv_runner_exe);
-    csv_file_cmd.addArgs(&[_][]const u8{ "--output-file", "test_results.csv" });
-    csv_file_cmd.step.dependOn(b.getInstallStep());
-
-    const csv_file_step = b.step("test-csv-file", "Run CSV tests and save to file");
-    csv_file_step.dependOn(&csv_file_cmd.step);
-
-    // Create blackbox test step (original)
-    const blackbox_cmd = b.addRunArtifact(test_exe);
-    blackbox_cmd.addArg("./zig-out/bin/ctx");
-    blackbox_cmd.step.dependOn(b.getInstallStep()); // Ensure ctx binary is built first
-
-    const blackbox_step = b.step("test-blackbox", "Run blackbox tests");
-    blackbox_step.dependOn(&blackbox_cmd.step);
+    const csv_step = b.step("test-csv", "Run all tests with CSV output");
+    csv_step.dependOn(&csv_cmd.step);
 }

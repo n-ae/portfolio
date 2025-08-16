@@ -11,11 +11,8 @@ This is a Zig-based context session manager called `ctx` - a CLI tool that saves
 - `zig build` - Build the project (creates both library and executable)
 - `zig build run` - Build and run the executable
 - `zig build test` - Run all tests (unit + integration)
-- `zig build test-unit` - Run fast unit tests only
-- `zig build test-integration` - Run integration tests only
 - `zig build test-blackbox` - Run end-to-end blackbox tests
-- `zig build test-csv` - Generate CSV test results for CI/CD
-- `zig build test-csv-file` - Generate CSV test results and save to test_results.csv
+- `zig build test-csv` - Run all tests with CSV output for CI/CD
 - `zig build --release=fast` - Build optimized release version
 - `zig build --help` - Show all available build options
 
@@ -24,16 +21,16 @@ This is a Zig-based context session manager called `ctx` - a CLI tool that saves
 The project follows standard Zig conventions:
 
 - **src/main.zig** - Main executable entry point containing the CLI application logic
-- **src/root.zig** - Library entry point with a simple add function (mostly boilerplate)
-- **build.zig** - Build configuration creating two modules:
-  - `lib_mod` - Static library module (root: src/root.zig)
-  - `exe_mod` - Executable module (root: src/main.zig) that imports the library
+- **build.zig** - Build configuration for the executable module
 
 ### Core Components
 
-- **ContextManager** - Main struct handling context operations (save/restore/list/delete)
-- **Context** - Data structure storing session state (name, timestamp, git branch, working directory, environment variables, etc.)
-- **SubCommand** - Enum defining CLI commands (save, restore, list, delete)
+- **ContextManager** (`src/context.zig`) - Main struct handling context operations (save/restore/list/delete)
+- **Storage** (`src/storage.zig`) - File persistence layer with JSON serialization and atomic operations
+- **ContextCommands** (`src/context_commands.zig`) - Shell command generation for context restoration
+- **Context** (`src/validation.zig`) - Data structure storing session state (name, timestamp, git branch, working directory, environment variables, etc.)
+- **Config** (`src/config.zig`) - Centralized configuration constants and limits
+- **TestUtils** (`src/test_utils.zig`) - Unified testing infrastructure with CSV reporting
 
 ### Key Dependencies
 
@@ -48,25 +45,66 @@ Contexts are saved as JSON files in `~/.ctx/` directory. Each context file conta
 **Unit Tests** (`src/unit_tests.zig`):
 - Fast-running tests for individual modules (validation, shell, context, main)
 - Test validation logic, shell detection, context management, and module integration
-- Run with: `zig build test-unit`
-
-**Integration Tests** (built into main module):
-- Test complete module integration and ensure all components work together
-- Run with: `zig build test-integration`
+- Run with: `zig build test`
 
 **Blackbox Tests** (`src/test.zig`):
 - End-to-end tests that run the actual binary as subprocess
-- 26 comprehensive tests covering CLI interface, save/restore/list/delete workflows
+- 11 comprehensive tests covering CLI interface, save/restore/list/delete workflows
 - Run with: `zig build test-blackbox`
+
+**CSV Test Reporting** (`src/test_utils.zig`):
+- Unified CSV test infrastructure for CI/CD integration
+- Consolidated test runner with combined unit and blackbox results
+- Run with: `zig build test-csv`
 
 **Test All**: `zig build test && zig build test-blackbox`
 
 ## Development Notes
 
-- Modular architecture with separated concerns (validation.zig, shell.zig, context.zig, main.zig)
-- Uses standard Zig JSON serialization for context persistence
-- Cross-platform shell detection and command generation (bash, zsh, fish, cmd, powershell)
-- Git integration for branch tracking and switching
-- Resilient context save/restore with atomic file operations
-- All allocations use a GeneralPurposeAllocator with proper cleanup
-- Code follows Martin Fowler refactoring principles for maintainability
+- **Maintainable Architecture**: Modular design with clear separation of concerns:
+  - `context.zig` - Core business logic (ContextManager)
+  - `storage.zig` - File persistence and JSON serialization
+  - `context_commands.zig` - Shell command generation
+  - `validation.zig` - Data validation and Context struct
+  - `config.zig` - Centralized configuration constants
+  - `test_utils.zig` - Unified testing infrastructure
+  - `shell.zig` - Cross-platform shell detection
+- **Memory Management**: All allocations use GeneralPurposeAllocator with proper cleanup and defer patterns
+- **Error Handling**: Standardized error propagation with separated user-facing error messages
+- **Testing**: Comprehensive 3-tier testing (unit, blackbox, CSV reporting) with 23 total tests
+- **Persistence**: Atomic file operations prevent corruption during context save/restore
+- **Cross-Platform**: Support for multiple shells (bash, zsh, fish, cmd, powershell)
+- **Git Integration**: Branch tracking and switching with proper validation
+
+## Container Infrastructure
+
+The project includes comprehensive container support for isolated testing:
+
+**Containerfile**:
+- Multi-stage builds for runtime (57.8 MB), testing (824 MB), and development (1.32 GB) environments
+- Uses Alpine Linux with package manager Zig installation for reliability
+- Non-root user setup for security best practices
+- Optimized for both Docker and Podman with proper caching
+
+**Container Images**:
+- `runtime` - Minimal production deployment with ctx CLI only
+- `testing` - Includes debugging tools (vim, tmux, htop, strace, valgrind, gdb)
+- `development` - Full development environment with clang, make, cmake
+
+**Build Commands**:
+- `zig run scripts/podman_build.zig -- runtime` - Build runtime image
+- `zig run scripts/podman_build.zig -- testing` - Build testing image
+- `zig run scripts/podman_build.zig -- development` - Build development image
+- `zig run scripts/podman_build.zig -- all` - Build all images
+
+## Scripts Directory
+
+All scripts are implemented in Zig for consistency and maintainability:
+
+- `csv_runner.zig` - Consolidated CSV test runner for CI/CD integration
+- `podman_build.zig` - Container build management with memory-safe implementation
+- `podman_test.zig` - Containerized test execution
+
+## Important Instructions
+
+**Documentation Maintenance**: Always keep documentation up to date when making changes to the codebase. This ensures consistency and helps maintain project clarity.
