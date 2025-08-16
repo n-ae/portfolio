@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Zig-based context session manager called `ctx` - a CLI tool that saves and restores development contexts including git branches, working directories, and environment variables. The project builds both a static library and an executable.
+This is a Zig-based context session manager called `ctx` - a CLI tool that saves and restores development contexts including git branches, working directories, and environment variables. The project builds an executable with comprehensive testing infrastructure.
 
 ## Build Commands
 
-- `zig build` - Build the project (creates both library and executable)
+- `zig build` - Build the project (creates executable and CSV test executables)
 - `zig build run` - Build and run the executable
 - `zig build test` - Run all tests (unit + integration)
 - `zig build test-blackbox` - Run end-to-end blackbox tests
@@ -21,7 +21,7 @@ This is a Zig-based context session manager called `ctx` - a CLI tool that saves
 The project follows standard Zig conventions:
 
 - **src/main.zig** - Main executable entry point containing the CLI application logic
-- **build.zig** - Build configuration for the executable module
+- **build.zig** - Build configuration for executable and CSV test infrastructure
 
 ### Core Components
 
@@ -30,7 +30,7 @@ The project follows standard Zig conventions:
 - **ContextCommands** (`src/context_commands.zig`) - Shell command generation for context restoration
 - **Context** (`src/validation.zig`) - Data structure storing session state (name, timestamp, git branch, working directory, environment variables, etc.)
 - **Config** (`src/config.zig`) - Centralized configuration constants and limits
-- **TestUtils** (`src/test_utils.zig`) - Unified testing infrastructure with CSV reporting
+- **Shell** (`src/shell.zig`) - Cross-platform shell detection and command generation
 
 ### Key Dependencies
 
@@ -44,17 +44,19 @@ Contexts are saved as JSON files in `~/.ctx/` directory. Each context file conta
 
 **Unit Tests** (`src/unit_tests.zig`):
 - Fast-running tests for individual modules (validation, shell, context, main)
-- Test validation logic, shell detection, context management, and module integration
+- 12 tests covering validation logic, shell detection, context management, and module integration
 - Run with: `zig build test`
 
 **Blackbox Tests** (`src/test.zig`):
 - End-to-end tests that run the actual binary as subprocess
-- 11 comprehensive tests covering CLI interface, save/restore/list/delete workflows
+- 26 comprehensive tests covering CLI interface, save/restore/list/delete workflows
 - Run with: `zig build test-blackbox`
 
-**CSV Test Reporting** (`src/test_utils.zig`):
-- Unified CSV test infrastructure for CI/CD integration
-- Consolidated test runner with combined unit and blackbox results
+**CSV Test Infrastructure**:
+- **Unit CSV Tests** (`src/unit_tests_csv.zig`) - Unit tests with CSV output (12 tests)
+- **Blackbox CSV Tests** (`src/test_csv.zig`) - Blackbox tests with CSV output (11 tests)
+- **CSV Runner** (`scripts/csv_runner.zig`) - Consolidated test runner with combined results
+- Combined CSV output for CI/CD integration (23 total tests)
 - Run with: `zig build test-csv`
 
 **Test All**: `zig build test && zig build test-blackbox`
@@ -67,8 +69,8 @@ Contexts are saved as JSON files in `~/.ctx/` directory. Each context file conta
   - `context_commands.zig` - Shell command generation
   - `validation.zig` - Data validation and Context struct
   - `config.zig` - Centralized configuration constants
-  - `test_utils.zig` - Unified testing infrastructure
   - `shell.zig` - Cross-platform shell detection
+  - `unit_tests_csv.zig` / `test_csv.zig` - CSV test infrastructure
 - **Memory Management**: All allocations use GeneralPurposeAllocator with proper cleanup and defer patterns
 - **Error Handling**: Standardized error propagation with separated user-facing error messages
 - **Testing**: Comprehensive 3-tier testing (unit, blackbox, CSV reporting) with 23 total tests
@@ -108,3 +110,4 @@ All scripts are implemented in Zig for consistency and maintainability:
 ## Important Instructions
 
 **Documentation Maintenance**: Always keep documentation up to date when making changes to the codebase. This ensures consistency and helps maintain project clarity.
+- Don't remove .claude

@@ -92,6 +92,27 @@ pub fn build(b: *std.Build) void {
     blackbox_step.dependOn(&blackbox_cmd.step);
 
     // CSV test infrastructure
+    // Unit test CSV executable
+    const unit_csv_exe = b.addExecutable(.{
+        .name = "ctx-unit-csv",
+        .root_source_file = b.path("src/unit_tests_csv.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    unit_csv_exe.root_module.addImport("build_options", options.createModule());
+    unit_csv_exe.root_module.addImport("clap", clap.module("clap"));
+    b.installArtifact(unit_csv_exe);
+
+    // Blackbox test CSV executable
+    const blackbox_csv_exe = b.addExecutable(.{
+        .name = "ctx-test-csv",
+        .root_source_file = b.path("src/test_csv.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    blackbox_csv_exe.root_module.addImport("build_options", options.createModule());
+    b.installArtifact(blackbox_csv_exe);
+
     const csv_runner_exe = b.addExecutable(.{
         .name = "csv-runner",
         .root_source_file = b.path("scripts/csv_runner.zig"),

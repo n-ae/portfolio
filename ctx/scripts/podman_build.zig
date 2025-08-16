@@ -202,12 +202,12 @@ fn buildAll(allocator: std.mem.Allocator, config: Config) !bool {
 
     if (failed.items.len == 0) {
         logSuccess("Successfully built all images", .{});
-        
+
         // Show available images
         logInfo("Available images:", .{});
         const image_pattern = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ config.registry, config.image_name });
         defer allocator.free(image_pattern);
-        
+
         const list_result = std.process.Child.run(.{
             .allocator = allocator,
             .argv = &[_][]const u8{ "podman", "images", image_pattern, "--format", "table {{.Repository}} {{.Tag}} {{.Size}} {{.Created}}" },
@@ -315,3 +315,4 @@ pub fn main() !void {
         std.process.exit(1);
     }
 }
+
