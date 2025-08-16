@@ -68,10 +68,6 @@ pub fn build(b: *std.Build) void {
     unit_tests.root_module.addImport("build_options", options.createModule());
     unit_tests.root_module.addImport("clap", clap.module("clap"));
 
-    // Note: Enhanced tests temporarily disabled due to compilation issues
-    // Will be re-enabled after fixing API compatibility
-    // TODO: Fix enhanced unit tests and performance tests
-
     const exe_tests = b.addTest(.{
         .root_module = exe_mod,
     });
@@ -104,8 +100,5 @@ pub fn build(b: *std.Build) void {
     const test_integration_step = b.step("test-integration", "Run integration tests only");
     test_integration_step.dependOn(&b.addRunArtifact(exe_tests).step);
 
-    // TODO: Re-enable CSV test targets when enhanced tests are fixed
-    // const test_unit_csv_step = b.step("test-unit-csv", "Run unit tests with CSV output");
-    // const test_performance_step = b.step("test-performance", "Run performance benchmarks");
-    // const test_csv_step = b.step("test-csv", "Run all tests with CSV output");
+    
 }

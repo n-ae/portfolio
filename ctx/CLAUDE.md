@@ -38,8 +38,6 @@ The project includes comprehensive containerized testing infrastructure:
 - `zig run scripts/podman_test.zig -- [OPTIONS] [TEST_TYPE]` - Run tests in containers with CSV support
   - Options: `--csv`, `--output file.csv`, `--verbose`, `--keep`
   - Types: `unit`, `blackbox`, `performance`, `all`, `interactive`
-- `zig run scripts/podman_build.zig -- --multiplatform blackbox-testing` - Build multiplatform testing containers
-- `zig run scripts/podman_test_multiplatform.zig -- --platform linux/amd64 blackbox` - Cross-platform testing
 
 ### Container Examples
 ```bash
@@ -53,7 +51,7 @@ zig run scripts/podman_test.zig -- --csv --output container_results.csv all
 zig run scripts/podman_test.zig -- performance
 ```
 
-See `MULTIPLATFORM.md` for detailed multiplatform testing documentation and `ARCHITECTURE.md` for maintainable architecture guidelines.
+See `ARCHITECTURE.md` for maintainable architecture guidelines.
 
 ## Architecture
 

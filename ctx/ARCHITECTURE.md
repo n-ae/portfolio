@@ -26,7 +26,6 @@ ctx/
 ├── scripts/                      # Build & container automation
 │   ├── podman_build.zig          # Container build orchestration
 │   ├── podman_test.zig           # Enhanced container testing (UPDATED)
-│   └── podman_test_multiplatform.zig  # Advanced multiplatform testing
 │
 ├── tests/                        # Performance tests & documentation
 │   ├── performance/string/       # String operation benchmarks
@@ -156,7 +155,6 @@ zig run scripts/podman_test.zig -- --csv --output container_results.csv unit
 ### **Simplified Container Strategy**
 
 1. **Primary Container** (`Containerfile`): Production-ready Alpine Linux container
-2. **Enhanced Container** (`Containerfile.multiplatform`): Multi-shell testing environment
 3. **Build Scripts**: Consolidated build and test orchestration
 
 ### **Container Testing Workflow**
@@ -169,9 +167,6 @@ zig run scripts/podman_build.zig -- builder
 zig run scripts/podman_test.zig -- --csv unit
 zig run scripts/podman_test.zig -- --csv performance  
 zig run scripts/podman_test.zig -- --csv blackbox
-
-# Advanced multiplatform testing (when needed)
-zig run scripts/podman_test_multiplatform.zig -- --platform linux/amd64 blackbox
 ```
 
 ## 📈 **Performance Monitoring**
@@ -240,9 +235,7 @@ zig run scripts/podman_test.zig -- --csv --output ci_results.csv all
 - **Documentation**: `CLAUDE.md`, `tests/README.md`, `ARCHITECTURE.md`
 
 ### **Optional Files (Advanced Use Cases)**
-- **Multiplatform**: `Containerfile.multiplatform`, `scripts/podman_test_multiplatform.zig`
 - **Performance Deep Dive**: `tests/performance/string/`
-- **Additional Docs**: `MULTIPLATFORM.md`
 
 ### **Maintenance Notes**
 
