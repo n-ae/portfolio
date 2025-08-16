@@ -109,20 +109,25 @@ test "context: parseName function validation" {
     const allocator = arena.allocator();
 
     // Create a mock ContextManager for testing parseName
+    const storage = @import("storage.zig");
+    var test_storage = try storage.Storage.init(allocator, "/tmp");
+    defer test_storage.deinit();
+    
     var ctx_manager = ContextManager{
         .allocator = allocator,
-        .contexts_dir = "/tmp/test",
-        .original_cwd = "/tmp",
+        .storage = test_storage,
+        .original_cwd = try allocator.dupe(u8, "/tmp"),
     };
+    defer allocator.free(ctx_manager.original_cwd);
 
     // Test valid args
     const valid_args = [_][:0]const u8{ "ctx", "save", "test-context" };
-    const result = ctx_manager.parseName(&valid_args, "save");
+    const result = ctx_manager.parseName(&valid_args);
     try testing.expectEqualStrings("test-context", result catch unreachable);
 
     // Test insufficient args
     const insufficient_args = [_][:0]const u8{ "ctx", "save" };
-    try testing.expectError(error.MissingName, ctx_manager.parseName(&insufficient_args, "save"));
+    try testing.expectError(error.MissingName, ctx_manager.parseName(&insufficient_args));
 }
 
 test "context: Context struct memory management" {
@@ -147,7 +152,7 @@ test "context: Context struct memory management" {
     commands[0] = try allocator.dupe(u8, "npm test");
 
     const test_context = Context{
-        .name = "test-context",
+        .name = try allocator.dupe(u8, "test-context"),
         .timestamp = std.time.timestamp(),
         .git_branch = branch,
         .working_directory = working_dir,

@@ -10,50 +10,10 @@ const ShellType = shell.ShellType;
 const validation = @import("validation.zig");
 const EnvVar = validation.EnvVar;
 const Context = validation.Context;
+const test_utils = @import("test_utils.zig");
 
-// Import modules directly since they're in the same directory
-// CSV Test Result Structure
-const TestResult = struct {
-    test_type: []const u8,
-    test_name: []const u8,
-    status: []const u8,
-    duration_ms: f64,
-    error_message: ?[]const u8,
-};
-
-var test_results: std.ArrayList(TestResult) = undefined;
+var csv_reporter: test_utils.CSVReporter = undefined;
 var test_allocator: std.mem.Allocator = undefined;
-
-// Helper to run a test and capture results
-fn runTest(comptime test_name: []const u8, comptime test_func: fn () anyerror!void) void {
-    const start_time = std.time.milliTimestamp();
-
-    test_func() catch |err| {
-        const end_time = std.time.milliTimestamp();
-        const duration = @as(f64, @floatFromInt(end_time - start_time));
-
-        const error_msg = std.fmt.allocPrint(test_allocator, "{}", .{err}) catch "OutOfMemory";
-        test_results.append(TestResult{
-            .test_type = "unit",
-            .test_name = test_name,
-            .status = "FAIL",
-            .duration_ms = duration,
-            .error_message = error_msg,
-        }) catch {};
-        return;
-    };
-
-    const end_time = std.time.milliTimestamp();
-    const duration = @as(f64, @floatFromInt(end_time - start_time));
-
-    test_results.append(TestResult{
-        .test_type = "unit",
-        .test_name = test_name,
-        .status = "PASS",
-        .duration_ms = duration,
-        .error_message = null,
-    }) catch {};
-}
 
 // Test functions without the 'test' keyword
 fn validationContextNameValid() !void {
@@ -156,11 +116,16 @@ fn contextParseName() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
+    const storage = @import("storage.zig");
+    var test_storage = try storage.Storage.init(allocator, "/tmp");
+    defer test_storage.deinit();
+    
     var ctx_manager = ContextManager{
         .allocator = allocator,
-        .contexts_dir = "/tmp/test",
-        .original_cwd = "/tmp",
+        .storage = test_storage,
+        .original_cwd = try allocator.dupe(u8, "/tmp"),
     };
+    defer allocator.free(ctx_manager.original_cwd);
 
     // Test valid args (should work without printing)
     const valid_args = [_][:0]const u8{ "ctx", "save", "test-context" };
@@ -223,49 +188,30 @@ fn endOfLineConstant() !void {
     try testing.expect(is_windows or is_unix);
 }
 
-// CSV output functions
-fn printCSVHeader() void {
-    const stdout = std.io.getStdOut().writer();
-    stdout.print("test_type,test_name,status,duration_ms,error_message\n", .{}) catch {};
-}
-
-fn printCSVResult(result: TestResult) void {
-    const stdout = std.io.getStdOut().writer();
-    if (result.error_message) |error_msg| {
-        // Escape quotes in error message
-        const escaped_error = std.mem.replaceOwned(u8, test_allocator, error_msg, "\"", "\"\"") catch error_msg;
-        defer if (escaped_error.ptr != error_msg.ptr) test_allocator.free(escaped_error);
-        stdout.print("{s},{s},{s},{d:.2},\"{s}\"\n", .{ result.test_type, result.test_name, result.status, result.duration_ms, escaped_error }) catch {};
-    } else {
-        stdout.print("{s},{s},{s},{d:.2},\n", .{ result.test_type, result.test_name, result.status, result.duration_ms }) catch {};
-    }
-}
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     test_allocator = gpa.allocator();
 
-    test_results = std.ArrayList(TestResult).init(test_allocator);
-    defer test_results.deinit();
+    csv_reporter = test_utils.CSVReporter.init(test_allocator);
+    defer csv_reporter.deinit();
 
-    // Run all tests
-    runTest("validation_context_name_valid", validationContextNameValid);
-    runTest("validation_context_name_invalid", validationContextNameInvalid);
-    runTest("validation_env_var_valid", validationEnvVarValid);
-    runTest("validation_env_var_invalid", validationEnvVarInvalid);
-    runTest("shell_type_enum", shellTypeEnum);
-    runTest("shell_detect_shell", shellDetectShell);
-    runTest("shell_print_env_var", shellPrintEnvVar);
-    runTest("context_parse_name", contextParseName);
-    runTest("context_memory_management", contextMemoryManagement);
-    runTest("main_module_import", mainModuleImport);
-    runTest("constants_reasonable", constantsReasonable);
-    runTest("end_of_line_constant", endOfLineConstant);
+    // Run all tests using the unified test runner
+    test_utils.runTimedTest("validation_context_name_valid", validationContextNameValid, "unit", &csv_reporter);
+    test_utils.runTimedTest("validation_context_name_invalid", validationContextNameInvalid, "unit", &csv_reporter);
+    test_utils.runTimedTest("validation_env_var_valid", validationEnvVarValid, "unit", &csv_reporter);
+    test_utils.runTimedTest("validation_env_var_invalid", validationEnvVarInvalid, "unit", &csv_reporter);
+    test_utils.runTimedTest("shell_type_enum", shellTypeEnum, "unit", &csv_reporter);
+    test_utils.runTimedTest("shell_detect_shell", shellDetectShell, "unit", &csv_reporter);
+    test_utils.runTimedTest("shell_print_env_var", shellPrintEnvVar, "unit", &csv_reporter);
+    test_utils.runTimedTest("context_parse_name", contextParseName, "unit", &csv_reporter);
+    test_utils.runTimedTest("context_memory_management", contextMemoryManagement, "unit", &csv_reporter);
+    test_utils.runTimedTest("main_module_import", mainModuleImport, "unit", &csv_reporter);
+    test_utils.runTimedTest("constants_reasonable", constantsReasonable, "unit", &csv_reporter);
+    test_utils.runTimedTest("end_of_line_constant", endOfLineConstant, "unit", &csv_reporter);
 
     // Print CSV results
-    printCSVHeader();
-    for (test_results.items) |result| {
-        printCSVResult(result);
-    }
+    csv_reporter.printHeader();
+    csv_reporter.printResults();
 }

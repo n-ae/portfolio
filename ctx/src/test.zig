@@ -4,6 +4,7 @@ const testing = std.testing;
 const fs = std.fs;
 
 const validation = @import("validation.zig");
+const config = @import("config.zig");
 const eol = validation.eol;
 
 const TestResult = struct {
@@ -97,7 +98,7 @@ const TestRunner = struct {
 
     pub fn init(allocator: std.mem.Allocator, ctx_binary: []const u8) !Self {
         // Create temporary test directory
-        const test_dir = try allocator.dupe(u8, "/tmp/ctx_test");
+        const test_dir = try allocator.dupe(u8, config.Config.TEST_DIR_PREFIX);
 
         // Store original HOME
         const original_home = if (std.posix.getenv("HOME")) |home|
@@ -156,7 +157,7 @@ const TestRunner = struct {
             .allocator = self.allocator,
             .argv = full_args.items,
             .env_map = &env_map,
-            .max_output_bytes = 1024 * 1024,
+            .max_output_bytes = config.Config.MAX_OUTPUT_SIZE,
         });
     }
 

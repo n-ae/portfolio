@@ -98,18 +98,27 @@ pub fn main() !void {
 
     switch (subcommand) {
         .save => {
-            const name = ctx_manager.parseName(args, "save") catch return;
+            const name = ctx_manager.parseName(args) catch |err| {
+                ContextManager.printParseError("save", err);
+                return;
+            };
             try ctx_manager.saveContext(name);
         },
         .restore => {
-            const name = ctx_manager.parseName(args, "restore") catch return;
+            const name = ctx_manager.parseName(args) catch |err| {
+                ContextManager.printParseError("restore", err);
+                return;
+            };
             try ctx_manager.restoreContext(name);
         },
         .list => {
             try ctx_manager.listContexts();
         },
         .delete => {
-            const name = ctx_manager.parseName(args, "delete") catch return;
+            const name = ctx_manager.parseName(args) catch |err| {
+                ContextManager.printParseError("delete", err);
+                return;
+            };
             try ctx_manager.deleteContext(name);
         },
         .version => {

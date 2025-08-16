@@ -1,9 +1,10 @@
 const std = @import("std");
+const config = @import("config.zig");
 
 // Constants for validation limits
 pub const MAX_CONTEXT_NAME_LENGTH = 255;
 pub const MIN_CONTEXT_NAME_LENGTH = 1;
-pub const MAX_ENV_KEY_LENGTH = 1024;
+pub const MAX_ENV_KEY_LENGTH = config.Validation.MAX_ENV_KEY_LENGTH;
 pub const MAX_ENV_VALUE_LENGTH = 4096;
 pub const MAX_BRANCH_NAME_LENGTH = 255;
 
@@ -28,6 +29,7 @@ pub const Context = struct {
     terminal_commands: [][]const u8,
 
     pub fn deinit(self: *const Context, allocator: std.mem.Allocator) void {
+        allocator.free(self.name);
         if (self.git_branch) |branch| {
             allocator.free(branch);
         }

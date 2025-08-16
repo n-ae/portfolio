@@ -4,55 +4,14 @@ const testing = std.testing;
 const fs = std.fs;
 
 const validation = @import("validation.zig");
+const config = @import("config.zig");
+const test_utils = @import("test_utils.zig");
 const eol = validation.eol;
 
-const CSVTestResult = struct {
-    test_type: []const u8,
-    test_name: []const u8,
-    status: []const u8,
-    duration_ms: f64,
-    error_message: ?[]const u8,
-};
-
-const ExpectationType = enum {
-    success,
-    failure,
-    output,
-};
-
-const TestExpectation = struct {
-    expectation_type: ExpectationType,
-    expected_output: ?[]const u8 = null,
-
-    fn validate(self: TestExpectation, result: std.process.Child.RunResult, allocator: std.mem.Allocator) !?[]const u8 {
-        return switch (self.expectation_type) {
-            .success => {
-                if (!OutputSelector.hasValidExitCode(result)) {
-                    return try OutputSelector.formatError(allocator, result, "success");
-                }
-                return null;
-            },
-            .failure => {
-                if (OutputSelector.hasValidExitCode(result)) {
-                    return try OutputSelector.formatError(allocator, result, "failure");
-                }
-                return null;
-            },
-            .output => {
-                if (!OutputSelector.hasValidExitCode(result)) {
-                    return try OutputSelector.formatError(allocator, result, "command");
-                }
-                const output = OutputSelector.selectOutput(result);
-                if (self.expected_output) |expected| {
-                    if (!std.mem.containsAtLeast(u8, output, 1, expected)) {
-                        return try std.fmt.allocPrint(allocator, "Expected output to contain '{s}' but got stdout: '{s}' stderr: '{s}'", .{ expected, result.stdout, result.stderr });
-                    }
-                }
-                return null;
-            },
-        };
-    }
-};
+// Use the unified test utilities
+const TestResult = test_utils.TestResult;
+const ExpectationType = test_utils.ExpectationType;
+const TestExpectation = test_utils.TestExpectation;
 
 const TestCase = struct {
     name: []const u8,
@@ -76,13 +35,8 @@ const TestCase = struct {
 
         const status = if (error_msg == null) "PASS" else "FAIL";
 
-        try runner.csv_results.append(CSVTestResult{
-            .test_type = "blackbox",
-            .test_name = self.name,
-            .status = status,
-            .duration_ms = duration,
-            .error_message = if (error_msg) |msg| try runner.allocator.dupe(u8, msg) else null,
-        });
+        const test_result = TestResult.init("blackbox", self.name, status, duration, if (error_msg) |msg| try runner.allocator.dupe(u8, msg) else null);
+        try runner.csv_reporter.addResult(test_result);
 
         runner.cleanupResult(result);
     }
@@ -112,12 +66,12 @@ const TestRunner = struct {
     ctx_binary: []const u8,
     test_dir: []const u8,
     original_home: ?[]const u8,
-    csv_results: std.ArrayList(CSVTestResult),
+    csv_reporter: *test_utils.CSVReporter,
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator, ctx_binary: []const u8) !Self {
-        const test_dir = try allocator.dupe(u8, "/tmp/ctx_test");
+    pub fn init(allocator: std.mem.Allocator, ctx_binary: []const u8, csv_reporter: *test_utils.CSVReporter) !Self {
+        const test_dir = try allocator.dupe(u8, config.Config.TEST_DIR_PREFIX);
 
         const original_home = if (std.posix.getenv("HOME")) |home|
             try allocator.dupe(u8, home)
@@ -129,7 +83,7 @@ const TestRunner = struct {
             .ctx_binary = try allocator.dupe(u8, ctx_binary),
             .test_dir = test_dir,
             .original_home = original_home,
-            .csv_results = std.ArrayList(CSVTestResult).init(allocator),
+            .csv_reporter = csv_reporter,
         };
     }
 
@@ -138,11 +92,6 @@ const TestRunner = struct {
         self.allocator.free(self.ctx_binary);
         self.allocator.free(self.test_dir);
         if (self.original_home) |home| self.allocator.free(home);
-
-        for (self.csv_results.items) |result| {
-            if (result.error_message) |msg| self.allocator.free(msg);
-        }
-        self.csv_results.deinit();
     }
 
     fn setupTestEnv(self: *Self) !void {
@@ -171,7 +120,7 @@ const TestRunner = struct {
             .allocator = self.allocator,
             .argv = full_args.items,
             .env_map = &env_map,
-            .max_output_bytes = 1024 * 1024,
+            .max_output_bytes = config.Config.MAX_OUTPUT_SIZE,
         });
     }
 
@@ -219,18 +168,8 @@ const TestRunner = struct {
     }
 
     pub fn printCSVResults(self: *Self) void {
-        const stdout = std.io.getStdOut().writer();
-        stdout.print("test_type,test_name,status,duration_ms,error_message\n", .{}) catch {};
-        for (self.csv_results.items) |result| {
-            if (result.error_message) |error_msg| {
-                // Escape quotes in error message
-                const escaped_error = std.mem.replaceOwned(u8, self.allocator, error_msg, "\"", "\"\"") catch error_msg;
-                defer if (escaped_error.ptr != error_msg.ptr) self.allocator.free(escaped_error);
-                stdout.print("{s},{s},{s},{d:.2},\"{s}\"\n", .{ result.test_type, result.test_name, result.status, result.duration_ms, escaped_error }) catch {};
-            } else {
-                stdout.print("{s},{s},{s},{d:.2},\n", .{ result.test_type, result.test_name, result.status, result.duration_ms }) catch {};
-            }
-        }
+        self.csv_reporter.printHeader();
+        self.csv_reporter.printResults();
     }
 };
 
@@ -255,7 +194,10 @@ pub fn main() !void {
         return;
     };
 
-    var test_runner = try TestRunner.init(allocator, ctx_binary);
+    var csv_reporter = test_utils.CSVReporter.init(allocator);
+    defer csv_reporter.deinit();
+
+    var test_runner = try TestRunner.init(allocator, ctx_binary, &csv_reporter);
     defer test_runner.deinit();
 
     try test_runner.runAllTests();
