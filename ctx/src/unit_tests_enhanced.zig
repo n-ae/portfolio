@@ -1,12 +1,12 @@
 const std = @import("std");
 const testing = std.testing;
-const test_framework = @import("test_framework.zig");
 
 const context = @import("context.zig");
 const ContextManager = context.ContextManager;
 const main_module = @import("main.zig");
 const shell = @import("shell.zig");
 const ShellType = shell.ShellType;
+const test_framework = @import("test_framework.zig");
 const validation = @import("validation.zig");
 const EnvVar = validation.EnvVar;
 const Context = validation.Context;
@@ -78,7 +78,7 @@ fn testShellTypeEnum() !void {
 fn testShellDetectShell() !void {
     // This might fail in some environments, but should not crash
     const detected = shell.detectShell();
-    
+
     // Should be one of the known shell types
     const known_shells = [_]ShellType{ ShellType.bash, ShellType.zsh, ShellType.fish, ShellType.sh, ShellType.cmd, ShellType.powershell };
     var found = false;
@@ -93,9 +93,9 @@ fn testShellDetectShell() !void {
 
 fn testShellPrintEnvVar() !void {
     const allocator = testing.allocator;
-    
+
     const env_var = EnvVar{ .key = "TEST_VAR", .value = "test_value" };
-    
+
     // Test different shell types
     const bash_cmd = try shell.printEnvVar(allocator, env_var, ShellType.bash);
     defer allocator.free(bash_cmd);
@@ -118,9 +118,9 @@ fn testShellPrintEnvVar() !void {
 
 fn testContextParseName() !void {
     const allocator = testing.allocator;
-    
+
     const valid_names = [_][]const u8{ "test", "test-feature", "test_branch", "test.env" };
-    
+
     for (valid_names) |name| {
         const parsed = try allocator.dupe(u8, name);
         defer allocator.free(parsed);
@@ -130,9 +130,9 @@ fn testContextParseName() !void {
 
 fn testContextMemoryManagement() !void {
     const allocator = testing.allocator;
-    
+
     // Test context creation and cleanup
-    var test_context = Context{
+    const test_context = Context{
         .name = try allocator.dupe(u8, "test-context"),
         .timestamp = std.time.timestamp(),
         .git_branch = try allocator.dupe(u8, "main"),
@@ -141,7 +141,7 @@ fn testContextMemoryManagement() !void {
         .environment_vars = try allocator.alloc(EnvVar, 0),
         .terminal_commands = try allocator.alloc([]const u8, 0),
     };
-    
+
     // Cleanup
     allocator.free(test_context.name);
     if (test_context.git_branch) |branch| {
@@ -289,3 +289,4 @@ test "constants: reasonable values" {
 test "constants: end of line constant" {
     try testEndOfLineConstant();
 }
+

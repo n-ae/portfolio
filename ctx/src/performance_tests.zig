@@ -1,15 +1,15 @@
 const std = @import("std");
+
+const context = @import("context.zig");
+const shell = @import("shell.zig");
+const storage = @import("storage.zig");
 const test_framework = @import("test_framework.zig");
 const TestRunner = test_framework.TestRunner;
 const TestResult = test_framework.TestResult;
 const OutputFormat = test_framework.OutputFormat;
+const validation = @import("validation.zig");
 
 // Import modules to benchmark
-const storage = @import("storage.zig");
-const validation = @import("validation.zig");
-const context = @import("context.zig");
-const shell = @import("shell.zig");
-
 /// Performance benchmark runner with configurable iterations
 pub const BenchmarkRunner = struct {
     allocator: std.mem.Allocator,
@@ -42,12 +42,12 @@ pub const BenchmarkRunner = struct {
 
         // Actual benchmark runs
         var timer = std.time.Timer.start() catch unreachable;
-        
+
         i = 0;
         while (i < self.iterations) : (i += 1) {
             benchmark_func();
         }
-        
+
         const total_duration_ns = timer.read();
         const avg_duration_ns = total_duration_ns / self.iterations;
         const avg_duration_ms = @as(f64, @floatFromInt(avg_duration_ns)) / 1_000_000.0;
@@ -102,13 +102,13 @@ fn benchmarkEnvironmentVarParsing() void {
 // File I/O benchmarks (using temporary files)
 fn benchmarkFileWrite() void {
     const test_data = "Test data for file write benchmark";
-    
+
     const tmp_file = std.fs.cwd().createFile("bench_temp.txt", .{}) catch return;
     defer {
         tmp_file.close();
         std.fs.cwd().deleteFile("bench_temp.txt") catch {};
     }
-    
+
     _ = tmp_file.writeAll(test_data) catch {};
 }
 
@@ -116,22 +116,22 @@ fn benchmarkFileRead() void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
-    
+
     // Create a temporary file first
     const tmp_file = std.fs.cwd().createFile("bench_temp_read.txt", .{}) catch return;
     defer {
         tmp_file.close();
         std.fs.cwd().deleteFile("bench_temp_read.txt") catch {};
     }
-    
+
     const test_data = "Test data for file read benchmark";
     _ = tmp_file.writeAll(test_data) catch return;
     tmp_file.close();
-    
+
     // Now benchmark reading
     const read_file = std.fs.cwd().openFile("bench_temp_read.txt", .{}) catch return;
     defer read_file.close();
-    
+
     const content = read_file.readToEndAlloc(allocator, 1024) catch return;
     defer allocator.free(content);
 }
@@ -211,3 +211,4 @@ pub fn main() !void {
 
     try runPerformanceBenchmarks(allocator, output_format, output_file);
 }
+
