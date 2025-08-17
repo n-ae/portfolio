@@ -45,34 +45,41 @@ zig build test-blackbox    # End-to-end tests
 
 ## CSV Test Results
 
-For automated testing and CI/CD integration, you can generate normalized CSV output:
+For automated testing and CI/CD integration, you can generate CSV output:
 
 ```bash
-# Generate CSV results using shell script (recommended)
-./scripts/run_csv_tests.sh test_results.csv
+# Unit tests with CSV output
+zig build test-unit-csv
 
-# Or use individual CSV test commands
-zig build test-unit-csv     # Unit tests with CSV output
-zig build test-blackbox-csv # Blackbox tests with CSV output
-zig build test-csv          # Combined CSV output (Zig-based)
+# Performance benchmarks with CSV output  
+zig build test-performance-csv
+
+# Direct CSV output using unified test runner
+./zig-out/bin/ctx-test-runner --type unit --format csv > unit_results.csv
+./zig-out/bin/ctx-test-runner --type performance --format csv --output perf_results.csv
+./zig-out/bin/ctx-test-runner --type all --format csv --output all_results.csv
 ```
 
-### CSV Format
+### CSV Formats
 
-The CSV output follows this format:
+**Unit Test CSV Format:**
 ```csv
-test_type,test_name,status,duration_ms,error_message
-unit,validation_context_name_valid,PASS,1.23,
-blackbox,save_valid_context,PASS,45.67,
-unit,invalid_test,FAIL,2.34,"Expected success but got error"
+unit,validation_context_name_valid,PASS,0.04,
+unit,validation_env_var_valid,PASS,0.00,
+unit,shell_detection,PASS,0.15,
+```
+
+**Performance Test CSV Format:**
+```csv
+test_name,duration_ns,iterations
+string_concatenation,14110,1000
+context_name_validation,117,1000
+file_write,106534,1000
 ```
 
 **Fields:**
-- `test_type`: "unit" or "blackbox"
-- `test_name`: Descriptive test name (underscores, no spaces)
-- `status`: "PASS" or "FAIL"
-- `duration_ms`: Execution time in milliseconds
-- `error_message`: Error details (quoted if present, empty if passed)
+- Unit tests: `test_type,test_name,status,duration_ms,error_message`
+- Performance tests: `test_name,duration_ns,iterations` (nanosecond precision)
 
 ## Test Philosophy
 

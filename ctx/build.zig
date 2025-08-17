@@ -59,9 +59,9 @@ pub fn build(b: *std.Build) void {
 
     // Testing infrastructure - Enhanced with CSV support
     
-    // Original unit tests (for compatibility)
+    // Unit tests with CSV support capability  
     const unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/unit_tests.zig"),
+        .root_source_file = b.path("src/unit_tests_enhanced.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -93,12 +93,40 @@ pub fn build(b: *std.Build) void {
     const blackbox_step = b.step("test-blackbox", "Run blackbox tests");
     blackbox_step.dependOn(&blackbox_cmd.step);
 
-    // Enhanced test targets with CSV support
+
+    const test_runner = b.addExecutable(.{
+        .name = "ctx-test-runner",
+        .root_source_file = b.path("src/test_runner.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    test_runner.root_module.addImport("build_options", options.createModule());
+    test_runner.root_module.addImport("clap", clap.module("clap"));
+    b.installArtifact(test_runner);
+
     const test_unit_step = b.step("test-unit", "Run unit tests only");
     test_unit_step.dependOn(&b.addRunArtifact(unit_tests).step);
 
     const test_integration_step = b.step("test-integration", "Run integration tests only");
     test_integration_step.dependOn(&b.addRunArtifact(exe_tests).step);
 
-    
+    // Consolidated test runner steps
+    const run_unit_csv_cmd = b.addRunArtifact(test_runner);
+    run_unit_csv_cmd.addArgs(&[_][]const u8{ "--type", "unit", "--format", "csv" });
+    run_unit_csv_cmd.step.dependOn(b.getInstallStep());
+    const test_unit_csv_step = b.step("test-unit-csv", "Run unit tests with CSV output");
+    test_unit_csv_step.dependOn(&run_unit_csv_cmd.step);
+
+    const run_performance_cmd = b.addRunArtifact(test_runner);
+    run_performance_cmd.addArgs(&[_][]const u8{ "--type", "performance" });
+    run_performance_cmd.step.dependOn(b.getInstallStep());
+    const performance_step = b.step("test-performance", "Run performance benchmarks");
+    performance_step.dependOn(&run_performance_cmd.step);
+
+    const run_performance_csv_cmd = b.addRunArtifact(test_runner);
+    run_performance_csv_cmd.addArgs(&[_][]const u8{ "--type", "performance", "--format", "csv" });
+    run_performance_csv_cmd.step.dependOn(b.getInstallStep());
+    const performance_csv_step = b.step("test-performance-csv", "Run performance benchmarks with CSV output");
+    performance_csv_step.dependOn(&run_performance_csv_cmd.step);
+
 }

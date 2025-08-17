@@ -219,7 +219,7 @@ fn runBlackboxTests(allocator: std.mem.Allocator, config: Config) !bool {
         \\echo '🎯 Running blackbox tests...'
         \\zig build test-blackbox
         \\echo '📊 Running CSV blackbox tests...'
-        \\./zig-out/bin/ctx-test-csv ./zig-out/bin/ctx
+        \\./zig-out/bin/ctx-test ./zig-out/bin/ctx
         \\echo '✅ Blackbox tests completed successfully!'
     ;
 
@@ -237,12 +237,14 @@ fn runCsvTests(allocator: std.mem.Allocator, config: Config) !bool {
 
     const test_command =
         \\set -e
-        \\echo '📊 Running CSV test suite...'
-        \\zig build test-csv
-        \\echo '💾 Testing CSV file output...'
-        \\./zig-out/bin/csv-runner --output-file /tmp/test-results.csv
-        \\echo '📄 CSV Results:'
-        \\cat /tmp/test-results.csv
+        \\echo '📊 Running CSV performance tests...'
+        \\./zig-out/bin/ctx-performance --csv --output /tmp/performance-results.csv
+        \\echo '📄 CSV Performance Results:'
+        \\cat /tmp/performance-results.csv
+        \\echo '🧪 Running enhanced unit tests with CSV...'
+        \\./zig-out/bin/ctx-unit-csv > /tmp/unit-results.csv
+        \\echo '📄 CSV Unit Test Results:'
+        \\head -5 /tmp/unit-results.csv
         \\echo '✅ CSV tests completed successfully!'
     ;
 
@@ -295,7 +297,8 @@ fn runInteractive(allocator: std.mem.Allocator, config: Config) !bool {
 
     logInfo("Available commands:", .{});
     logInfo("  - zig build test        # Run all tests", .{});
-    logInfo("  - zig build test-csv    # Run CSV tests", .{});
+    logInfo("  - ./zig-out/bin/ctx-performance --csv  # CSV performance tests", .{});
+    logInfo("  - ./zig-out/bin/ctx-unit-csv          # CSV unit tests", .{});
     logInfo("  - ctx --help           # Test CLI", .{});
     logInfo("  - exit                 # Exit container", .{});
 

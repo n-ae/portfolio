@@ -87,9 +87,9 @@ pub fn isEnvVarValid(env_var: EnvVar) bool {
     if (env_var.key.len == 0 or env_var.key.len > MAX_ENV_KEY_LENGTH) return false;
     if (env_var.value.len > MAX_ENV_VALUE_LENGTH) return false;
 
-    // Key should not contain null bytes or '=' characters
+    // Key should not contain null bytes, '=' characters, or spaces
     for (env_var.key) |c| {
-        if (c == 0 or c == '=') return false;
+        if (c == 0 or c == '=' or c == ' ') return false;
     }
 
     // Value should not contain null bytes

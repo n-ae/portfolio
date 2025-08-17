@@ -56,6 +56,15 @@ pub fn printEnvVarCommand(env_var: EnvVar, shell_type: ShellType) void {
     }
 }
 
+pub fn formatEnvVarCommand(allocator: std.mem.Allocator, env_var: EnvVar, shell_type: ShellType) ![]const u8 {
+    return switch (shell_type) {
+        .bash, .zsh, .fish => std.fmt.allocPrint(allocator, "export {s}=\"{s}\"", .{ env_var.key, env_var.value }),
+        .cmd => std.fmt.allocPrint(allocator, "set {s}={s}", .{ env_var.key, env_var.value }),
+        .powershell => std.fmt.allocPrint(allocator, "$env:{s}=\"{s}\"", .{ env_var.key, env_var.value }),
+        .unknown => std.fmt.allocPrint(allocator, "# Unknown shell - skipping {s}", .{env_var.key}),
+    };
+}
+
 pub fn printDirectoryChangeCommand(directory: []const u8, shell_type: ShellType) void {
     switch (shell_type) {
         .bash, .zsh => {

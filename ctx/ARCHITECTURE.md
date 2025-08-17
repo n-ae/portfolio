@@ -12,12 +12,11 @@ ctx/
 │   ├── main.zig                  # CLI entry point & command parsing
 │   ├── context.zig               # Core ContextManager business logic
 │   ├── storage.zig               # File persistence & JSON serialization
-│   ├── context_commands.zig      # Shell command generation
 │   ├── validation.zig            # Input validation & data structures
 │   ├── shell.zig                 # Shell detection & compatibility
 │   ├── config.zig                # Application configuration constants
 │   │
-│   ├── test_framework.zig        # Unified testing framework (NEW)
+│   │
 │   ├── unit_tests.zig            # Standard Zig unit tests
 │   ├── unit_tests_enhanced.zig   # Enhanced tests with CSV support (NEW)
 │   ├── performance_tests.zig     # Performance benchmarks (NEW)
@@ -27,9 +26,10 @@ ctx/
 │   ├── podman_build.zig          # Container build orchestration
 │   ├── podman_test.zig           # Enhanced container testing (UPDATED)
 │
-├── tests/                        # Performance tests & documentation
-│   ├── performance/string/       # String operation benchmarks
-│   └── README.md                 # Testing documentation
+├── tests/performance/string/     # Legacy string operation benchmarks
+│   ├── benchmark.zig             # String benchmark implementations  
+│   └── performance_test.zig      # String performance test
+├── tests/README.md               # Testing documentation
 │
 ├── build.zig                     # Enhanced build system (UPDATED)
 └── [Container & docs files]
@@ -37,18 +37,18 @@ ctx/
 
 ## 🎯 **Core Design Principles**
 
-### **1. Unified Testing Framework**
-- **Single source of truth** for test result formatting
-- **Multiple output formats**: Standard, CSV, JSON
-- **Consistent API** across all test types
-- **Performance measurement** built-in
+### **1. Simplified Testing Approach**
+- **Standard Zig test runner** for core functionality
+- **CSV output support** via dedicated executables
+- **Performance benchmarking** with configurable parameters
+- **Multiple test types**: Unit, integration, blackbox, performance
 
 ### **2. Clear Module Boundaries**
 ```zig
 main.zig           → CLI interface & command routing
 context.zig         → Business logic & orchestration  
 storage.zig         → Data persistence
-context_commands.zig → Shell command generation
+config.zig → Application configuration
 validation.zig      → Input validation & types
 shell.zig          → Cross-shell compatibility
 ```
@@ -64,25 +64,16 @@ Container      → Isolated environment testing
 
 ## 🔧 **Key Components**
 
-### **Test Framework (`src/test_framework.zig`)**
+### **Consolidated Testing Approach**
 
-**Purpose**: Unified testing infrastructure supporting multiple output formats.
+**Current Implementation**: Tests use a unified test runner with configurable output formats and test types.
 
-**Key Features**:
-- Automatic timing measurement
-- CSV/JSON export capability
-- Error message handling
-- Test suite aggregation
-
-**Usage**:
-```zig
-const test_functions = [_]struct { name: []const u8, func: fn () anyerror!void }{
-    .{ .name = "validation_test", .func = testValidation },
-    .{ .name = "context_test", .func = testContext },
-};
-
-try test_framework.runTestSuite("unit", test_functions, allocator, .csv, "results.csv");
-```
+**Available Test Commands**:
+- `zig build test-unit-csv` - Unit tests with CSV output
+- `zig build test-performance` - Performance benchmarks (standard output)
+- `zig build test-performance-csv` - Performance benchmarks with CSV output
+- `./zig-out/bin/ctx-test-runner --type unit --format csv` - Direct CSV unit test output
+- `./zig-out/bin/ctx-test-runner --type performance --format csv` - CSV performance results
 
 ### **Performance Testing (`src/performance_tests.zig`)**
 
@@ -92,22 +83,22 @@ try test_framework.runTestSuite("unit", test_functions, allocator, .csv, "result
 - Warmup iterations to stabilize measurements
 - Configurable iteration counts
 - Multiple benchmark categories (string ops, file I/O, context operations)
-- CSV/JSON output for trend analysis
+- CSV output for trend analysis
 
 **Usage**:
 ```bash
-./zig-out/bin/ctx-performance --csv --output performance.csv
+./zig-out/bin/ctx-test-runner --type performance --format csv --output performance.csv
 ```
 
-### **Enhanced Unit Tests (`src/unit_tests_enhanced.zig`)**
+### **Unit Tests (`src/unit_tests_enhanced.zig`)**
 
-**Purpose**: Backwards-compatible unit tests with enhanced output capabilities.
+**Purpose**: Comprehensive unit tests with dual output capabilities.
 
 **Key Features**:
-- All original unit tests preserved
-- Enhanced with timing and CSV output
-- Command-line argument parsing
-- Dual compatibility (Zig test runner + standalone executable)
+- Works with standard Zig test runner (`zig build test`)
+- Enhanced with timing measurement and CSV output via test runner
+- Memory-safe with proper allocator management
+- Modular test functions for external consumption
 
 ## 📊 **Build System**
 
@@ -126,9 +117,8 @@ zig build test-blackbox          # Blackbox tests only
 
 # Enhanced testing with CSV support
 zig build test-unit-csv          # Unit tests → CSV output
-zig build test-performance       # Performance benchmarks
-zig build test-performance-csv   # Performance → CSV output
-zig build test-csv               # All tests → CSV output
+zig build test-performance       # Performance benchmarks (standard output)
+zig build test-performance-csv   # Performance benchmarks → CSV output
 
 # Container testing
 zig run scripts/podman_build.zig -- [TARGET]           # Build containers
@@ -137,14 +127,17 @@ zig run scripts/podman_test.zig -- [OPTIONS] [TYPE]    # Test in containers
 
 ### **CSV Output Capabilities**
 
-All testing now supports CSV output for CI/CD integration:
+All testing now supports CSV output for CI/CD integration via the unified test runner:
 
 ```bash
 # Unit tests with CSV
-./zig-out/bin/ctx-unit-tests --csv --output unit_results.csv
+./zig-out/bin/ctx-test-runner --type unit --format csv > unit_results.csv
 
 # Performance benchmarks with CSV
-./zig-out/bin/ctx-performance --csv --output perf_results.csv
+./zig-out/bin/ctx-test-runner --type performance --format csv --output perf_results.csv
+
+# All tests with CSV
+./zig-out/bin/ctx-test-runner --type all --format csv --output all_results.csv
 
 # Container tests with CSV
 zig run scripts/podman_test.zig -- --csv --output container_results.csv unit
@@ -152,10 +145,10 @@ zig run scripts/podman_test.zig -- --csv --output container_results.csv unit
 
 ## 🐳 **Container Infrastructure**
 
-### **Simplified Container Strategy**
+### **Container Strategy**
 
 1. **Primary Container** (`Containerfile`): Production-ready Alpine Linux container
-3. **Build Scripts**: Consolidated build and test orchestration
+2. **Build Scripts**: Consolidated build and test orchestration
 
 ### **Container Testing Workflow**
 
@@ -175,16 +168,16 @@ zig run scripts/podman_test.zig -- --csv blackbox
 
 1. **String Operations**: Concatenation, allocation, comparison
 2. **Context Operations**: Name validation, shell detection, env var parsing
-3. **File I/O**: Read/write operations, JSON serialization
+3. **File I/O**: Read/write operations, context serialization
 4. **Memory Management**: Allocation patterns, cleanup verification
 
 ### **Performance Tracking**
 
 ```csv
-test_type,test_name,status,duration_ms,error_message
-performance,string_concatenation,PASS,0.05,
-performance,context_name_validation,PASS,0.02,
-performance,file_write,PASS,1.23,
+test_name,duration_ns,iterations
+string_concatenation,13035,1000
+context_name_validation,117,1000
+file_write,106534,1000
 ```
 
 ## 🎛️ **Configuration Management**
@@ -204,7 +197,7 @@ performance,file_write,PASS,1.23,
 ### **Adding New Features**
 
 1. **Core Logic**: Add to appropriate module in `src/`
-2. **Tests**: Add to `unit_tests_enhanced.zig` using test framework
+2. **Tests**: Add to `unit_tests_enhanced.zig` (standard Zig tests + CSV capability via test runner)
 3. **Performance**: Add benchmarks to `performance_tests.zig` if relevant
 4. **Integration**: Ensure blackbox tests cover new CLI functionality
 5. **Container**: Test in containerized environment
@@ -217,7 +210,8 @@ zig build test                    # Fast feedback
 zig build test-performance        # Performance regression check
 
 # Pre-commit testing  
-zig build test-csv                # Generate CI-compatible results
+zig build test-unit-csv           # Generate CSV unit test results
+zig build test-performance-csv    # Performance benchmarks with CSV
 zig run scripts/podman_test.zig -- all  # Container validation
 
 # CI/CD Pipeline
@@ -227,10 +221,9 @@ zig run scripts/podman_test.zig -- --csv --output ci_results.csv all
 ## 📚 **File Organization**
 
 ### **Essential Files (Keep)**
-- **Core Application**: `src/{main,context,storage,validation,shell,config,context_commands}.zig`
+- **Core Application**: `src/{main,context,storage,validation,shell,config}.zig`
 - **Build System**: `build.zig`, `build.zig.zon`
-- **Testing Framework**: `src/test_framework.zig`, `src/unit_tests_enhanced.zig`, `src/performance_tests.zig`
-- **Integration Tests**: `src/test.zig`
+- **Testing Infrastructure**: `src/unit_tests_enhanced.zig`, `src/performance_tests.zig`, `src/test.zig`, `src/test_runner.zig`
 - **Container Infrastructure**: `Containerfile`, `scripts/podman_{build,test}.zig`
 - **Documentation**: `CLAUDE.md`, `tests/README.md`, `ARCHITECTURE.md`
 
@@ -239,8 +232,8 @@ zig run scripts/podman_test.zig -- --csv --output ci_results.csv all
 
 ### **Maintenance Notes**
 
-- **Backwards Compatibility**: Original `unit_tests.zig` preserved for Zig test runner compatibility
-- **Incremental Adoption**: Enhanced features are additive, not replacing existing functionality
+- **Unified Testing**: Single test file (`unit_tests_enhanced.zig`) works with both Zig test runner and external test runner
+- **Parameter-Driven**: Features controlled via CLI parameters rather than separate binaries
 - **Clear Interfaces**: Each module has well-defined responsibilities and minimal coupling
 - **Testability**: All components can be tested in isolation and integration
 

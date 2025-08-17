@@ -10,7 +10,6 @@ const shell = @import("shell.zig");
 const validation = @import("validation.zig");
 const config = @import("config.zig");
 const storage = @import("storage.zig");
-const context_commands = @import("context_commands.zig");
 const Context = validation.Context;
 const EnvVar = validation.EnvVar;
 const eol = validation.eol;
@@ -58,18 +57,41 @@ pub const ContextManager = struct {
     }
 
     fn captureCurrentContext(self: *Self, name: []const u8) !Context {
+        const context_name = try self.allocator.dupe(u8, name);
+        const working_dir = try self.getCurrentWorkingDirectory();
+        const git_branch = try self.captureGitBranch();
+        const env_vars = try self.captureEnvironmentVars();
+        const open_files = try self.captureOpenFiles();
+        const recent_commands = try self.captureRecentCommands();
+
         return Context{
-            .name = try self.allocator.dupe(u8, name),
+            .name = context_name,
             .timestamp = std.time.timestamp(),
-            .git_branch = self.getCurrentGitBranch() catch |err| switch (err) {
-                error.OutOfMemory => return err,
-                else => null, // Git not available or not in repo - that's OK
-            },
-            .working_directory = try self.getCurrentWorkingDirectory(),
-            .open_files = self.getOpenFiles() catch &[_][]const u8{}, // Fallback to empty
-            .environment_vars = self.getRelevantEnvVars() catch &[_]EnvVar{}, // Fallback to empty
-            .terminal_commands = self.getRecentCommands() catch &[_][]const u8{}, // Fallback to empty
+            .git_branch = git_branch,
+            .working_directory = working_dir,
+            .open_files = open_files,
+            .environment_vars = env_vars,
+            .terminal_commands = recent_commands,
         };
+    }
+
+    fn captureGitBranch(self: *Self) !?[]const u8 {
+        return self.getCurrentGitBranch() catch |err| switch (err) {
+            error.OutOfMemory => return err,
+            else => null, // Git not available or not in repo - that's OK
+        };
+    }
+
+    fn captureEnvironmentVars(self: *Self) ![]EnvVar {
+        return self.getRelevantEnvVars() catch &[_]EnvVar{}; // Fallback to empty
+    }
+
+    fn captureOpenFiles(self: *Self) ![][]const u8 {
+        return self.getOpenFiles() catch &[_][]const u8{}; // Fallback to empty
+    }
+
+    fn captureRecentCommands(self: *Self) ![][]const u8 {
+        return self.getRecentCommands() catch &[_][]const u8{}; // Fallback to empty
     }
 
     fn getCurrentWorkingDirectory(self: *Self) ![]const u8 {
@@ -79,29 +101,25 @@ pub const ContextManager = struct {
     }
 
     pub fn restoreContext(self: *Self, name: []const u8) !void {
-        // Validate context name
-        if (name.len == 0) {
-            std.debug.print("❌ Context name cannot be empty" ++ eol, .{});
-            return error.InvalidName;
-        }
-
         const context = self.storage.loadContext(name) catch |err| switch (err) {
-            error.FileNotFound => return,
-            else => {
-                std.debug.print("❌ Failed to load context: {}" ++ eol, .{err});
-                return err;
+            error.FileNotFound => {
+                std.debug.print("❌ Context '{s}' not found" ++ eol, .{name});
+                return;
             },
+            else => return err,
         };
         defer context.deinit(self.allocator);
-
-        // Validate context data
-        if (!validation.isContextValid(&context)) {
-            std.debug.print("❌ Context '{s}' contains invalid data" ++ eol, .{name});
-            return error.InvalidContext;
+        
+        const restore_commands = try generateRestoreCommands(self.allocator, &context);
+        defer {
+            self.allocator.free(restore_commands.header);
+            self.allocator.free(restore_commands.footer);
+            for (restore_commands.commands) |cmd| {
+                self.allocator.free(cmd.command);
+            }
+            self.allocator.free(restore_commands.commands);
         }
-
-        // Generate shell commands for restoration
-        context_commands.ContextCommands.generateRestoreCommands(&context);
+        printRestoreCommands(restore_commands);
     }
 
 
@@ -212,3 +230,92 @@ pub const ContextManager = struct {
     }
 };
 
+
+const RestoreCommand = struct {
+    command: []const u8,
+    is_warning: bool = false,
+};
+
+const RestoreCommands = struct {
+    header: []const u8,
+    commands: []RestoreCommand,
+    footer: []const u8,
+};
+
+/// Generate shell commands to restore a context (separated logic from output)
+fn generateRestoreCommands(allocator: std.mem.Allocator, context: *const Context) !RestoreCommands {
+    var commands = std.ArrayList(RestoreCommand).init(allocator);
+    
+    // Change directory command
+    if (validateDirectory(context.working_directory)) {
+        const cd_cmd = try std.fmt.allocPrint(allocator, "cd \"{s}\"", .{context.working_directory});
+        try commands.append(.{ .command = cd_cmd });
+    } else |err| {
+        const warning = try std.fmt.allocPrint(allocator, "# Warning: Could not access directory '{s}': {}", .{ context.working_directory, err });
+        try commands.append(.{ .command = warning, .is_warning = true });
+        try commands.append(.{ .command = "# Staying in current directory", .is_warning = true });
+    }
+
+    // Git branch switching command
+    if (context.git_branch) |branch| {
+        if (validation.validateGitBranch(branch)) {
+            const git_cmd = try std.fmt.allocPrint(allocator, "git switch \"{s}\"", .{branch});
+            try commands.append(.{ .command = git_cmd });
+        } else |err| {
+            const warning = try std.fmt.allocPrint(allocator, "# Warning: Git branch '{s}' not available: {}", .{ branch, err });
+            try commands.append(.{ .command = warning, .is_warning = true });
+        }
+    }
+
+    // Environment variable commands
+    const shell_type = shell.detectShell();
+    for (context.environment_vars) |env_var| {
+        if (validation.isEnvVarValid(env_var)) {
+            const env_cmd = shell.formatEnvVarCommand(allocator, env_var, shell_type) catch continue;
+            try commands.append(.{ .command = env_cmd });
+        } else {
+            const warning = try std.fmt.allocPrint(allocator, "# Warning: Skipping invalid env var: {s}", .{env_var.key});
+            try commands.append(.{ .command = warning, .is_warning = true });
+        }
+    }
+
+    const header = try std.fmt.allocPrint(allocator, "# Restoring context '{s}'...", .{context.name});
+    const footer = try std.fmt.allocPrint(allocator, "# ✅ Context '{s}' restored!\n# Directory: {s}\n{s}", .{
+        context.name, 
+        context.working_directory,
+        if (context.git_branch) |branch| try std.fmt.allocPrint(allocator, "# Git branch: {s}", .{branch}) else ""
+    });
+
+    return RestoreCommands{
+        .header = header,
+        .commands = try commands.toOwnedSlice(),
+        .footer = footer,
+    };
+}
+
+/// Print restore commands to stdout (separated output from logic)
+fn printRestoreCommands(restore_commands: RestoreCommands) void {
+    std.debug.print("{s}" ++ eol, .{restore_commands.header});
+    
+    for (restore_commands.commands) |cmd| {
+        std.debug.print("{s}" ++ eol, .{cmd.command});
+    }
+    
+    std.debug.print("{s}" ++ eol, .{restore_commands.footer});
+}
+
+/// Validate that a directory exists and is accessible
+fn validateDirectory(dir_path: []const u8) !void {
+    var dir = std.fs.cwd().openDir(dir_path, .{}) catch |err| switch (err) {
+        error.FileNotFound => {
+            std.debug.print("# Directory '{s}' doesn't exist, staying in current directory" ++ eol, .{dir_path});
+            return error.DirectoryNotFound;
+        },
+        error.AccessDenied => {
+            std.debug.print("# Access denied to '{s}'" ++ eol, .{dir_path});
+            return error.AccessDenied;
+        },
+        else => return err,
+    };
+    defer dir.close();
+}
