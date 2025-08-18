@@ -57,45 +57,12 @@ pub fn build(b: *std.Build) void {
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
 
-    // Testing infrastructure - Enhanced with CSV support
-
-    // Unit tests with CSV support capability
-    const unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/unit_tests.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    unit_tests.root_module.addImport("build_options", options.createModule());
-    unit_tests.root_module.addImport("clap", clap.module("clap"));
-
-    const exe_tests = b.addTest(.{
-        .root_module = exe_mod,
-    });
-
-    const blackbox_exe = b.addExecutable(.{
-        .name = "ctx-test",
-        .root_source_file = b.path("src/test.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    blackbox_exe.root_module.addImport("build_options", options.createModule());
-    b.installArtifact(blackbox_exe);
-
-    // Core test steps
-    const test_step = b.step("test", "Run all tests (unit + integration)");
-    test_step.dependOn(&b.addRunArtifact(unit_tests).step);
-    test_step.dependOn(&b.addRunArtifact(exe_tests).step);
-
-    const blackbox_cmd = b.addRunArtifact(blackbox_exe);
-    blackbox_cmd.addArg("./zig-out/bin/ctx");
-    blackbox_cmd.step.dependOn(b.getInstallStep());
-
-    const blackbox_step = b.step("test-blackbox", "Run blackbox tests");
-    blackbox_step.dependOn(&blackbox_cmd.step);
-
+    // Testing infrastructure
+    
+    // Unified test runner - single executable for all test types
     const test_runner = b.addExecutable(.{
-        .name = "ctx-test-runner",
-        .root_source_file = b.path("src/test_runner.zig"),
+        .name = "test",
+        .root_source_file = b.path("src/test.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -103,28 +70,17 @@ pub fn build(b: *std.Build) void {
     test_runner.root_module.addImport("clap", clap.module("clap"));
     b.installArtifact(test_runner);
 
-    const test_unit_step = b.step("test-unit", "Run unit tests only");
-    test_unit_step.dependOn(&b.addRunArtifact(unit_tests).step);
+    // Single unified test step - runs all tests by default, accepts args for test runner
+    const test_cmd = b.addRunArtifact(test_runner);
+    test_cmd.step.dependOn(b.getInstallStep());
 
-    const test_integration_step = b.step("test-integration", "Run integration tests only");
-    test_integration_step.dependOn(&b.addRunArtifact(exe_tests).step);
+    // Forward arguments to test runner (default: all tests)
+    if (b.args) |args| {
+        test_cmd.addArgs(args);
+    } else {
+        test_cmd.addArgs(&[_][]const u8{ "--type", "all" });
+    }
 
-    // Consolidated test runner steps
-    const run_unit_csv_cmd = b.addRunArtifact(test_runner);
-    run_unit_csv_cmd.addArgs(&[_][]const u8{ "--type", "unit", "--format", "csv" });
-    run_unit_csv_cmd.step.dependOn(b.getInstallStep());
-    const test_unit_csv_step = b.step("test-unit-csv", "Run unit tests with CSV output");
-    test_unit_csv_step.dependOn(&run_unit_csv_cmd.step);
-
-    const run_performance_cmd = b.addRunArtifact(test_runner);
-    run_performance_cmd.addArgs(&[_][]const u8{ "--type", "performance" });
-    run_performance_cmd.step.dependOn(b.getInstallStep());
-    const performance_step = b.step("test-performance", "Run performance benchmarks");
-    performance_step.dependOn(&run_performance_cmd.step);
-
-    const run_performance_csv_cmd = b.addRunArtifact(test_runner);
-    run_performance_csv_cmd.addArgs(&[_][]const u8{ "--type", "performance", "--format", "csv" });
-    run_performance_csv_cmd.step.dependOn(b.getInstallStep());
-    const performance_csv_step = b.step("test-performance-csv", "Run performance benchmarks with CSV output");
-    performance_csv_step.dependOn(&run_performance_csv_cmd.step);
+    const test_step = b.step("test", "Run all tests (unit + integration + performance + blackbox). Use -- to pass options to test runner");
+    test_step.dependOn(&test_cmd.step);
 }

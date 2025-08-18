@@ -31,7 +31,7 @@ The codebase had significant duplication in test infrastructure with multiple bi
 - Comprehensive argument parsing with proper error handling
 
 **Architecture**:
-- Imports existing test modules (`unit_tests.zig`, `performance_tests.zig`)
+- Imports existing test modules (`unit_tests.zig`, `.performance.test.zig`)
 - Uses existing test functions without duplication
 - Provides unified interface for all test capabilities
 
@@ -40,7 +40,7 @@ The codebase had significant duplication in test infrastructure with multiple bi
 ```zig
 const performance_tests = b.addExecutable(.{
     .name = "ctx-performance",
-    .root_source_file = b.path("src/performance_tests.zig"),
+    .root_source_file = b.path("src/.performance.test.zig"),
 });
 const unit_csv_tests = b.addExecutable(.{
     .name = "ctx-unit-csv", 

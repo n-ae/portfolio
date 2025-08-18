@@ -43,10 +43,13 @@ ctx/
 │   ├── validation.zig            # Input validation & data structures
 │   ├── shell.zig                 # Shell detection & compatibility
 │   ├── config.zig                # Application configuration constants
-│   ├── unit_tests.zig            # Enhanced tests with CSV support
-│   ├── performance_tests.zig     # Performance benchmarks
-│   ├── test_runner.zig           # Unified test runner
-│   └── test.zig                  # Blackbox/integration tests
+│   ├── test.zig                  # Unified test runner
+│   ├── .performance.test.zig     # Performance benchmarks
+│   ├── .blackbox.test.zig        # End-to-end blackbox tests
+│   ├── validation.unit.test.zig  # Validation module unit tests
+│   ├── shell.unit.test.zig       # Shell module unit tests
+│   ├── context.unit.test.zig     # Context module unit tests
+│   └── main.integration.test.zig # Integration tests
 ├── scripts/                      # Build & container automation
 │   ├── podman_build.zig          # Container build orchestration
 │   └── podman_test.zig           # Container testing with CSV support
@@ -78,45 +81,44 @@ Contexts are saved as JSON files in `~/.ctx/` directory. Each context file conta
 - `zig build --release=fast` - Build optimized release version
 
 ### Testing Commands
-- `zig build test` - Run all standard tests (unit + integration)
-- `zig build test-unit` - Run unit tests only
-- `zig build test-unit-csv` - Run unit tests with CSV output
-- `zig build test-integration` - Run integration tests only
-- `zig build test-blackbox` - Run end-to-end blackbox tests
-- `zig build test-performance` - Run performance benchmarks (standard output)
-- `zig build test-performance-csv` - Run performance benchmarks with CSV output
+- `zig build test` - Run all tests (unit + integration + performance + blackbox)
+- `zig build test -- [OPTIONS]` - Run specific tests with options
 
-### Unified Test Runner
-- `./zig-out/bin/ctx-test-runner [OPTIONS]` - Consolidated test runner with configurable output
-  - `--type unit|performance|all` - Select test type (default: all)
-  - `--format standard|csv` - Select output format (default: standard)
-  - `--output FILE` - Write results to file instead of stdout
-  - Examples:
-    - `./zig-out/bin/ctx-test-runner` - Run all tests, standard output
-    - `./zig-out/bin/ctx-test-runner --type unit --format csv` - Unit tests with CSV
-    - `./zig-out/bin/ctx-test-runner --type performance --format csv --output perf.csv` - Performance to file
-- `./zig-out/bin/ctx-test <ctx-binary-path>` - Blackbox test runner
+**Test Runner Options:**
+- `--type unit|integration|performance|blackbox|all` - Select test type (default: all)
+- `--format standard|csv` - Select output format (default: standard)
+- `--output FILE` - Write results to file instead of stdout
+
+**Examples:**
+- `zig build test` - Run all tests with standard output
+- `zig build test -- --type unit` - Run unit tests only
+- `zig build test -- --type integration` - Run integration tests only
+- `zig build test -- --type blackbox` - Run blackbox tests only
+- `zig build test -- --type unit --format csv` - Unit tests with CSV output
+- `zig build test -- --type performance --format csv --output perf.csv` - Performance tests to file
 
 ## Testing Structure
 
 ### Test Types
 
-**Unit Tests** (`src/unit_tests.zig`):
-- Fast-running tests for individual modules (validation, shell, context, main)
-- 12 tests covering validation logic, shell detection, context management, and module integration
-- Works with both standard Zig test runner and CSV output via unified test runner
+**Unit Tests** (individual `*.unit.test.zig` files):
+- `validation.unit.test.zig` - Context name and environment variable validation tests
+- `shell.unit.test.zig` - Shell detection and command formatting tests  
+- `context.unit.test.zig` - Context manager memory management tests
+- Fast-running tests for individual modules in isolation
+- Run via standard Zig test runner
 
-**Integration Tests**:
-- Tests the main module with all dependencies
+**Integration Tests** (`main.integration.test.zig`):
+- Tests module dependencies and configuration constants
 - Ensures all modules work together correctly
-- Run with: `zig build test-integration`
+- Verifies application-level integration
 
-**Blackbox Tests** (`src/test.zig`):
+**Blackbox Tests** (`.blackbox.test.zig`):
 - End-to-end tests that run the actual binary as subprocess
 - 26 comprehensive tests covering CLI interface, save/restore/list/delete workflows
 - Tests include: CLI interface, save/restore/list/delete commands, complete workflows
 
-**Performance Tests** (`src/performance_tests.zig`):
+**Performance Tests** (`.performance.test.zig`):
 - Systematic performance benchmarking with configurable iterations
 - Warmup iterations to stabilize measurements
 - Multiple benchmark categories (string ops, file I/O, context operations)
@@ -125,14 +127,14 @@ Contexts are saved as JSON files in `~/.ctx/` directory. Each context file conta
 ### Running Tests
 
 ```bash
-# Run all tests
-zig build test && zig build test-blackbox
+# Run all tests (unit + integration + performance + blackbox)
+zig build test
 
 # Run individual test suites
-zig build test-unit        # Fast unit tests
-zig build test-integration # Integration tests  
-zig build test-blackbox    # End-to-end tests
-zig build test-performance # Performance benchmarks
+zig build test -- --type unit         # Fast unit tests
+zig build test -- --type integration  # Integration tests
+zig build test -- --type blackbox     # End-to-end tests
+zig build test -- --type performance  # Performance benchmarks
 ```
 
 ### CSV Test Output
@@ -141,15 +143,13 @@ For automated testing and CI/CD integration:
 
 ```bash
 # Unit tests with CSV output
-zig build test-unit-csv
+zig build test -- --type unit --format csv
 
-# Performance benchmarks with CSV output  
-zig build test-performance-csv
+# Performance benchmarks with CSV output
+zig build test -- --type performance --format csv --output perf_results.csv
 
-# Direct CSV output using unified test runner
-./zig-out/bin/ctx-test-runner --type unit --format csv > unit_results.csv
-./zig-out/bin/ctx-test-runner --type performance --format csv --output perf_results.csv
-./zig-out/bin/ctx-test-runner --type all --format csv --output all_results.csv
+# All tests with CSV output
+zig build test -- --type all --format csv --output all_results.csv
 ```
 
 **CSV Formats:**
@@ -247,8 +247,8 @@ Performance tests generate CSV output with nanosecond precision for trend analys
 ### Adding New Features
 
 1. **Core Logic**: Add to appropriate module in `src/`
-2. **Tests**: Add to `unit_tests.zig` (works with both standard Zig tests and CSV output)
-3. **Performance**: Add benchmarks to `performance_tests.zig` if relevant
+2. **Tests**: Add to appropriate `*.unit.test.zig` file for the module being tested
+3. **Performance**: Add benchmarks to `.performance.test.zig` if relevant
 4. **Integration**: Ensure blackbox tests cover new CLI functionality
 5. **Container**: Test in containerized environment
 
@@ -256,12 +256,12 @@ Performance tests generate CSV output with nanosecond precision for trend analys
 
 ```bash
 # Local development testing
-zig build test                    # Fast feedback
-zig build test-performance        # Performance regression check
+zig build test                                        # Fast feedback (all tests)
+zig build test -- --type performance                 # Performance regression check
 
-# Pre-commit testing  
-zig build test-unit-csv           # Generate CSV unit test results
-zig build test-performance-csv    # Performance benchmarks with CSV
+# Pre-commit testing
+zig build test -- --type unit --format csv --output unit_results.csv
+zig build test -- --type performance --format csv --output perf_results.csv
 zig run scripts/podman_test.zig -- all  # Container validation
 
 # CI/CD Pipeline
@@ -273,7 +273,6 @@ zig run scripts/podman_test.zig -- --csv --output ci_results.csv all
 ### Environment Variables
 - `HOME`: Context storage location (~/.ctx/)
 - `SHELL`: Shell detection override
-- `TARGET_PLATFORM`: Container platform specification
 
 ### Configuration Files
 - `src/config.zig`: Application constants
