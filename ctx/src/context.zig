@@ -6,10 +6,10 @@ const fs = std.fs;
 const process = std.process;
 const build_options = @import("build_options");
 
-const shell = @import("shell.zig");
-const validation = @import("validation.zig");
 const config = @import("config.zig");
+const shell = @import("shell.zig");
 const storage = @import("storage.zig");
+const validation = @import("validation.zig");
 const Context = validation.Context;
 const EnvVar = validation.EnvVar;
 const eol = validation.eol;
@@ -18,6 +18,8 @@ inline fn getEnv(key: []const u8) ?[:0]const u8 {
     return std.posix.getenv(key);
 }
 
+/// Manages context saving, restoration, and persistence operations
+/// Handles the complete lifecycle of development context snapshots
 pub const ContextManager = struct {
     allocator: Allocator,
     storage: storage.Storage,
@@ -25,6 +27,8 @@ pub const ContextManager = struct {
 
     const Self = @This();
 
+    /// Initialize a new ContextManager with storage in the user's home directory
+    /// Returns error if home directory cannot be accessed or storage initialization fails
     pub fn init(allocator: Allocator) !Self {
         const home_dir = getEnv("HOME") orelse config.Config.FALLBACK_HOME_DIR;
 
@@ -43,11 +47,15 @@ pub const ContextManager = struct {
         };
     }
 
+    /// Clean up allocated resources including storage and working directory string
     pub fn deinit(self: *Self) void {
         self.storage.deinit();
         self.allocator.free(self.original_cwd);
     }
 
+    /// Capture and save the current development context with the given name
+    /// Includes working directory, git branch, environment variables, and placeholder for editor state
+    /// Returns error if context name is invalid or storage operation fails
     pub fn saveContext(self: *Self, name: []const u8) !void {
         try validation.validateContextName(name);
         const context = try self.captureCurrentContext(name);
@@ -100,6 +108,9 @@ pub const ContextManager = struct {
         return try self.allocator.dupe(u8, cwd);
     }
 
+    /// Load and display shell commands to restore a previously saved context
+    /// Generates platform-appropriate commands for directory change, git branch switch, and environment setup
+    /// Prints user-friendly error if context does not exist
     pub fn restoreContext(self: *Self, name: []const u8) !void {
         const context = self.storage.loadContext(name) catch |err| switch (err) {
             error.FileNotFound => {
@@ -109,7 +120,7 @@ pub const ContextManager = struct {
             else => return err,
         };
         defer context.deinit(self.allocator);
-        
+
         const restore_commands = try generateRestoreCommands(self.allocator, &context);
         defer {
             self.allocator.free(restore_commands.header);
@@ -122,7 +133,8 @@ pub const ContextManager = struct {
         printRestoreCommands(restore_commands);
     }
 
-
+    /// Display all saved contexts with timestamps showing when they were created
+    /// Shows helpful message with save command example if no contexts exist
     pub fn listContexts(self: *Self) !void {
         const contexts = self.storage.listContexts() catch |err| switch (err) {
             else => return err,
@@ -146,6 +158,8 @@ pub const ContextManager = struct {
         }
     }
 
+    /// Permanently delete a saved context by name
+    /// Shows user-friendly error message if context does not exist
     pub fn deleteContext(self: *Self, name: []const u8) !void {
         const deleted = try self.storage.deleteContext(name);
         if (!deleted) {
@@ -208,6 +222,8 @@ pub const ContextManager = struct {
         return commands.toOwnedSlice();
     }
 
+    /// Extract context name from command line arguments
+    /// Returns error if required name argument is missing
     pub fn parseName(self: *Self, args: []const [:0]const u8) ![]const u8 {
         _ = self;
         if (args.len < 3) {
@@ -216,7 +232,8 @@ pub const ContextManager = struct {
         return args[2];
     }
 
-    /// Print user-friendly error message for parsing errors
+    /// Display user-friendly error messages for command parsing failures
+    /// Provides usage examples and specific guidance based on error type
     pub fn printParseError(command: []const u8, err: anyerror) void {
         switch (err) {
             error.MissingName => {
@@ -230,7 +247,6 @@ pub const ContextManager = struct {
     }
 };
 
-
 const RestoreCommand = struct {
     command: []const u8,
     is_warning: bool = false,
@@ -242,10 +258,12 @@ const RestoreCommands = struct {
     footer: []const u8,
 };
 
-/// Generate shell commands to restore a context (separated logic from output)
+/// Generate platform-appropriate shell commands to restore a saved development context
+/// Returns structured commands for directory change, git branch switch, and environment variables
+/// Validates each component and provides warnings for unavailable resources
 fn generateRestoreCommands(allocator: std.mem.Allocator, context: *const Context) !RestoreCommands {
     var commands = std.ArrayList(RestoreCommand).init(allocator);
-    
+
     // Change directory command
     if (validateDirectory(context.working_directory)) {
         const cd_cmd = try std.fmt.allocPrint(allocator, "cd \"{s}\"", .{context.working_directory});
@@ -280,11 +298,14 @@ fn generateRestoreCommands(allocator: std.mem.Allocator, context: *const Context
     }
 
     const header = try std.fmt.allocPrint(allocator, "# Restoring context '{s}'...", .{context.name});
-    const footer = try std.fmt.allocPrint(allocator, "# ✅ Context '{s}' restored!\n# Directory: {s}\n{s}", .{
-        context.name, 
-        context.working_directory,
-        if (context.git_branch) |branch| try std.fmt.allocPrint(allocator, "# Git branch: {s}", .{branch}) else ""
-    });
+
+    const git_info = if (context.git_branch) |branch|
+        try std.fmt.allocPrint(allocator, "# Git branch: {s}", .{branch})
+    else
+        try allocator.dupe(u8, "");
+    defer allocator.free(git_info);
+
+    const footer = try std.fmt.allocPrint(allocator, "# ✅ Context '{s}' restored!\n# Directory: {s}\n{s}", .{ context.name, context.working_directory, git_info });
 
     return RestoreCommands{
         .header = header,
@@ -293,18 +314,20 @@ fn generateRestoreCommands(allocator: std.mem.Allocator, context: *const Context
     };
 }
 
-/// Print restore commands to stdout (separated output from logic)
+/// Output restore commands to stdout with proper formatting
+/// Displays header, individual commands, and summary footer
 fn printRestoreCommands(restore_commands: RestoreCommands) void {
     std.debug.print("{s}" ++ eol, .{restore_commands.header});
-    
+
     for (restore_commands.commands) |cmd| {
         std.debug.print("{s}" ++ eol, .{cmd.command});
     }
-    
+
     std.debug.print("{s}" ++ eol, .{restore_commands.footer});
 }
 
-/// Validate that a directory exists and is accessible
+/// Check if a directory exists and can be accessed by the current user
+/// Returns specific errors for file not found or permission denied cases
 fn validateDirectory(dir_path: []const u8) !void {
     var dir = std.fs.cwd().openDir(dir_path, .{}) catch |err| switch (err) {
         error.FileNotFound => {

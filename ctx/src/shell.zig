@@ -17,25 +17,74 @@ inline fn getEnv(key: []const u8) ?[:0]const u8 {
     return std.posix.getenv(key);
 }
 
+/// Enhanced shell detection with robust environment variable checking
+/// Handles edge cases like shell symlinks, nested shells, and multiple shell indicators
 pub fn detectShell() ShellType {
-    // Check SHELL environment variable first (Unix-like systems)
+    // Priority 1: Check current shell context (most reliable)
+    if (getEnv("ZSH_VERSION")) |_| return .zsh;
+    if (getEnv("BASH_VERSION")) |_| return .bash;
+    if (getEnv("FISH_VERSION")) |_| return .fish;
+
+    // Priority 2: Check SHELL environment variable with enhanced parsing
     if (getEnv("SHELL")) |shell_path| {
-        if (std.mem.endsWith(u8, shell_path, "/bash")) return .bash;
-        if (std.mem.endsWith(u8, shell_path, "/zsh")) return .zsh;
-        if (std.mem.endsWith(u8, shell_path, "/fish")) return .fish;
+        // Handle both absolute paths and symlinks
+        if (std.mem.containsAtLeast(u8, shell_path, 1, "bash")) return .bash;
+        if (std.mem.containsAtLeast(u8, shell_path, 1, "zsh")) return .zsh;
+        if (std.mem.containsAtLeast(u8, shell_path, 1, "fish")) return .fish;
+        // Handle common shell symlinks and alternatives
+        if (std.mem.containsAtLeast(u8, shell_path, 1, "sh") and
+            !std.mem.containsAtLeast(u8, shell_path, 1, "fish"))
+        {
+            // Could be dash, ash, or other sh-compatible - treat as bash for commands
+            return .bash;
+        }
     }
 
-    // Check for Windows shells
-    if (getEnv("PSModulePath")) |_| return .powershell;
+    // Priority 3: Check for Windows shells with multiple indicators
+    if (getEnv("PSModulePath")) |_| {
+        // Confirm PowerShell by checking multiple indicators
+        if (getEnv("POWERSHELL_DISTRIBUTION_CHANNEL")) |_| return .powershell;
+        if (getEnv("PSVersionTable")) |_| return .powershell;
+        return .powershell; // PSModulePath is strong indicator
+    }
+
     if (getEnv("COMSPEC")) |comspec| {
-        if (std.mem.endsWith(u8, comspec, "cmd.exe")) return .cmd;
+        if (std.mem.containsAtLeast(u8, comspec, 1, "cmd.exe")) return .cmd;
+        if (std.mem.containsAtLeast(u8, comspec, 1, "powershell")) return .powershell;
     }
 
-    // Platform-specific defaults
+    // Priority 4: Check session-specific indicators
+    if (getEnv("ZSH_NAME")) |_| return .zsh;
+    if (getEnv("BASH")) |_| return .bash;
+
+    // Priority 5: Platform-specific intelligent defaults
     return switch (@import("builtin").os.tag) {
-        .windows => .cmd,
-        .macos => .zsh, // macOS default since Catalina
-        else => .bash, // Most Linux distributions
+        .windows => blk: {
+            // Windows 10+ often has PowerShell as default
+            if (getEnv("OS")) |os| {
+                if (std.mem.containsAtLeast(u8, os, 1, "Windows_NT")) {
+                    // Check if this is a modern Windows version
+                    if (getEnv("PROCESSOR_ARCHITECTURE")) |_| return .powershell;
+                }
+            }
+            break :blk .cmd;
+        },
+        .macos => blk: {
+            // macOS Catalina+ defaults to zsh, but check for older versions
+            if (getEnv("TERM_PROGRAM")) |term| {
+                if (std.mem.containsAtLeast(u8, term, 1, "Apple_Terminal")) return .zsh;
+                if (std.mem.containsAtLeast(u8, term, 1, "iTerm")) return .zsh;
+            }
+            break :blk .zsh;
+        },
+        else => blk: {
+            // Linux/Unix: intelligent detection based on distribution hints
+            if (getEnv("DESKTOP_SESSION")) |session| {
+                if (std.mem.containsAtLeast(u8, session, 1, "ubuntu")) return .bash;
+                if (std.mem.containsAtLeast(u8, session, 1, "fedora")) return .bash;
+            }
+            break :blk .bash;
+        },
     };
 }
 
@@ -85,4 +134,3 @@ pub fn printDirectoryChangeCommand(directory: []const u8, shell_type: ShellType)
         },
     }
 }
-

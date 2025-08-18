@@ -9,6 +9,103 @@ const validation = @import("validation.zig");
 const Context = validation.Context;
 const eol = validation.eol;
 
+/// Storage format version for compatibility tracking
+pub const STORAGE_VERSION = "1.0";
+
+/// Versioned context structure for JSON storage
+const VersionedContext = struct {
+    // Metadata
+    version: []const u8 = STORAGE_VERSION,
+    created_with: []const u8,
+
+    // Context data (flattened from Context struct)
+    name: []const u8,
+    timestamp: i64,
+    git_branch: ?[]const u8,
+    working_directory: []const u8,
+    open_files: [][]const u8,
+    environment_vars: []validation.EnvVar,
+    terminal_commands: [][]const u8,
+
+    /// Create from standard Context
+    pub fn fromContext(allocator: Allocator, context: *const Context) !VersionedContext {
+        const version_str = build_options.package.name ++ " v" ++ build_options.package.version;
+
+        return VersionedContext{
+            .version = try allocator.dupe(u8, STORAGE_VERSION),
+            .created_with = try allocator.dupe(u8, version_str),
+            .name = try allocator.dupe(u8, context.name),
+            .timestamp = context.timestamp,
+            .git_branch = if (context.git_branch) |branch| try allocator.dupe(u8, branch) else null,
+            .working_directory = try allocator.dupe(u8, context.working_directory),
+            .open_files = try duplicateStringSlice(allocator, context.open_files),
+            .environment_vars = try duplicateEnvVars(allocator, context.environment_vars),
+            .terminal_commands = try duplicateStringSlice(allocator, context.terminal_commands),
+        };
+    }
+
+    /// Convert to standard Context
+    pub fn toContext(self: *const VersionedContext, allocator: Allocator) !Context {
+        return Context{
+            .name = try allocator.dupe(u8, self.name),
+            .timestamp = self.timestamp,
+            .git_branch = if (self.git_branch) |branch| try allocator.dupe(u8, branch) else null,
+            .working_directory = try allocator.dupe(u8, self.working_directory),
+            .open_files = try duplicateStringSlice(allocator, self.open_files),
+            .environment_vars = try duplicateEnvVars(allocator, self.environment_vars),
+            .terminal_commands = try duplicateStringSlice(allocator, self.terminal_commands),
+        };
+    }
+
+    /// Clean up allocated memory
+    pub fn deinit(self: *const VersionedContext, allocator: Allocator) void {
+        allocator.free(self.version);
+        allocator.free(self.created_with);
+        allocator.free(self.name);
+        if (self.git_branch) |branch| {
+            allocator.free(branch);
+        }
+        allocator.free(self.working_directory);
+
+        for (self.open_files) |file| {
+            allocator.free(file);
+        }
+        allocator.free(self.open_files);
+
+        for (self.environment_vars) |env_var| {
+            allocator.free(env_var.key);
+            allocator.free(env_var.value);
+        }
+        allocator.free(self.environment_vars);
+
+        for (self.terminal_commands) |cmd| {
+            allocator.free(cmd);
+        }
+        allocator.free(self.terminal_commands);
+    }
+};
+
+/// Helper function to duplicate string slice
+fn duplicateStringSlice(allocator: Allocator, source: [][]const u8) ![][]const u8 {
+    const result = try allocator.alloc([]const u8, source.len);
+    for (source, 0..) |str, i| {
+        result[i] = try allocator.dupe(u8, str);
+    }
+    return result;
+}
+
+/// Helper function to duplicate environment variables
+fn duplicateEnvVars(allocator: Allocator, source: []validation.EnvVar) ![]validation.EnvVar {
+    const result = try allocator.alloc(validation.EnvVar, source.len);
+    for (source, 0..) |env_var, i| {
+        result[i] = validation.EnvVar{
+            .key = try allocator.dupe(u8, env_var.key),
+            .value = try allocator.dupe(u8, env_var.value),
+        };
+    }
+    return result;
+}
+
 /// Storage interface for context data persistence
 pub const Storage = struct {
     allocator: Allocator,
@@ -62,19 +159,13 @@ pub const Storage = struct {
         const content = try file.readToEndAlloc(self.allocator, config.Config.MAX_FILE_SIZE);
         defer self.allocator.free(content);
 
-        const parsed = try json.parseFromSlice(Context, self.allocator, content, .{ .allocate = .alloc_always });
+        const parsed = try json.parseFromSlice(VersionedContext, self.allocator, content, .{ .allocate = .alloc_always });
         defer parsed.deinit();
-        
-        // Deep copy the context to avoid memory management issues
-        return Context{
-            .name = try self.allocator.dupe(u8, parsed.value.name),
-            .timestamp = parsed.value.timestamp,
-            .git_branch = if (parsed.value.git_branch) |branch| try self.allocator.dupe(u8, branch) else null,
-            .working_directory = try self.allocator.dupe(u8, parsed.value.working_directory),
-            .open_files = try self.duplicateStringSlice(parsed.value.open_files),
-            .environment_vars = try self.duplicateEnvVars(parsed.value.environment_vars),
-            .terminal_commands = try self.duplicateStringSlice(parsed.value.terminal_commands),
-        };
+
+        const versioned_context = parsed.value;
+        const context = try versioned_context.toContext(self.allocator);
+
+        return context;
     }
 
     /// Delete a context from storage
@@ -147,14 +238,16 @@ pub const Storage = struct {
     }
 
     fn writeToTempFile(self: *Self, context: *const Context, temp_file: []const u8) !void {
-        _ = self;
+        const versioned_context = try VersionedContext.fromContext(self.allocator, context);
+        defer versioned_context.deinit(self.allocator);
+
         const file = fs.cwd().createFile(temp_file, .{}) catch |err| {
             std.debug.print("❌ Failed to create context file: {}" ++ eol, .{err});
             return err;
         };
         defer file.close();
 
-        json.stringify(context, .{ .whitespace = .indent_2 }, file.writer()) catch |err| {
+        json.stringify(versioned_context, .{ .whitespace = .indent_2 }, file.writer()) catch |err| {
             std.debug.print("❌ Failed to write context data: {}" ++ eol, .{err});
             fs.cwd().deleteFile(temp_file) catch {}; // Clean up temp file
             return err;
@@ -202,7 +295,7 @@ pub const Storage = struct {
         const content = file.readToEndAlloc(self.allocator, config.Config.MAX_PREVIEW_SIZE) catch return null;
         defer self.allocator.free(content);
 
-        const parsed = json.parseFromSlice(Context, self.allocator, content, .{}) catch return null;
+        const parsed = json.parseFromSlice(VersionedContext, self.allocator, content, .{}) catch return null;
         defer parsed.deinit();
 
         return parsed.value.timestamp;
@@ -226,3 +319,4 @@ pub fn freeContextInfoList(allocator: Allocator, contexts: []ContextInfo) void {
     }
     allocator.free(contexts);
 }
+

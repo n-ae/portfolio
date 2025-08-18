@@ -9,6 +9,7 @@ const TestType = enum {
     integration,
     performance,
     blackbox,
+    container,
     all,
 };
 
@@ -31,7 +32,7 @@ fn showUsage() void {
         \\Run different types of tests with configurable output formats.
         \\
         \\Options:
-        \\  --type TYPE         Test type: unit, integration, performance, blackbox, all (default: all)
+        \\  --type TYPE         Test type: unit, integration, performance, blackbox, container, all (default: all)
         \\  --format FORMAT     Output format: standard, csv (default: standard)  
         \\  --output FILE       Write results to file instead of stdout
         \\  --help              Show this help message
@@ -41,6 +42,7 @@ fn showUsage() void {
         \\  ctx-test-runner --type unit --format csv     # Unit tests with CSV output
         \\  ctx-test-runner --type integration           # Integration tests only
         \\  ctx-test-runner --type blackbox             # Blackbox tests only
+        \\  ctx-test-runner --type container            # Container tests only
         \\  ctx-test-runner --type performance --format csv --output perf.csv  # Performance tests to file
         \\
     , .{});
@@ -74,10 +76,12 @@ fn parseArgs(allocator: std.mem.Allocator) !Config {
                 config.test_type = .performance;
             } else if (std.mem.eql(u8, type_str, "blackbox")) {
                 config.test_type = .blackbox;
+            } else if (std.mem.eql(u8, type_str, "container")) {
+                config.test_type = .container;
             } else if (std.mem.eql(u8, type_str, "all")) {
                 config.test_type = .all;
             } else {
-                std.debug.print("Error: Invalid test type '{s}'. Use: unit, integration, performance, blackbox, all\n", .{type_str});
+                std.debug.print("Error: Invalid test type '{s}'. Use: unit, integration, performance, blackbox, container, all\n", .{type_str});
                 return error.InvalidArgs;
             }
         } else if (std.mem.eql(u8, arg, "--format")) {
@@ -147,12 +151,17 @@ pub fn main() !void {
             std.debug.print("Running blackbox tests...\n", .{});
             try runBlackboxTests(allocator, config);
         },
+        .container => {
+            std.debug.print("Running container tests...\n", .{});
+            try runContainerTests(allocator, config);
+        },
         .all => {
             std.debug.print("Running all tests...\n", .{});
             try runUnitTests(allocator, config);
             try runIntegrationTests(allocator, config);
             try runPerformanceTests(allocator, config);
             try runBlackboxTests(allocator, config);
+            try runContainerTests(allocator, config);
         },
     }
 }
@@ -166,7 +175,7 @@ fn runUnitTests(allocator: std.mem.Allocator, config: Config) !void {
         }
         allocator.free(test_files);
     }
-    
+
     for (test_files) |test_file| {
         const result = try std.process.Child.run(.{
             .allocator = allocator,
@@ -174,7 +183,7 @@ fn runUnitTests(allocator: std.mem.Allocator, config: Config) !void {
         });
         defer allocator.free(result.stdout);
         defer allocator.free(result.stderr);
-        
+
         if (config.output_format == .standard) {
             if (result.stdout.len > 0) {
                 std.debug.print("Unit test output ({s}):\n{s}\n", .{ test_file, result.stdout });
@@ -183,7 +192,7 @@ fn runUnitTests(allocator: std.mem.Allocator, config: Config) !void {
                 std.debug.print("Unit test errors ({s}):\n{s}\n", .{ test_file, result.stderr });
             }
         }
-        
+
         if (result.term.Exited != 0) {
             std.debug.print("Unit tests failed in {s} with exit code: {d}\n", .{ test_file, result.term.Exited });
             return error.TestsFailed;
@@ -209,7 +218,7 @@ fn runIntegrationTests(allocator: std.mem.Allocator, config: Config) !void {
         }
         allocator.free(test_files);
     }
-    
+
     for (test_files) |test_file| {
         const result = try std.process.Child.run(.{
             .allocator = allocator,
@@ -217,7 +226,7 @@ fn runIntegrationTests(allocator: std.mem.Allocator, config: Config) !void {
         });
         defer allocator.free(result.stdout);
         defer allocator.free(result.stderr);
-        
+
         if (config.output_format == .standard) {
             if (result.stdout.len > 0) {
                 std.debug.print("Integration test output ({s}):\n{s}\n", .{ test_file, result.stdout });
@@ -226,7 +235,7 @@ fn runIntegrationTests(allocator: std.mem.Allocator, config: Config) !void {
                 std.debug.print("Integration test errors ({s}):\n{s}\n", .{ test_file, result.stderr });
             }
         }
-        
+
         if (result.term.Exited != 0) {
             std.debug.print("Integration tests failed in {s} with exit code: {d}\n", .{ test_file, result.term.Exited });
             return error.TestsFailed;
@@ -243,7 +252,7 @@ fn runBlackboxTests(allocator: std.mem.Allocator, config: Config) !void {
         }
         allocator.free(test_files);
     }
-    
+
     for (test_files) |test_file| {
         // Run blackbox tests by executing the zig file directly (it contains main function)
         const result = try std.process.Child.run(.{
@@ -252,7 +261,7 @@ fn runBlackboxTests(allocator: std.mem.Allocator, config: Config) !void {
         });
         defer allocator.free(result.stdout);
         defer allocator.free(result.stderr);
-        
+
         if (config.output_format == .standard) {
             if (result.stdout.len > 0) {
                 std.debug.print("Blackbox test output ({s}):\n{s}\n", .{ test_file, result.stdout });
@@ -261,11 +270,107 @@ fn runBlackboxTests(allocator: std.mem.Allocator, config: Config) !void {
                 std.debug.print("Blackbox test errors ({s}):\n{s}\n", .{ test_file, result.stderr });
             }
         }
-        
+
         if (result.term.Exited != 0) {
             std.debug.print("Blackbox tests failed in {s} with exit code: {d}\n", .{ test_file, result.term.Exited });
             return error.TestsFailed;
         }
+    }
+}
+
+fn runContainerTests(allocator: std.mem.Allocator, config: Config) !void {
+    // Check if Podman is available
+    const podman_check = std.process.Child.run(.{
+        .allocator = allocator,
+        .argv = &[_][]const u8{ "podman", "--version" },
+    }) catch {
+        std.debug.print("Podman not available - skipping container tests\n", .{});
+        return;
+    };
+    defer allocator.free(podman_check.stdout);
+    defer allocator.free(podman_check.stderr);
+
+    if (podman_check.term.Exited != 0) {
+        std.debug.print("Podman not available - skipping container tests\n", .{});
+        return;
+    }
+
+    // Use existing Podman test infrastructure
+    std.debug.print("Running container tests using Podman infrastructure...\n", .{});
+
+    // First check if we have any custom *.container.test.zig files
+    const test_files = try findTestFiles(allocator, ".", "*.container.test.zig");
+    defer {
+        for (test_files) |file| {
+            allocator.free(file);
+        }
+        allocator.free(test_files);
+    }
+
+    // Run custom container test files if they exist
+    for (test_files) |test_file| {
+        const result = try std.process.Child.run(.{
+            .allocator = allocator,
+            .argv = &[_][]const u8{ "zig", "run", test_file },
+        });
+        defer allocator.free(result.stdout);
+        defer allocator.free(result.stderr);
+
+        if (config.output_format == .standard) {
+            if (result.stdout.len > 0) {
+                std.debug.print("Container test output ({s}):\n{s}\n", .{ test_file, result.stdout });
+            }
+            if (result.stderr.len > 0) {
+                std.debug.print("Container test errors ({s}):\n{s}\n", .{ test_file, result.stderr });
+            }
+        }
+
+        if (result.term.Exited != 0) {
+            std.debug.print("Container tests failed in {s} with exit code: {d}\n", .{ test_file, result.term.Exited });
+            return error.TestsFailed;
+        }
+    }
+
+    // Run a simpler container test that works with available binaries
+    std.debug.print("Running simplified container tests with available binaries...\n", .{});
+
+    const container_test_cmd =
+        \\set -e
+        \\echo '🐳 Testing ctx CLI in container environment...'
+        \\echo '📦 Available binaries:'
+        \\ls -la zig-out/bin/
+        \\echo '🧪 Testing basic functionality:'
+        \\./zig-out/bin/ctx version
+        \\./zig-out/bin/ctx --help | head -5
+        \\echo '🎯 Running blackbox tests:'
+        \\./zig-out/bin/ctx-test ./zig-out/bin/ctx
+        \\echo '✅ Container tests completed successfully!'
+    ;
+
+    const container_name = try std.fmt.allocPrint(allocator, "ctx-test-unified-{d}", .{std.time.timestamp()});
+    defer allocator.free(container_name);
+
+    const image = "localhost/ctx-cli:builder-latest";
+
+    const result = try std.process.Child.run(.{
+        .allocator = allocator,
+        .argv = &[_][]const u8{ "podman", "run", "--name", container_name, "--rm", "--workdir", "/build", image, "sh", "-c", container_test_cmd },
+    });
+    defer allocator.free(result.stdout);
+    defer allocator.free(result.stderr);
+
+    if (config.output_format == .standard) {
+        if (result.stdout.len > 0) {
+            std.debug.print("Container test output:\n{s}\n", .{result.stdout});
+        }
+        if (result.stderr.len > 0) {
+            std.debug.print("Container test errors:\n{s}\n", .{result.stderr});
+        }
+    }
+
+    if (result.term.Exited != 0) {
+        std.debug.print("Container tests failed with exit code: {d}\n", .{result.term.Exited});
+        return error.TestsFailed;
     }
 }
 
@@ -291,16 +396,17 @@ fn findTestFiles(allocator: std.mem.Allocator, dir_path: []const u8, pattern: []
             }
         } else if (entry.kind == .directory) {
             // Skip common directories that shouldn't contain tests
-            if (std.mem.eql(u8, entry.name, ".git") or 
+            if (std.mem.eql(u8, entry.name, ".git") or
                 std.mem.eql(u8, entry.name, "zig-out") or
-                std.mem.eql(u8, entry.name, ".zig-cache")) {
+                std.mem.eql(u8, entry.name, ".zig-cache"))
+            {
                 continue;
             }
-            
+
             // Recursively search subdirectories
             const sub_dir_path = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ dir_path, entry.name });
             defer allocator.free(sub_dir_path);
-            
+
             const sub_files = try findTestFiles(allocator, sub_dir_path, pattern);
             defer {
                 for (sub_files) |sub_file| {
@@ -308,7 +414,7 @@ fn findTestFiles(allocator: std.mem.Allocator, dir_path: []const u8, pattern: []
                 }
                 allocator.free(sub_files);
             }
-            
+
             for (sub_files) |sub_file| {
                 try files.append(try allocator.dupe(u8, sub_file));
             }
@@ -321,7 +427,7 @@ fn findTestFiles(allocator: std.mem.Allocator, dir_path: []const u8, pattern: []
 fn matchesPattern(filename: []const u8, pattern: []const u8) bool {
     // Simple pattern matching for *.extension.zig
     if (std.mem.startsWith(u8, pattern, "*.") and std.mem.endsWith(u8, pattern, ".zig")) {
-        const middle_part = pattern[2..pattern.len-4]; // Remove "*." and ".zig"
+        const middle_part = pattern[2 .. pattern.len - 4]; // Remove "*." and ".zig"
         const expected_suffix = std.fmt.allocPrint(std.heap.page_allocator, ".{s}.zig", .{middle_part}) catch return false;
         defer std.heap.page_allocator.free(expected_suffix);
         return std.mem.endsWith(u8, filename, expected_suffix);
