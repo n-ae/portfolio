@@ -58,10 +58,10 @@ pub fn build(b: *std.Build) void {
     run_step.dependOn(&run_cmd.step);
 
     // Testing infrastructure - Enhanced with CSV support
-    
-    // Unit tests with CSV support capability  
+
+    // Unit tests with CSV support capability
     const unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/unit_tests_enhanced.zig"),
+        .root_source_file = b.path("src/unit_tests.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -92,7 +92,6 @@ pub fn build(b: *std.Build) void {
 
     const blackbox_step = b.step("test-blackbox", "Run blackbox tests");
     blackbox_step.dependOn(&blackbox_cmd.step);
-
 
     const test_runner = b.addExecutable(.{
         .name = "ctx-test-runner",
@@ -128,5 +127,4 @@ pub fn build(b: *std.Build) void {
     run_performance_csv_cmd.step.dependOn(b.getInstallStep());
     const performance_csv_step = b.step("test-performance-csv", "Run performance benchmarks with CSV output");
     performance_csv_step.dependOn(&run_performance_csv_cmd.step);
-
 }

@@ -2,7 +2,7 @@ const std = @import("std");
 const ArrayList = std.ArrayList;
 
 // Import all test modules
-const unit_tests = @import("unit_tests_enhanced.zig");
+const unit_tests = @import("unit_tests.zig");
 const performance_tests = @import("performance_tests.zig");
 
 const TestType = enum {
@@ -46,13 +46,13 @@ fn showUsage() void {
 fn parseArgs(allocator: std.mem.Allocator) !Config {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
-    
+
     var config = Config{};
     var i: usize = 1; // Skip program name
-    
+
     while (i < args.len) {
         const arg = args[i];
-        
+
         if (std.mem.eql(u8, arg, "--help") or std.mem.eql(u8, arg, "-h")) {
             config.help = true;
             return config;
@@ -99,10 +99,10 @@ fn parseArgs(allocator: std.mem.Allocator) !Config {
             std.debug.print("Error: Unknown option '{s}'\n", .{arg});
             return error.InvalidArgs;
         }
-        
+
         i += 1;
     }
-    
+
     return config;
 }
 
@@ -110,20 +110,20 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
-    
+
     const config = parseArgs(allocator) catch {
         showUsage();
         std.process.exit(1);
     };
-    
+
     if (config.help) {
         showUsage();
         return;
     }
-    
+
     // Set global allocator for unit tests
     unit_tests.g_allocator = allocator;
-    
+
     switch (config.test_type) {
         .unit => {
             std.debug.print("Running unit tests...\n", .{});
@@ -144,13 +144,13 @@ pub fn main() !void {
 fn runUnitTests(allocator: std.mem.Allocator, config: Config) !void {
     var results = ArrayList(unit_tests.TestResult).init(allocator);
     defer results.deinit();
-    
+
     // Run all unit tests and collect results
     for (unit_tests.test_functions) |test_def| {
         const result = unit_tests.runTestWithTiming(test_def.name, test_def.func);
         try results.append(result);
     }
-    
+
     // Output results in requested format
     try outputUnitTestResults(results.items, config);
 }
@@ -160,7 +160,7 @@ fn runPerformanceTests(allocator: std.mem.Allocator, config: Config) !void {
         .standard => .standard,
         .csv => .csv,
     };
-    
+
     try performance_tests.runPerformanceBenchmarks(allocator, perf_format, config.output_file);
 }
 
@@ -169,7 +169,7 @@ fn outputUnitTestResults(results: []const unit_tests.TestResult, config: Config)
         const file = try std.fs.cwd().createFile(file_path, .{});
         break :blk file.writer();
     } else std.io.getStdOut().writer();
-    
+
     switch (config.output_format) {
         .csv => {
             try writer.print("test_type,test_name,status,duration_ms,error_message\n", .{});
@@ -188,12 +188,7 @@ fn outputUnitTestResults(results: []const unit_tests.TestResult, config: Config)
             try writer.print("==================\n", .{});
             for (results) |result| {
                 const status_symbol = if (std.mem.eql(u8, result.status, "PASS")) "✅" else "❌";
-                try writer.print("{s} {s}: {s} ({d:.2}ms)\n", .{ 
-                    status_symbol, 
-                    result.test_name, 
-                    result.status, 
-                    result.duration_ms 
-                });
+                try writer.print("{s} {s}: {s} ({d:.2}ms)\n", .{ status_symbol, result.test_name, result.status, result.duration_ms });
                 if (result.error_message.len > 0) {
                     try writer.print("   Error: {s}\n", .{result.error_message});
                 }
@@ -201,3 +196,4 @@ fn outputUnitTestResults(results: []const unit_tests.TestResult, config: Config)
         },
     }
 }
+
