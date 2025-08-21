@@ -1,0 +1,11 @@
+<root>
+  <item id="1">First</item>
+  <item id="1">First</item>
+  <item id="2">Second</item>
+  <container type="main">
+    <data>Content</data>
+  </container>
+  <container type="backup">
+    <data>Content</data>
+  </container>
+</root>

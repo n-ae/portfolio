@@ -36,7 +36,20 @@ local function run_test(lang, mode, file)
 		return false
 	end
 
-	local organized_file = file:gsub("%.csproj$", ".organized.csproj")
+	-- Determine expected file based on mode
+	local mode_suffix = ""
+	if mode == "--organize" then
+		mode_suffix = ".o"
+	elseif mode == "--fix-warnings" then
+		mode_suffix = ".f"
+	elseif mode == "--organize --fix-warnings" then
+		mode_suffix = ".of"
+	else
+		mode_suffix = ".d"
+	end
+	
+	local expected_file = file:gsub("%.([^%.]+)$", mode_suffix .. ".expected.%1")
+	local organized_file = file:gsub("%.([^%.]+)$", ".organized.%1")
 
 	-- Run the tool
 	local success, _ = execute_cmd(cmd .. " " .. mode .. " " .. file)
@@ -74,18 +87,23 @@ local function run_test(lang, mode, file)
 			return true
 		end
 	else
-		-- Normal comparison using fel.sh
-		local fel_success, fel_output = execute_cmd("./tests/fel.sh " .. file .. " " .. organized_file)
-		local is_clean = fel_success and fel_output:gsub("%s+", "") == ""
-		
-		-- Special case: Lua does superior duplicate removal on large files
-		-- If fel.sh shows differences, check if it's just Lua removing more duplicates
-		if not is_clean and lang == "lua" and (file:match("large%-benchmark") or file:match("large%-test") or file:match("massive%-benchmark")) then
-			-- For Lua on large files, just check if tool ran successfully (Lua removes more duplicates, which is good)
-			return true
+		-- Compare against expected file using fel.sh
+		if not file_exists(expected_file) then
+			-- If no expected file exists, fall back to organized file comparison
+			local fel_success, fel_output = execute_cmd("./tests/fel.sh " .. file .. " " .. organized_file)
+			local is_clean = fel_success and fel_output:gsub("%s+", "") == ""
+			
+			-- Special case: Lua does superior duplicate removal on large files
+			if not is_clean and lang == "lua" and (file:match("large%-benchmark") or file:match("large%-test") or file:match("massive%-benchmark")) then
+				return true
+			end
+			
+			return is_clean
+		else
+			-- Compare organized output against expected file
+			local fel_success, fel_output = execute_cmd("./tests/fel.sh " .. expected_file .. " " .. organized_file)
+			return fel_success and fel_output:gsub("%s+", "") == ""
 		end
-		
-		return is_clean
 	end
 end
 
@@ -182,20 +200,38 @@ for _, lang in ipairs(languages) do
 			lang_total = lang_total + 1
 			total_tests = total_tests + 1
 			
+			-- Determine expected file based on mode
+			local mode_suffix = ""
+			if test_mode == "--organize" then
+				mode_suffix = ".o"
+			elseif test_mode == "--fix-warnings" then
+				mode_suffix = ".f"
+			elseif test_mode == "--organize --fix-warnings" then
+				mode_suffix = ".of"
+			else
+				mode_suffix = ".d"
+			end
+			
+			local expected_file = file:gsub("%.([^%.]+)$", mode_suffix .. ".expected.%1")
+			local organized_file = file:gsub("%.([^%.]+)$", ".organized.%1")
+			
 			local test_result = run_test(lang, test_mode, file)
 			local status = test_result and "pass" or "fail"
 			local error_details = ""
 			
 			if not test_result then
 				-- Try to get more detailed error information
-				local organized_file = file:gsub("%.csproj$", ".organized.csproj"):gsub("%.xml$", ".organized.xml")
-				local success, fel_output = execute_cmd("./tests/fel.sh " .. file .. " " .. organized_file)
-				if not success then
-					error_details = "execution_failed"
-				elseif fel_output and fel_output:gsub("%s+", "") ~= "" then
-					error_details = "output_differs"
+				if file_exists(expected_file) then
+					local success, fel_output = execute_cmd("./tests/fel.sh " .. expected_file .. " " .. organized_file)
+					if not success then
+						error_details = "execution_failed"
+					elseif fel_output and fel_output:gsub("%s+", "") ~= "" then
+						error_details = "output_differs_from_expected"
+					else
+						error_details = "unknown"
+					end
 				else
-					error_details = "unknown"
+					error_details = "missing_expected_file"
 				end
 			end
 			

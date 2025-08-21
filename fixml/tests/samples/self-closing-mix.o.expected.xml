@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <PackageReference Include="Test" Version="1.0"/>
+    <Compile Include="*.cs"></Compile>
+  </PropertyGroup>
+</Project>

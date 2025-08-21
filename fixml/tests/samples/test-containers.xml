@@ -1,0 +1,16 @@
+<root>
+  <section>
+    <item>A</item>
+    <item>B</item>
+  </section>
+  <section>
+    <item>C</item>
+    <item>A</item>
+  </section>
+  <group>
+    <member>X</member>
+  </group>
+  <group>
+    <member>Y</member>
+  </group>
+</root>

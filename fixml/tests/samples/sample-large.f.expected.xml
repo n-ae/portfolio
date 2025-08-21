@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Document Type="Configuration">
+  <Properties>
+    <Version>6.0</Version>
+    <Id>{A57D92E5-14C8-413C-ABFA-F86E89AB038F}</Id>
+    <Mode>portable</Mode>
+  </Properties>
+  <Resources>
+    <ExcludedResource Path="Components\ModuleA\**" />
+    <ExcludedResource Path="Handlers\ServiceCommand - Copy\**" />
+    <ExcludedResource Path="Handlers\PaymentModule\**" />
+    <ExcludedResource Path="CreateBranchService\**" />
+    <ExcludedResource Path="CreateChannelService\**" />
+    <ExcludedResource Path="CreateCardService\**" />
+    <ExcludedResource Path="CreateTransferService\**" />
+    <ExcludedResource Path="CreateRateService\**" />
+    <ExcludedResource Path="CreateProcessService\**" />
+    <ExcludedResource Path="CreateLocationService\**" />
+    <ExcludedResource Path="DataPackages\ExpressPackage\Results\**" />
+    <ExcludedResource Path="GetProtocolsService\**" />
+    <ExcludedResource Path="GetContactExportService\**" />
+    <ExcludedResource Path="GetInboxCancelService\**" />
+    <ExcludedResource Path="GetInboxDiscountService\**" />
+    <ExcludedResource Path="GetInboxRefundService\**" />
+    <ExcludedResource Path="SendProcessService\**" />
+    <ExcludedResource Path="UpdateReferenceService\**" />
+    <ExcludedResource Path="UpdateTerritoryService\**" />
+    <ExcludedResource Path="UpdateBranchInfoService\**" />
+    <ExcludedResource Path="UpdateBranchService\**" />
+    <ExcludedResource Path="UpdateOperationService\**" />
+    <OptionalResource Path="Components\ModuleA\**" />
+    <OptionalResource Path="Handlers\ServiceCommand - Copy\**" />
+    <OptionalResource Path="Handlers\PaymentModule\**" />
+    <OptionalResource Path="CreateBranchService\**" />
+    <OptionalResource Path="CreateChannelService\**" />
+    <OptionalResource Path="CreateCardService\**" />
+    <OptionalResource Path="CreateRateService\**" />
+    <OptionalResource Path="CreateProcessService\**" />
+    <OptionalResource Path="CreateLocationService\**" />
+    <OptionalResource Path="DataPackages\ExpressPackage\Results\**" />
+    <OptionalResource Path="GetProtocolsService\**" />
+    <OptionalResource Path="GetContactExportService\**" />
+    <ExcludedResource Path="SendBulkNotificationService\**" />
+    <DeploymentResource Path="Components\ModuleA\**" />
+    <DeploymentResource Path="Handlers\ServiceCommand - Copy\**" />
+    <DeploymentResource Path="Handlers\PaymentModule\**" />
+    <DeploymentResource Path="CreateBranchService\**" />
+    <DeploymentResource Path="CreateChannelService\**" />
+    <DeploymentResource Path="CreateCardService\**" />
+    <DeploymentResource Path="CreateRateService\**" />
+    <DeploymentResource Path="CreateProcessService\**" />
+    <DeploymentResource Path="CreateLocationService\**" />
+    <DeploymentResource Path="DataPackages\ExpressPackage\Results\**" />
+    <DeploymentResource Path="GetProtocolsService\**" />
+    <DeploymentResource Path="GetContactExportService\**" />
+    <DeploymentResource Path="GetInboxCancelService\**" />
+    <DeploymentResource Path="GetInboxDiscountService\**" />
+    <DeploymentResource Path="GetInboxRefundService\**" />
+    <DeploymentResource Path="SendProcessService\**" />
+    <DeploymentResource Path="UpdateReferenceService\**" />
+    <DeploymentResource Path="UpdateTerritoryService\**" />
+    <DeploymentResource Path="UpdateBranchInfoService\**" />
+    <DeploymentResource Path="UpdateBranchService\**" />
+    <DeploymentResource Path="UpdateOperationService\**" />
+    <OptionalResource Path="GetInboxCancelService\**" />
+    <OptionalResource Path="GetInboxDiscountService\**" />
+    <OptionalResource Path="GetInboxRefundService\**" />
+    <OptionalResource Path="SendProcessService\**" />
+    <OptionalResource Path="UpdateReferenceService\**" />
+    <OptionalResource Path="UpdateTerritoryService\**" />
+    <OptionalResource Path="UpdateBranchInfoService\**" />
+    <OptionalResource Path="UpdateBranchService\**" />
+    <OptionalResource Path="UpdateOperationService\**" />
+    <DeploymentResource Path="SendBulkNotificationService\**" />
+  </Resources>
+  <Includes>
+    <IncludeFile Path="Services\ContactTransferService\ContactTransferServiceHandler.cs" />
+    <IncludeFile Path="Services\ContactTransferService\MultipleContactTransferServiceHandler.cs" />
+    <IncludeFile Path="Services\ContactDetailService\ContactDetailServiceHandler.cs" />
+    <IncludeFile Path="Components\ModuleA\ModuleAServiceHandler.cs" />
+    <IncludeFile Path="Components\ModuleB\ModuleBServiceHandler.cs" />
+    <IncludeFile Path="Services\TransactionRollbackService\TransactionRollbackServiceHandler.cs" />
+    <IncludeFile Path="Services\DiscountApprovalService\DiscountApprovalServiceHandler.cs" />
+    <IncludeFile Path="Services\ContactApprovalService\ContactApprovalService.cs" />
+    <IncludeFile Path="Services\ContactApprovalService\ContactApprovalServiceHandler.cs" />
+    <IncludeFile Path="Services\ContactApprovalService\ContactApprovalServiceValidator.cs" />
+    <IncludeFile Path="Services\ContactApprovalService\ContactApprovalServiceResult.cs" />
+    <IncludeFile Path="Services\PaymentApprovalService\PaymentApprovalService.cs" />
+    <IncludeFile Path="Services\PaymentApprovalService\PaymentApprovalServiceHandler.cs" />
+    <IncludeFile Path="Services\PaymentApprovalService\PaymentApprovalServiceValidator.cs" />
+    <IncludeFile Path="Services\PaymentApprovalService\PaymentApprovalServiceResult.cs" />
+    <IncludeFile Path="Services\DocumentApprovalService\DocumentApprovalService.cs" />
+    <IncludeFile Path="Services\DocumentApprovalService\DocumentApprovalServiceHandler.cs" />
+    <IncludeFile Path="Services\DocumentApprovalService\DocumentApprovalServiceValidator.cs" />
+    <IncludeFile Path="Services\DocumentApprovalService\DocumentApprovalServiceResult.cs" />
+    <IncludeFile Path="Services\InvoiceApprovalService\InvoiceApprovalServiceHandler.cs" />
+    <IncludeFile Path="Services\BatchProcessService\BatchProcessService.cs" />
+    <IncludeFile Path="Services\BatchProcessService\IBatchProcessService.cs" />
+    <IncludeFile Path="Queries\TokenService\GetActiveTokenService\GetActiveTokenServiceQuery.cs" />
+    <IncludeFile Path="Queries\TokenService\GetActiveTokenService\GetActiveTokenServiceQueryHandler.cs" />
+    <IncludeFile Path="Queries\TokenService\GetActiveTokenService\GetActiveTokenServiceQueryResult.cs" />
+    <IncludeFile Path="Services\AddressService\AddressServiceQueryHandler.cs" />
+    <IncludeFile Path="Services\NotificationService\NotificationServiceHandler.cs" />
+    <IncludeFile Path="Services\ReferenceExportService\ReferenceExportServiceHandler.cs" />
+    <IncludeFile Path="Services\WinningRewardService\WinningRewardServiceHandler.cs" />
+    <IncludeFile Path="Services\WinningRewardService\WinningRewardServiceQuery.cs" />
+    <IncludeFile Path="Services\WinningRewardService\WinningRewardServiceQueryHandler.cs" />
+  </Includes>
+  <References>
+    <Reference Include="SystemComponent" />
+  </References>
+  <Settings>
+    <Setting Name="AutoGenerateBindingRedirects">true</Setting>
+    <Setting Name="GeneratePackageOnBuild">false</Setting>
+    <Setting Name="IncludeSymbols">false</Setting>
+    <Setting Name="SymbolPackageFormat">snupkg</Setting>
+    <Setting Name="PackageId">MyApplication</Setting>
+    <Setting Name="AssemblyTitle">My Application</Setting>
+    <Setting Name="Product">My Application</Setting>
+    <Setting Name="Description">Sample application for testing</Setting>
+    <Setting Name="Copyright">Copyright © 2023</Setting>
+    <Setting Name="AssemblyVersion">1.0.0.0</Setting>
+    <Setting Name="FileVersion">1.0.0.0</Setting>
+    <Setting Name="LangVersion">latest</Setting>
+    <Setting Name="Nullable">enable</Setting>
+    <Setting Name="GenerateDocumentationFile">true</Setting>
+    <Setting Name="NoWarn">1591</Setting>
+    <Setting Name="TreatWarningsAsErrors">false</Setting>
+    <Setting Name="WarningsAsErrors" />
+    <Setting Name="WarningsNotAsErrors" />
+    <Setting Name="ApplicationIcon">app.ico</Setting>
+    <Setting Name="Win32Resource" />
+    <Setting Name="ApplicationManifest">app.manifest</Setting>
+    <Setting Name="SignAssembly">false</Setting>
+    <Setting Name="AssemblyOriginatorKeyFile" />
+    <Setting Name="DelaySign">false</Setting>
+    <Setting Name="PublicSign">false</Setting>
+    <Setting Name="PackageRequireLicenseAcceptance">false</Setting>
+    <Setting Name="PackageLicenseExpression">MIT</Setting>
+    <Setting Name="PackageProjectUrl">https://example.com</Setting>
+    <Setting Name="RepositoryUrl">https://github.com/example/repo</Setting>
+    <Setting Name="RepositoryType">git</Setting>
+    <Setting Name="PackageTags">sample test xml</Setting>
+    <Setting Name="PackageReleaseNotes">Initial release</Setting>
+    <Setting Name="GenerateNuspec">false</Setting>
+    <Setting Name="NuspecFile" />
+    <Setting Name="NuspecBasePath" />
+    <Setting Name="NuspecProperties" />
+  </Settings>
+  <Dependencies>
+    <Dependency Name="Microsoft.Extensions.Hosting" Version="6.0.1" />
+    <Dependency Name="Microsoft.Extensions.Configuration" Version="6.0.1" />
+    <Dependency Name="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+    <Dependency Name="Microsoft.Extensions.Logging" Version="6.0.0" />
+    <Dependency Name="Microsoft.EntityFrameworkCore" Version="6.0.10" />
+    <Dependency Name="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.10" />
+    <Dependency Name="Microsoft.EntityFrameworkCore.Tools" Version="6.0.10" />
+    <Dependency Name="Microsoft.EntityFrameworkCore.Design" Version="6.0.10" />
+    <Dependency Name="AutoMapper" Version="12.0.0" />
+    <Dependency Name="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
+    <Dependency Name="FluentValidation" Version="11.2.2" />
+    <Dependency Name="FluentValidation.DependencyInjectionExtensions" Version="11.2.2" />
+    <Dependency Name="MediatR" Version="11.0.0" />
+    <Dependency Name="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
+    <Dependency Name="Newtonsoft.Json" Version="13.0.1" />
+    <Dependency Name="Serilog" Version="2.12.0" />
+    <Dependency Name="Serilog.Extensions.Hosting" Version="5.0.1" />
+    <Dependency Name="Serilog.Sinks.Console" Version="4.1.0" />
+    <Dependency Name="Serilog.Sinks.File" Version="5.0.0" />
+    <Dependency Name="System.Text.Json" Version="6.0.6" />
+    <Dependency Name="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.10" />
+    <Dependency Name="Microsoft.AspNetCore.Authorization" Version="6.0.10" />
+    <Dependency Name="Microsoft.AspNetCore.Mvc.Versioning" Version="5.0.0" />
+    <Dependency Name="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.0.0" />
+    <Dependency Name="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <Dependency Name="System.IdentityModel.Tokens.Jwt" Version="6.24.0" />
+    <Dependency Name="Microsoft.IdentityModel.Tokens" Version="6.24.0" />
+    <Dependency Name="BCrypt.Net-Next" Version="4.0.3" />
+    <Dependency Name="MongoDB.Driver" Version="2.17.1" />
+    <Dependency Name="Redis.StackExchange" Version="2.6.66" />
+    <Dependency Name="RabbitMQ.Client" Version="6.4.0" />
+    <Dependency Name="Microsoft.Extensions.Caching.Memory" Version="6.0.1" />
+    <Dependency Name="Microsoft.Extensions.Caching.Redis" Version="2.2.0" />
+    <Dependency Name="Polly" Version="7.2.3" />
+    <Dependency Name="Polly.Extensions.Http" Version="3.0.0" />
+    <Dependency Name="Microsoft.ApplicationInsights.AspNetCore" Version="2.21.0" />
+    <Dependency Name="Microsoft.Extensions.Diagnostics.HealthChecks" Version="6.0.10" />
+    <Dependency Name="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="6.0.10" />
+    <Dependency Name="AspNetCore.HealthChecks.UI" Version="6.0.5" />
+    <Dependency Name="AspNetCore.HealthChecks.UI.Client" Version="6.0.5" />
+    <Dependency Name="AspNetCore.HealthChecks.SqlServer" Version="6.0.2" />
+    <Dependency Name="AspNetCore.HealthChecks.Redis" Version="6.0.4" />
+    <Dependency Name="AspNetCore.HealthChecks.MongoDb" Version="6.0.2" />
+    <Dependency Name="AspNetCore.HealthChecks.RabbitMQ" Version="6.0.2" />
+    <Dependency Name="Microsoft.Extensions.Http.Polly" Version="6.0.10" />
+    <Dependency Name="System.Net.Http" Version="4.3.4" />
+    <Dependency Name="System.Text.RegularExpressions" Version="4.3.1" />
+    <Dependency Name="System.Threading.Tasks" Version="4.3.0" />
+    <Dependency Name="System.Collections.Concurrent" Version="4.3.0" />
+    <Dependency Name="System.Linq" Version="4.3.0" />
+    <Dependency Name="System.Reflection" Version="4.3.0" />
+    <Dependency Name="Microsoft.CSharp" Version="4.7.0" />
+    <Dependency Name="System.ComponentModel.Annotations" Version="5.0.0" />
+    <Dependency Name="System.ComponentModel.DataAnnotations" Version="4.3.0" />
+    <Dependency Name="System.Security.Claims" Version="4.3.0" />
+    <Dependency Name="System.Security.Principal" Version="4.3.0" />
+    <Dependency Name="System.Globalization" Version="4.3.0" />
+    <Dependency Name="System.IO" Version="4.3.0" />
+    <Dependency Name="System.Runtime" Version="4.3.1" />
+    <Dependency Name="System.Resources.ResourceManager" Version="4.3.0" />
+    <Dependency Name="System.Threading" Version="4.3.0" />
+    <Dependency Name="Microsoft.NETCore.Platforms" Version="6.0.5" />
+    <Dependency Name="NETStandard.Library" Version="2.0.3" />
+    <Dependency Name="System.Buffers" Version="4.5.1" />
+    <Dependency Name="System.Memory" Version="4.5.4" />
+    <Dependency Name="System.Numerics.Vectors" Version="4.5.0" />
+    <Dependency Name="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+    <Dependency Name="System.Threading.Tasks.Extensions" Version="4.5.4" />
+    <Dependency Name="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
+    <Dependency Name="System.Text.Encodings.Web" Version="6.0.0" />
+    <Dependency Name="System.ValueTuple" Version="4.5.0" />
+    <Dependency Name="Microsoft.Extensions.Primitives" Version="6.0.0" />
+    <Dependency Name="Microsoft.Extensions.Options" Version="6.0.0" />
+    <Dependency Name="Microsoft.Extensions.FileProviders.Abstractions" Version="6.0.0" />
+    <Dependency Name="Microsoft.Extensions.FileProviders.Physical" Version="6.0.0" />
+    <Dependency Name="Microsoft.Extensions.FileSystemGlobbing" Version="6.0.0" />
+    <Dependency Name="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
+    <Dependency Name="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
+    <Dependency Name="Microsoft.Extensions.Configuration.CommandLine" Version="6.0.0" />
+    <Dependency Name="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="6.0.1" />
+    <Dependency Name="Microsoft.Extensions.Configuration.FileExtensions" Version="6.0.0" />
+    <Dependency Name="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+    <Dependency Name="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
+  </Dependencies>
+  <TestDependencies>
+    <TestDependency Name="Microsoft.NET.Test.Sdk" Version="17.3.2" />
+    <TestDependency Name="xunit" Version="2.4.2" />
+    <TestDependency Name="xunit.runner.visualstudio" Version="2.4.3" />
+    <TestDependency Name="coverlet.collector" Version="3.1.2" />
+    <TestDependency Name="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.10" />
+    <TestDependency Name="Microsoft.EntityFrameworkCore.InMemory" Version="6.0.10" />
+    <TestDependency Name="Moq" Version="4.18.2" />
+    <TestDependency Name="FluentAssertions" Version="6.7.0" />
+    <TestDependency Name="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+    <TestDependency Name="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+    <TestDependency Name="Microsoft.Extensions.Logging" Version="6.0.0" />
+    <TestDependency Name="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
+    <TestDependency Name="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
+    <TestDependency Name="Microsoft.Extensions.Options.ConfigurationExtensions" Version="6.0.0" />
+    <TestDependency Name="AutoFixture" Version="4.18.0" />
+    <TestDependency Name="AutoFixture.AutoMoq" Version="4.18.0" />
+    <TestDependency Name="AutoFixture.Xunit2" Version="4.18.0" />
+    <TestDependency Name="Bogus" Version="34.0.2" />
+    <TestDependency Name="Microsoft.AspNetCore.TestHost" Version="6.0.10" />
+    <TestDependency Name="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+    <TestDependency Name="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
+    <TestDependency Name="Microsoft.Extensions.Http" Version="6.0.0" />
+    <TestDependency Name="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+    <TestDependency Name="System.Net.Http.Json" Version="6.0.0" />
+    <TestDependency Name="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.10" />
+    <TestDependency Name="Microsoft.IdentityModel.JsonWebTokens" Version="6.24.0" />
+    <TestDependency Name="Testcontainers" Version="2.2.0" />
+    <TestDependency Name="Testcontainers.MsSql" Version="2.2.0" />
+    <TestDependency Name="Testcontainers.MongoDb" Version="2.2.0" />
+    <TestDependency Name="Testcontainers.Redis" Version="2.2.0" />
+    <TestDependency Name="Docker.DotNet" Version="3.125.4" />
+    <TestDependency Name="WireMock.Net" Version="1.5.14" />
+    <TestDependency Name="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
+    <TestDependency Name="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
+    <TestDependency Name="Microsoft.AspNetCore.Owin" Version="6.0.10" />
+    <TestDependency Name="Microsoft.Owin" Version="4.2.2" />
+    <TestDependency Name="Microsoft.Owin.Host.HttpListener" Version="4.2.2" />
+    <TestDependency Name="Microsoft.Owin.Hosting" Version="4.2.2" />
+    <TestDependency Name="Owin" Version="1.0" />
+    <TestDependency Name="System.Net.Http" Version="4.3.4" />
+    <TestDependency Name="System.Threading.Tasks" Version="4.3.0" />
+    <TestDependency Name="System.Text.Json" Version="6.0.6" />
+    <TestDependency Name="Newtonsoft.Json" Version="13.0.1" />
+    <TestDependency Name="System.ComponentModel.Annotations" Version="5.0.0" />
+  </TestDependencies>
+  <Metadata>
+    <Company>Sample Company</Company>
+    <Authors>Development Team</Authors>
+    <Copyright>© 2023 Sample Company</Copyright>
+    <Trademark>Sample Application</Trademark>
+    <Title>Sample XML Application</Title>
+    <Description>A sample application demonstrating XML processing capabilities</Description>
+    <Summary>XML processing sample with multiple configurations and dependencies</Summary>
+    <ReleaseNotes>
+      - Initial release
+      - Added configuration management
+      - Implemented service layer
+      - Added comprehensive testing
+      - Performance optimizations
+      - Documentation updates
+      - Bug fixes and improvements
+    </ReleaseNotes>
+    <Tags>xml processing configuration sample</Tags>
+    <Category>Development Tools</Category>
+    <Language>en-US</Language>
+    <LicenseUrl>https://opensource.org/licenses/MIT</LicenseUrl>
+    <ProjectUrl>https://github.com/example/sample-xml-app</ProjectUrl>
+    <IconUrl>https://example.com/icon.png</IconUrl>
+    <RequireLicenseAcceptance>false</RequireLicenseAcceptance>
+    <DevelopmentDependency>false</DevelopmentDependency>
+    <MinClientVersion>4.0</MinClientVersion>
+    <ServiceableAssembly>true</ServiceableAssembly>
+  </Metadata>
+  <BuildSettings>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SampleApp</RootNamespace>
+    <AssemblyName>SampleApp</AssemblyName>
+    <TargetFrameworkVersion>v6.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WarningLevel>4</WarningLevel>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+    <RestoreSources>https://api.nuget.org/v3/index.json</RestoreSources>
+    <RestorePackagesPath>packages</RestorePackagesPath>
+    <RestoreDisableParallel>false</RestoreDisableParallel>
+    <RestoreConfigFile>NuGet.config</RestoreConfigFile>
+    <RestoreNoCache>false</RestoreNoCache>
+    <RestoreIgnoreFailedSources>false</RestoreIgnoreFailedSources>
+    <RestoreFallbackFolders>$(NuGetPackageRoot)</RestoreFallbackFolders>
+    <RestoreAdditionalProjectSources />
+    <RestoreAdditionalProjectFallbackFolders />
+    <RestoreAdditionalProjectFallbackFoldersExcludes />
+    <RestoreTaskAssemblyFile />
+    <RestoreGraphProjectInput />
+    <RestoreOutputPath>obj</RestoreOutputPath>
+  </BuildSettings>
+  <OutputSettings>
+    <OutputPath Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">bin\Debug\</OutputPath>
+    <OutputPath Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">bin\Release\</OutputPath>
+    <DefineConstants Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">DEBUG;TRACE</DefineConstants>
+    <DefineConstants Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">TRACE</DefineConstants>
+    <DebugType Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">full</DebugType>
+    <DebugType Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">pdbonly</DebugType>
+    <Optimize Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">false</Optimize>
+    <Optimize Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">true</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <DocumentationFile>bin\$(Configuration)\$(AssemblyName).xml</DocumentationFile>
+    <NoWarn>1591;1572;1571;1573;1574</NoWarn>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <WarningsNotAsErrors />
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>Warning</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+    <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
+    <RunCodeAnalysisOnce>false</RunCodeAnalysisOnce>
+    <RunCodeAnalysisOnBuild>false</RunCodeAnalysisOnBuild>
+    <CodeAnalysisIgnoreGeneratedCode>true</CodeAnalysisIgnoreGeneratedCode>
+    <EnableDefaultItems>true</EnableDefaultItems>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>true</EnableDefaultEmbeddedResourceItems>
+  </OutputSettings>
+  <Folders>
+    <Folder Include="Services\Functions\" />
+    <Folder Include="Services\Packages\" />
+    <Folder Include="Services\Procedures\" />
+    <Folder Include="Queries\Functions\" />
+    <Folder Include="Queries\Packages\" />
+    <Folder Include="Queries\Procedures\" />
+    <Folder Include="UpdateInvoiceCardService\" />
+    <Folder Include="UpdateBranchTypeService\" />
+    <Folder Include="UpdateBranchService\" />
+  </Folders>
+  <AdditionalIncludes>
+    <IncludeFile Path="Services\BatchServices\TransferProcessService.cs" />
+    <IncludeFile Path="Services\BatchServices\ITransferProcessService.cs" />
+    <IncludeFile Path="Queries\TokenLogQueries\GetActiveTokenLogService\GetActiveTokenLogServiceQuery.cs" />
+    <IncludeFile Path="Queries\TokenLogQueries\GetActiveTokenLogService\GetActiveTokenLogServiceQueryHandler.cs" />
+    <IncludeFile Path="Queries\TokenLogQueries\GetActiveTokenLogService\GetActiveTokenLogServiceQueryResult.cs" />
+    <IncludeFile Path="Services\DocumentNotificationService\DocumentNotificationServiceHandler.cs" />
+    <IncludeFile Path="Services\ReferenceExportListService\" />
+  </AdditionalIncludes>
+</Document>

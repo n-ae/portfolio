@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description><![CDATA[This is a <test> & special content]]></Description>
+  </PropertyGroup>
+</Project>
