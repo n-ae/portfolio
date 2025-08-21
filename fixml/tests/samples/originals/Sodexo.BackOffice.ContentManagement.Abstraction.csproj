@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{8FB52E16-7126-495E-A9D0-06589291EFE6}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Command\DeleteContentCommand.cs" />
+    <Compile Include="Command\DeleteResourceCommand.cs" />
+    <Compile Include="Command\SetLocalizationContentCommand.cs" />
+    <Compile Include="Command\SetLocalizationResourceCommand.cs" />
+    <Compile Include="Command\SetLocalizationVersionKeyCommand.cs" />
+    <Compile Include="Command\UploadFileCommand.cs" />
+    <Compile Include="Command\ZipUploadFileCommand.cs" />
+    <Compile Include="Dto\LocalizedContentDto.cs" />
+    <Compile Include="Dto\LocalizedResourceDto.cs" />
+    <Compile Include="Enums\ContentManagementErrorCode.cs" />
+    <Compile Include="Enums\TestUser.cs" />
+    <Compile Include="Enums\UserReferanceType.cs" />
+    <Compile Include="QueryResult\GetImpHistoryListQueryResult.cs" />
+    <Compile Include="QueryResult\GetImpTemplatesQueryResult.cs" />
+    <Compile Include="Query\GetImpHistoryListQuery.cs" />
+    <Compile Include="Query\GetImpTemplatesQuery.cs" />
+    <Compile Include="Query\GetLocalizationContentDetailQuery.cs" />
+    <Compile Include="Query\GetLocalizationContentListQuery.cs" />
+    <Compile Include="Query\GetLocalizationResourceDetailQuery.cs" />
+    <Compile Include="Query\GetLocalizationListQuery.cs" />
+    <Compile Include="Query\GetLocalizationResourceListQuery.cs" />
+    <Compile Include="Query\GetLocalizationVersionQuery.cs" />
+    <Compile Include="Settings\ExcelTransferExampleTemplateSettings.cs" />
+    <Compile Include="Settings\GenericExcelFileSettings.cs" />
+    <Compile Include="Settings\GenericExcelItemFileSettings.cs" />
+    <Compile Include="Validator\GetLocalizationDetailQueryValidator.cs" />
+    <Compile Include="Validator\GetLocalizationListQueryValidator.cs" />
+    <Compile Include="Validator\SetLocalizationCommandValidator.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Core\Sodexo.BackOffice.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="IntegrationEvents\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PropertyChanged.Fody" Version="4.1.0" />
+  </ItemGroup>
+</Project>

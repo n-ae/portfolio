@@ -1,0 +1,54 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{605907CF-A668-47D4-BD97-ACEF9EC45C15}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Accessor\IBpmContextAccessor.cs" />
+    <Compile Include="Command\CreateMrkActionCommand.cs" />
+    <Compile Include="Command\CreateMrkCallCommand.cs" />
+    <Compile Include="Command\UpdateMrkCallCommand.cs" />
+    <Compile Include="Dto\CallDto.cs" />
+    <Compile Include="Dto\CallOwnerDto.cs" />
+    <Compile Include="Dto\CallSolutionCodeDto.cs" />
+    <Compile Include="Dto\MrkActionListDto.cs" />
+    <Compile Include="Dto\MrkCallContactTypeDto.cs" />
+    <Compile Include="Dto\MrkCallsLogDto.cs" />
+    <Compile Include="Dto\MrkCallSolutionDto.cs" />
+    <Compile Include="Dto\MrkMActionTypeDto.cs" />
+    <Compile Include="Dto\MrkCallDto.cs" />
+    <Compile Include="Dto\MrkCallStatusDto.cs" />
+    <Compile Include="Dto\MrkCallTypeDto.cs" />
+    <Compile Include="Dto\ProcessActionDto.cs" />
+    <Compile Include="Dto\GetProcessListDto.cs" />
+    <Compile Include="Dto\GetProcessTaskListDto.cs" />
+    <Compile Include="Dto\GetTaskListDto.cs" />
+    <Compile Include="Dto\ProcessDto.cs" />
+    <Compile Include="Dto\ProcessHistoryDto.cs" />
+    <Compile Include="Enums\ActionType.cs" />
+    <Compile Include="Enums\BPMManagementErrorCode.cs" />
+    <Compile Include="Enums\ComponentDefType.cs" />
+    <Compile Include="Enums\ConditionType.cs" />
+    <Compile Include="Enums\CallStatus.cs" />
+    <Compile Include="Enums\CTypeState.cs" />
+    <Compile Include="Enums\Status.cs" />
+    <Compile Include="Enums\TaskAuthType.cs" />
+    <Compile Include="Enums\TaskStatus.cs" />
+    <Compile Include="QueryResult\MrkMActionTypeQueryResult.cs" />
+    <Compile Include="Query\GetProcessQuery.cs" />
+    <Compile Include="Request\CreateProcessRequest.cs" />
+    <Compile Include="Request\SaveProcessRequest.cs" />
+    <Compile Include="Validator\CreateMrkCallCommandValidator.cs" />
+    <Compile Include="Validator\UpdateMrkCallCommandValidator.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\ApiBase\Sodexo.BackOffice.ApiBase.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ClientService\" />
+    <Folder Include="CommandResult\" />
+    <Folder Include="IntegrationEvents\" />
+  </ItemGroup>
+</Project>

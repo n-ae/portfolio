@@ -1,0 +1,56 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <ProjectGuid>{76CD233E-B2F4-491C-AD96-8A3263BC3874}</ProjectGuid>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Commands\UpdateGiftPackageCards\UpdateGiftPackageCardsCommandHandlerTest.cs" />
+    <Compile Include="DomainTests\ProceedCardNo\ToCardIdTests.cs" />
+    <Compile Include="DomainTests\CardOrder\CardOrderApproveTests.cs" />
+    <Compile Include="DomainTests\CardOrder\CardOrderCancelApproveTests.cs" />
+    <Compile Include="DomainTests\CardOrder\CardOrderCancelTests.cs" />
+    <Compile Include="FluentData\FluentCardOrder.cs" />
+    <Compile Include="FluentData\FluentScCard.cs" />
+    <Compile Include="Queries\CardContact\GetCardContactServiceListForPluxeeOnlineQueryHandlerTest.cs" />
+    <Compile Include="Queries\CardContact\GetCardContactListForPluxeeOnlineQueryHandlerTest.cs" />
+    <Compile Include="Queries\CardLimitService\GetPCardLimitServiceQueryHandlerTests.cs" />
+    <Compile Include="Validators\CardContact\GetCardContactListForPluxeeOnlineQueryValidatorTest.cs" />
+    <Compile Include="Validators\CardContact\GetCardContactServiceListForPluxeeOnlineQueryValidatorTest.cs" />
+    <Compile Include="Validators\PCardLimitService\GetPCardLimitServiceQueryValidatorTests.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="5.10.3" />
+    <PackageReference Include="JetBrains.Annotations" Version="2025.1.0-eap1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
+    <PackageReference Include="Moq" Version="4.16.1" />
+    <PackageReference Include="NBuilder" Version="6.1.0" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.msbuild" Version="2.9.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="ReportGenerator" Version="4.6.1" />
+  </ItemGroup>
+  
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Test\Sodexo.BackOffice.Test\Sodexo.BackOffice.Test.csproj" />
+    <ProjectReference Include="..\..\Src\Api\Sodexo.BackOffice.CardManagement.Api.csproj" />
+    <ProjectReference Include="..\..\Src\Application\Sodexo.BackOffice.CardManagement.Application.csproj" />
+    <ProjectReference Include="..\..\Src\Domain\Sodexo.BackOffice.CardManagement.Domain.csproj" />
+    <ProjectReference Include="..\..\Src\Infrastructure\Sodexo.BackOffice.CardManagement.Infrastructure.csproj" />
+  </ItemGroup>
+  
+
+  <ItemGroup>
+    <Folder Include="HandlerTests\" />
+  </ItemGroup>
+
+</Project>

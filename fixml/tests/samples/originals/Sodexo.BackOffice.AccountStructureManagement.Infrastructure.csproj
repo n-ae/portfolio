@@ -1,0 +1,110 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{C52BC3B9-1C8E-4895-8F88-6AF7B5FFB114}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Context\AccountStructureManagement.AccountStructureContext.cs" />
+    <Compile Include="Data\SoftPosUserQueries.cs" />
+    <Compile Include="Repository\AccBankTransferRepository.cs" />
+    <Compile Include="Repository\AccDeductionRepository.cs" />
+    <Compile Include="Repository\AccClientAccountRepository.cs" />
+    <Compile Include="Repository\AccDeductionsRepository.cs" />
+    <Compile Include="Repository\AccPaymentLinesRepository.cs" />
+    <Compile Include="Repository\AccVatDeclPeriodRepository.cs" />
+    <Compile Include="Repository\AffBranchOperationRepository.cs" />
+    <Compile Include="Repository\AffBrandGiftCategoryRepository.cs" />
+    <Compile Include="Repository\AffFirmOperationRepository.cs" />
+    <Compile Include="Repository\AffFirmServiceRepository.cs" />
+    <Compile Include="Repository\AffInvoiceCardRepository.cs" />
+    <Compile Include="Repository\AffInvoiceCardsRepository.cs" />
+    <Compile Include="Repository\AffPropertyRepository.cs" />
+    <Compile Include="Repository\BankBalanceRepository.cs" />
+    <Compile Include="Repository\AccTransactionRepository.cs" />
+
+    <Compile Include="Repository\AccCreditCardTransRepository.cs" />
+
+    <Compile Include="Repository\AddressRepository.cs" />
+    <Compile Include="Repository\AffContactRepository.cs" />
+    <Compile Include="Repository\AffilateRepository.cs" />
+    <Compile Include="Repository\ALeadsTerritoryRepository.cs" />
+    <Compile Include="Repository\BranchChannelRepository.cs" />
+    <Compile Include="Repository\AccountCardRepository.cs" />
+    <Compile Include="Repository\BranchRepository.cs" />
+    <Compile Include="Repository\ChequeRepository.cs" />
+    <Compile Include="Repository\CliContractDigitalGiftLabelRepository.cs" />
+    <Compile Include="Repository\CliContractLogRepository.cs" />
+    <Compile Include="Repository\CliContractsProtocolRepository.cs" />
+    <Compile Include="Repository\ContactApprovalRepository.cs" />
+    <Compile Include="Repository\ContactOperationLogRepository.cs" />
+    <Compile Include="Repository\ContactOperationRepository.cs" />
+    <Compile Include="Repository\CliBranchOperationRepository.cs" />
+    <Compile Include="Repository\ContactRepository.cs" />
+    <Compile Include="Repository\AffContractFuelCardRepository.cs" />
+    <Compile Include="Repository\ContractPackageRepository.cs" />
+    <Compile Include="Repository\ContractRepository.cs" />
+    <Compile Include="Repository\CliFirmServiceRepository.cs" />
+    <Compile Include="Repository\CrmContactRepository.cs" />
+    <Compile Include="Repository\DbsSyncBlockRepository.cs" />
+    <Compile Include="Repository\EfaturaInboxOperationRepository.cs" />
+    <Compile Include="Repository\ExcelFileRepository.cs" />
+    <Compile Include="Repository\FirmBranchRepository.cs" />
+    <Compile Include="Repository\FirmRepository.cs" />
+    <Compile Include="Repository\FirmCompanyRepository.cs" />
+    <Compile Include="Repository\FirmConsCardRepository.cs" />
+    <Compile Include="Repository\EspiUserServiceRepository.cs" />
+    <Compile Include="Repository\EfaturaInboxRepository.cs" />
+    <Compile Include="Repository\FleetGroupRepository.cs" />
+    <Compile Include="Repository\FuelKitsRepository.cs" />
+    <Compile Include="Repository\FuelPassBalanceLoadingRepository.cs" />
+    <Compile Include="Repository\FuelPassProviderFleetsRepository.cs" />
+    <Compile Include="Repository\FuelPassProviderPlateTransferTransRepository.cs" />
+    <Compile Include="Repository\FuelPassSalesRepository.cs" />
+    <Compile Include="Repository\MarketingCampaignRepository.cs" />
+    <Compile Include="Repository\MContractRateRepository.cs" />
+    <Compile Include="Repository\MHolidayRepository.cs" />
+    <Compile Include="Repository\FlexoGiftRepository.cs" />
+    <Compile Include="Repository\PartnerProgramRepository.cs" />
+    <Compile Include="Repository\SoftPosUserRepository.cs" />
+    <Compile Include="Repository\SurveyRepository.cs" />
+    <Compile Include="Repository\MrkMActionResultRepository.cs" />
+    <Compile Include="Repository\FleetVehicleRepository.cs" />
+    <Compile Include="Repository\FleetVehicleProductRepository.cs" />
+    <Compile Include="Repository\FleetContractRepository.cs" />
+    <Compile Include="Repository\FleetInvoiceRepository.cs" />
+    <Compile Include="Repository\FuelCardTransactionRepository.cs" />
+    <Compile Include="Repository\FuelCardRepository.cs" />
+    <Compile Include="Repository\FleetRepository.cs" />
+    <Compile Include="Repository\FuelPassRepository.cs" />
+    <Compile Include="Repository\LimitRequestRepository.cs" />
+    <Compile Include="Repository\MProductionPeriodRepository.cs" />
+    <Compile Include="Repository\MrkBranchSystemRepository.cs" />
+    <Compile Include="Repository\MrkActionRepository.cs" />
+    <Compile Include="Repository\MrkCallRepository.cs" />
+    <Compile Include="Repository\AccPeriodRepository.cs" />
+    <Compile Include="Repository\MServiceRepository.cs" />
+    <Compile Include="Repository\NavAccSyncBlockRepository.cs" />
+    <Compile Include="Repository\NoLostAndVoidRepository.cs" />
+    <Compile Include="Repository\OkcFirmPrerequisiteRepository.cs" />
+    <Compile Include="Repository\PayBankTransferConParamRepository.cs" />
+    <Compile Include="Repository\PayBankTransferEftRepository.cs" />
+    <Compile Include="Repository\PayBankTransferRepository.cs" />
+    <Compile Include="Repository\SodexoOnlineUserRepository.cs" />
+    <Compile Include="Repository\MerchantCommentRepository.cs" />
+    <Compile Include="Repository\TerminalRepository.cs" />
+    <Compile Include="Repository\VAddressRepository.cs" />
+    <Compile Include="Repository\McOrdPlMatchRepository.cs" />
+    <Compile Include="Repository\VwUyePassOrdMcOrderRepository.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Data\Sodexo.BackOffice.Data.csproj" />
+    <ProjectReference Include="..\..\..\BusinessProcessManagement\Src\Abstraction\Sodexo.BackOffice.BPMManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\DeliveryManagement\Abstraction\Sodexo.BackOffice.DeliveryManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\MerchantManagement\Src\Sodexo.BackOffice.MerchantManagement.Abstraction\Sodexo.BackOffice.MerchantManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\OrderManagement\Src\Domain\Sodexo.BackOffice.OrderManagement.Domain.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.AccountStructureManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Domain\Sodexo.BackOffice.AccountStructureManagement.Domain.csproj" />
+  </ItemGroup>
+</Project>

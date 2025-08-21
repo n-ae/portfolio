@@ -1,0 +1,23 @@
+# Lua compiled files
+*.luac
+
+# LuaRocks build artifacts
+*.rockspec
+*.rock
+
+# Local cache files
+luac.out
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Runtime logs
+*.log

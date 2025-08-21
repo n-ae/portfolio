@@ -1,0 +1,49 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{80330A7B-774B-4462-B164-3B237C7C3922}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Context\OrderManagement.OrderContext.cs" />
+    <Compile Include="Data\PackageSqlQueries.cs" />
+    <Compile Include="Repository\AccCreditCardProvRepository.cs" />
+    <Compile Include="Repository\CmpBranchSummaryRepository.cs" />
+    <Compile Include="Repository\ExcelOrderRepository.cs" />
+    <Compile Include="Repository\FirmBranchRepository.cs" />
+    <Compile Include="Repository\FirmServiceBlockageRepository.cs" />
+    <Compile Include="Repository\InaccurateOrderRepository.cs" />
+    <Compile Include="Repository\MOrderReasonRepository.cs" />
+    <Compile Include="Repository\OrderInvoiceOperationRepository.cs" />
+    <Compile Include="Repository\OrderInvoiceRepository.cs" />
+    <Compile Include="Repository\OrderPeriodRepository.cs" />
+    <Compile Include="Repository\Order\AddBranchOrder.cs" />
+    <Compile Include="Repository\Order\CancelOrder.cs" />
+    <Compile Include="Repository\Order\CardRefill.cs" />
+    <Compile Include="Repository\Order\CreateManualOrderInvoice.cs" />
+    <Compile Include="Repository\Order\CreateOrder.cs" />
+    <Compile Include="Repository\Order\CreateOrderInvoiceOp.cs" />
+    <Compile Include="Repository\Order\OrderQueryRepository.cs" />
+    <Compile Include="Repository\Order\OrderRepository.cs" />
+    <Compile Include="Repository\Order\ProcessOrderLine.cs" />
+    <Compile Include="Repository\Order\UpdateOrder.cs" />
+    <Compile Include="Repository\Order\RemoveOrderLine.cs" />
+    <Compile Include="Repository\StandardOrderRepository.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ExcelDataReader" Version="3.6.0" />
+    <PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Data\Sodexo.BackOffice.Data.csproj" />
+    <ProjectReference Include="..\..\..\AccountStructureManagement\Src\Abstraction\Sodexo.BackOffice.AccountStructureManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\BusinessProcessManagement\Src\Abstraction\Sodexo.BackOffice.BPMManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\CardManagement\Src\Abstraction\Sodexo.BackOffice.CardManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\CardManagement\Src\Domain\Sodexo.BackOffice.CardManagement.Domain.csproj" />
+    <ProjectReference Include="..\..\..\InvoiceManagement\Src\Abstraction\Sodexo.BackOffice.InvoiceManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\NotificationManagement\Src\Abstraction\Sodexo.BackOffice.NotificationManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\SecurityManagement\Src\Abstraction\Sodexo.BackOffice.SecurityManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Domain\Sodexo.BackOffice.OrderManagement.Domain.csproj" />
+  </ItemGroup>
+</Project>

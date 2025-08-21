@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{09D05A91-448F-46EC-837B-B6E91505AF7A}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Accessor\BpmContextAccessor.cs" />
+    <Compile Include="Context\BPMManagement.BPMContext.cs" />
+    <Compile Include="Repository\BpmActionCustomRepository.cs" />
+    <Compile Include="Repository\BpmCustomRepository.cs" />
+    <Compile Include="Repository\BpmMrkCallsRepository.cs" />
+    <Compile Include="Repository\Flow\BpmFlowCustomRepository.cs" />
+    <Compile Include="Repository\Flow\FlowStep\Action\ActionFlowStep.cs" />
+    <Compile Include="Repository\Flow\FlowStep\Action\DbObjectActionFlowStep.cs" />
+    <Compile Include="Repository\Flow\FlowStep\Action\DllActionFlowStep.cs" />
+    <Compile Include="Repository\Flow\FlowStep\Action\IActionFlowStep.cs" />
+    <Compile Include="Repository\Flow\FlowStep\Condition\ConditionFlowStep.cs" />
+    <Compile Include="Repository\Flow\FlowStep\Condition\DllConditionFlowStep.cs" />
+    <Compile Include="Repository\Flow\FlowStep\Condition\ExpressionConditionFlowStep.cs" />
+    <Compile Include="Repository\Flow\FlowStep\Condition\IConditionFlowStep.cs" />
+    <Compile Include="Repository\Flow\FlowStep\CreateNextFlowStepRequest.cs" />
+    <Compile Include="Repository\Flow\FlowStep\TaskFlowStep.cs" />
+    <Compile Include="Repository\Flow\FlowStep\IFlowStep.cs" />
+    <Compile Include="Repository\MrkMActionTypeRepository.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Data\Sodexo.BackOffice.Data.csproj" />
+    <ProjectReference Include="..\..\..\AccountStructureManagement\Src\Abstraction\Sodexo.BackOffice.AccountStructureManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.BPMManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Domain\Sodexo.BackOffice.BPMManagement.Domain.csproj" />
+  </ItemGroup>
+</Project>

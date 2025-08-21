@@ -1,0 +1,58 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <ProjectGuid>{76CD233E-B2F4-491C-AD96-5A3263BC3874}</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="DomainTests\OrderInvoice\ChangeInvText2OrderInvoiceTests.cs" />
+    <Compile Include="DomainTests\OrderInvoice\ChangeTotalOrderInvoiceTests.cs" />
+    <Compile Include="DomainTests\Order\BranchOrderCancelTests.cs" />
+    <Compile Include="DomainTests\Order\OrderHoldingTaxTests.cs" />
+    <Compile Include="DomainTests\Order\OrderCommissionTests.cs" />
+    <Compile Include="DomainTests\Order\OrderDiscountTests.cs" />
+    <Compile Include="DomainTests\Order\ProductionCancelOrderApproveTests.cs" />
+    <Compile Include="DomainTests\Order\ProductionOrderApproveTests.cs" />
+    <Compile Include="FluentData\FluentCardRefillOrderDetail.cs" />
+    <Compile Include="FluentData\FluentCardRefillOrderLine.cs" />
+    <Compile Include="FluentData\FluentOrdOrderInvoice.cs" />
+    <Compile Include="FluentData\FluentOrdOrder.cs" />
+    <Compile Include="FluentData\FluentOrdBranchOrder.cs" />
+    <Compile Include="FluentData\FluentOrdOrderDetail.cs" />
+    <Compile Include="FluentData\FluentOrdOrderLine.cs" />
+    <Compile Include="DomainTests\Order\OrderCancelTests.cs" />
+    <Compile Include="DomainTests\Order\OrderCardRefillTests.cs" />
+    <Compile Include="DomainTests\Order\OrderLockTests.cs" />
+    <Compile Include="DomainTests\Order\OrderUnLockTests.cs" />
+    <Compile Include="DomainTests\Order\PrintOrderApproveTests.cs" />
+    <Compile Include="DomainTests\Order\PrintOrderCancelTests.cs" />
+    <Compile Include="DomainTests\Order\ReadyOrderTests.cs" />
+    <Compile Include="DomainTests\Order\UnReadyOrderTests.cs" />
+    <Compile Include="FluentData\FluentXlsOrderGeneral.cs" />
+    <Compile Include="PhysicalCardExcelUploadTests\EnrichPhysicalCardExcelOrderCommandHandlerTests.cs" />
+    <Compile Include="ValidatorTests\ExcelOrderEnrichRowValidatorTests.cs" />
+    <Compile Include="ValidatorTests\ExcelOrderImportRowValidatorTests.cs" />
+    <Compile Include="ValidatorTests\TestOptionsMonitor.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Test\Sodexo.BackOffice.Test\Sodexo.BackOffice.Test.csproj" />
+    <ProjectReference Include="..\..\Src\Application\Sodexo.BackOffice.OrderManagement.Application.csproj" />
+    <ProjectReference Include="..\..\Src\Domain\Sodexo.BackOffice.OrderManagement.Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="5.10.3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
+    <PackageReference Include="Moq" Version="4.16.1" />
+    <PackageReference Include="NBuilder" Version="6.1.0" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.msbuild" Version="2.9.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="ReportGenerator" Version="4.6.1" />
+  </ItemGroup>
+</Project>

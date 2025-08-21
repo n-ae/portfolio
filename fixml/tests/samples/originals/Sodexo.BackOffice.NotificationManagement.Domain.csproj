@@ -1,0 +1,90 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{1791EA67-34D9-4F6C-AF87-1A58F8E51948}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Entities\NotificationManagment.ConsumerNotification.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlBatchMail.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlBatchMail.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlDocument.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlDocument.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlHtmlDoc.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlHtmlDoc.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlMailSendInfo.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlMailSendInfo.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlSm.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlSm.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlSmsDoc.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlSmsDoc.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlSmsSendResult.cs" />
+    <Compile Include="Entities\NotificationManagment.DdlSmsSendResult.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.LkOneTimePasswordType.cs" />
+    <Compile Include="Entities\NotificationManagment.LkOneTimePasswordType.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MailApp.cs" />
+    <Compile Include="Entities\NotificationManagment.MailApp.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MailAppExcel.cs" />
+    <Compile Include="Entities\NotificationManagment.MailAppExcel.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MailAppExcelTemplate.cs" />
+    <Compile Include="Entities\NotificationManagment.MailAppExcelTemplate.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MailAppInputType.cs" />
+    <Compile Include="Entities\NotificationManagment.MailAppInputType.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MailAppQueue.cs" />
+    <Compile Include="Entities\NotificationManagment.MailAppQueue.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MailAppStatus.cs" />
+    <Compile Include="Entities\NotificationManagment.MailAppStatus.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MailSendOrderQueue.cs" />
+    <Compile Include="Entities\NotificationManagment.MailSendOrderQueue.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MailSendQueue.cs" />
+    <Compile Include="Entities\NotificationManagment.MailSendQueue.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MailSendType.cs" />
+    <Compile Include="Entities\NotificationManagment.MailSendType.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiFileType.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiFileType.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiFolder.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiFolder.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiFolderAccess.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiFolderAccess.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiFolderKeyword.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiFolderKeyword.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiFolderOp.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiFolderOp.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiMailAttachment.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiMailAttachment.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiMailItem.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiMailItem.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiMailReturn.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiMailReturn.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiMailReturnStatus.cs" />
+    <Compile Include="Entities\NotificationManagment.MapiMailReturnStatus.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MrkMMailFrom.cs" />
+    <Compile Include="Entities\NotificationManagment.MrkMMailFrom.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MrkMMailTo.cs" />
+    <Compile Include="Entities\NotificationManagment.MrkMMailTo.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MrkMSmsTo.cs" />
+    <Compile Include="Entities\NotificationManagment.MrkMSmsTo.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MSector.cs" />
+    <Compile Include="Entities\NotificationManagment.MSector.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.MSubsector.cs" />
+    <Compile Include="Entities\NotificationManagment.MSubsector.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.OneTimePassword.cs" />
+    <Compile Include="Entities\NotificationManagment.OneTimePassword.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.OrdXmlOperation.cs" />
+    <Compile Include="Entities\NotificationManagment.OrdXmlOperation.Generated.cs" />
+    <Compile Include="Entities\NotificationManagment.PPushNotification.cs" />
+    <Compile Include="Entities\NotificationManagment.PPushNotification.Generated.cs" />
+    <Compile Include="Objects\MailAppData.cs" />
+    <Compile Include="Repository\IDdlSmsRepository.cs" />
+    <Compile Include="Repository\IMapiRepository.cs" />
+    <Compile Include="Repository\INotificationRepository.cs" />
+    <Compile Include="Repository\IPushNotificationRepository.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.NotificationManagement.Abstraction.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Enums\" />
+  </ItemGroup>
+</Project>

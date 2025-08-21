@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{970828B1-F7BC-4884-B3A0-37D7DF2AF48E}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Context\ParseDocumentContext.cs" />
+    <Compile Include="Context\SecurityManagement.IdentityServerConfiguration.IdentityServerConfigurationContext.cs" />
+    <Compile Include="Context\SecurityManagement.IdentityServerOperational.IdentityServerOperationalContext.cs" />
+    <Compile Include="Context\SecurityManagement.SecurityContext.cs" />
+    <Compile Include="Repository\CiamRepository.cs" />
+    <Compile Include="Repository\AUserRepository.cs" />
+    <Compile Include="Repository\MultiBenefitProfileRepository.cs" />
+    <Compile Include="Repository\CustomerProfileRepository.cs" />
+    <Compile Include="Repository\MerchantProfileRepository.cs" />
+    <Compile Include="Repository\ConsumerProfileRepository.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="IdentityServer4" Version="4.1.2" />
+    <PackageReference Include="IdentityServer4.EntityFramework" Version="4.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Data\Sodexo.BackOffice.Data.csproj" />
+    <ProjectReference Include="..\Domain\Sodexo.BackOffice.SecurityManagement.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,133 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="BatchServices\BatchServiceAuthenticator.cs" />
+    <Compile Include="BatchServices\ExchangeBalance\EcJob.cs" />
+    <Compile Include="BatchServices\ExchangeBalance\IEcJob.cs" />
+    <Compile Include="BatchServices\ITcbcJob.cs" />
+    <Compile Include="BatchServices\ITfJob.cs" />
+    <Compile Include="BatchServices\ITicJob.cs" />
+    <Compile Include="BatchServices\ITrJob.cs" />
+    <Compile Include="BatchServices\MasterpassConsumerInvoice\IMasterpassConsumerInvoiceJob.cs" />
+    <Compile Include="BatchServices\MasterpassConsumerInvoice\MasterpassConsumerInvoiceJob.cs" />
+    <Compile Include="BatchServices\RecurringJobService.cs" />
+    <Compile Include="BatchServices\TcbcJob.cs" />
+    <Compile Include="BatchServices\TfJob.cs" />
+    <Compile Include="BatchServices\TicJob.cs" />
+    <Compile Include="BatchServices\TrJob.cs" />
+    <Compile Include="CancelMobilePaymentOtp\CancelMobilePaymentOtpQueryHandler.cs" />
+    <Compile Include="CardTransactionControl\CardTransactionControlQueryHandler.cs" />
+    <Compile Include="CheckIfFlaggedCardHasBalance\CheckIfFlaggedCardHasBalanceCommandHandler.cs" />
+    <Compile Include="Commands/SoftposUserCommands/CreateSoftposUser/CreateSoftposUserCommand.cs" />
+    <Compile Include="Commands/SoftposUserCommands/CreateSoftposUser/CreateSoftposUserCommandHandler.cs" />
+    <Compile Include="Commands/SoftposUserCommands/CreateSoftposUser/CreateSoftposUserCommandResult.cs" />
+    <Compile Include="Commands/SoftposUserCommands/CreateSoftposUser/CreateSoftposUserCommandValidator.cs" />
+    <Compile Include="Commands/SoftposUserLogCommands/CreateSoftposUserLog/CreateSoftposUserLogCommand.cs" />
+    <Compile Include="Commands/SoftposUserLogCommands/CreateSoftposUserLog/CreateSoftposUserLogCommandHandler.cs" />
+    <Compile Include="Commands/SoftposUserLogCommands/CreateSoftposUserLog/CreateSoftposUserLogCommandResult.cs" />
+    <Compile Include="Commands/SoftposUserLogCommands/CreateSoftposUserLog/CreateSoftposUserLogCommandValidator.cs" />
+    <Compile Include="Commands\PaymentCommands\UpdatePayment\UpdatePaymentCommand.cs" />
+    <Compile Include="Commands\PaymentCommands\UpdatePayment\UpdatePaymentCommandHandler.cs" />
+    <Compile Include="Commands\PaymentCommands\UpdatePayment\UpdatePaymentCommandResult.cs" />
+    <Compile Include="Commands\SodexopayActinoTokenLogCommands\CreateSodexopayActionTokenLog\CreateSodexopayActionTokenLogCommand.cs" />
+    <Compile Include="Commands\SodexopayActinoTokenLogCommands\CreateSodexopayActionTokenLog\CreateSodexopayActionTokenLogCommandHandler.cs" />
+    <Compile Include="Commands\SodexopayActinoTokenLogCommands\CreateSodexopayActionTokenLog\CreateSodexopayActionTokenLogCommandResult.cs" />
+    <Compile Include="Commands\SodexopayActinoTokenLogCommands\CreateSodexopayActionTokenLog\CreateSodexopayActionTokenLogCommandValidator.cs" />
+    <Compile Include="Commands\SodexopayActionTokenCommands\UpdateSodexopayActionToken\UpdateSodexopayActionTokenCommand.cs" />
+    <Compile Include="Commands\SodexopayActionTokenCommands\UpdateSodexopayActionToken\UpdateSodexopayActionTokenCommandHandler.cs" />
+    <Compile Include="Commands\SodexopayActionTokenCommands\UpdateSodexopayActionToken\UpdateSodexopayActionTokenCommandResult.cs" />
+    <Compile Include="Commands\SodexopayActionTokenCommands\UpdateSodexopayActionToken\UpdateSodexopayActionTokenCommandValidator.cs" />
+    <Compile Include="Commands\SoftposUserBranchCommands\UpdateSoftposUserBranch\UpdateSoftposUserBranchCommand.cs" />
+    <Compile Include="Commands\SoftposUserBranchCommands\UpdateSoftposUserBranch\UpdateSoftposUserBranchCommandHandler.cs" />
+    <Compile Include="Commands\SoftposUserBranchCommands\UpdateSoftposUserBranch\UpdateSoftposUserBranchCommandResult.cs" />
+    <Compile Include="Commands\SoftposUserBranchCommands\UpdateSoftposUserBranch\UpdateSoftposUserBranchCommandValidator.cs" />
+    <Compile Include="Commands\SoftposUserCommands\UpdateSoftposUser\UpdateSoftposUserCommand.cs" />
+    <Compile Include="Commands\SoftposUserCommands\UpdateSoftposUser\UpdateSoftposUserCommandHandler.cs" />
+    <Compile Include="Commands\SoftposUserCommands\UpdateSoftposUser\UpdateSoftposUserCommandResult.cs" />
+    <Compile Include="Commands\SoftposUserCommands\UpdateSoftposUser\UpdateSoftposUserCommandValidator.cs" />
+    <Compile Include="CommitPurchasePartner\CommitPurchasePartnerCommandHander.cs" />
+    <Compile Include="CommitPurchase\CommitPurchaseCommandHandler.cs" />
+    <Compile Include="CreateConsumerTopupInvoice\CreateConsumerTopupInvoiceCommandHandler.cs" />
+    <Compile Include="CreateIntegrator\CreateIntegratorCommandHandler.cs" />
+    <Compile Include="DbPackages\PckVirtualCardOperations\PckVirtualCardOperations.cs" />
+    <Compile Include="DbPackages\PckVirtualCardOperations\SendMailParams.cs" />
+    <Compile Include="ExchangeBalance\EventBus\ExternalChequeCodeUpdatedEventHandler.cs" />
+    <Compile Include="ExchangeBalance\EventBus\ExternalChequeCodeAddedEventHandler.cs" />
+    <Compile Include="ExchangeBalance\EventBus\BalanceUpdatedEventHandler.cs" />
+    <Compile Include="ExchangeBalance\NewExchangeBalanceCommandHandler.cs" />
+    <Compile Include="ExchangeBalance\ExchangeBalanceToBeDeletedCommandHandler.cs" />
+    <Compile Include="ExchangeBalance\ExchangeBalanceCommandHandler.cs" />
+    <Compile Include="ExchangeBalance\ExchangeBalanceCommandValidator.cs" />
+    <Compile Include="ExchangeBalance\UpdateBalance\UpdateBalanceCommandHandler.cs" />
+    <Compile Include="ExternalPaymentThreeDResultInfo\ExternalPaymentThreeDResultInfoCommandHandler.cs" />
+    <Compile Include="GenerateMobilePaymentOtp\GenerateMobilePaymentOtpCommandHandler.cs" />
+    <Compile Include="GeneratePassword\GeneratePasswordCommandHandler.cs" />
+    <Compile Include="GetAllBrand\GetAllBrandGiftCategoriesQueryHandler.cs" />
+    <Compile Include="GetExchangeBalanceErrorControl\GetExchangeBalanceErrorControlQueryHandler.cs" />
+    <Compile Include="GetCardIdByCardHash\GetCardIdByCardHashQueryHandler.cs" />
+    <Compile Include="GetExchangeBalanceTransactionDetailedInfo\GetExchangeBalanceTransactionDetailedInfoQueryHandler.cs" />
+    <Compile Include="GetExchangeBalanceTransactionInfo\GetExchangeBalanceTransactionInfoQueryHandler.cs" />
+    <Compile Include="GetExternalTopupPayment3dInfoListForInvoiceJob\GetExternalTopupPayment3dInfoBasicListForInvoiceJobQueryHandler.cs" />
+    <Compile Include="GetIntegratorChannelList\GetIntegratorChannelListQueryHandler.cs" />
+    <Compile Include="GetIntegratorChannelNameWithTransactionId\GetIntegratorChannelNameWithTransactionIdQueryHandler.cs" />
+    <Compile Include="GetIntegratorList\GetIntegratorListQueryHandler.cs" />
+    <Compile Include="GetInvoiceInfo\GetInvoiceInfoQueryHandler.cs" />
+    <Compile Include="GetExternalTopupPayment3dInfoList\GetExternalTopupPayment3dInfoListQueryHandler.cs" />
+    <Compile Include="GetMasterpassKeyPartner\GetMasterpassKeyPartnerQueryHandler.cs" />
+    <Compile Include="GetMasterPassKey\GetMasterPassKeyQueryHandler.cs" />
+    <Compile Include="GetMasterpassTopupAmountsByDashboardType\GetMasterpassTopupAmountsByDashboardTypeQueryHandler.cs" />
+    <Compile Include="GetMasterpassTopupAmounts\GetMasterpassTopupAmountQueryHandler.cs" />
+    <Compile Include="GetOnlineShoppingCityList\GetOnlineShoppingCityListQueryHandler.cs" />
+    <Compile Include="GetOnlineShoppingCategoryList\GetOnlineShoppingCategoryListQueryHandler.cs" />
+    <Compile Include="GetOnlineShoppingChannelList\GetOnlineShoppingChannelListQueryHandler.cs" />
+    <Compile Include="GetOnlineShoppingList\GetOnlineShoppingListQueryHandler.cs" />
+    <Compile Include="ControlPaymentIntegratorCards\ControlPaymentIntegratorCardsCommandHandler.cs" />
+    <Compile Include="IntegrationEventHandlers\ExternalTopupPaymentCommittedEventHandler.cs" />
+    <Compile Include="InvoiceInfo\InvoiceInfoCommandHandler.cs" />
+    <Compile Include="NFCPaymentsControl\CheckNFCPaymentsQueryHandler.cs" />
+    <Compile Include="NFCPaymentControl\CheckIsNFCPaymentQueryHandler.cs" />
+    <Compile Include="ReversePartnerTopup\ReversePartnerTopupCommandHandler.cs" />
+    <Compile Include="SaveSdkProvisionError\SaveSdkProvisionErrorCommandHandler.cs" />
+    <Compile Include="TopupInvoiceReconcile\TopupInvoiceReconcileCommandHandler.cs" />
+    <Compile Include="TopupTransactionFinalization\TopupTransactionFinalizationCommandHandler.cs" />
+    <Compile Include="InsertPaymentIntegratorCards\InsertPaymentIntegratorCardsCommandHandler.cs" />
+    <Compile Include="IoCModules\PaymentManagementModule.cs" />
+    <Compile Include="MakePaymentVirtual\MakePaymentVirtualCommandHandler.cs" />
+    <Compile Include="Mappers\ExternalTopupBalanceMapper.cs" />
+    <Compile Include="SodexoAuthorization\SodexoAuthorizationCommandHandler.cs" />
+    <Compile Include="TopupExternalBalance\TopupExternalBalanceCommandHandler.cs" />
+    <Compile Include="TopupReconcile\TopupReconcileCommandHandler.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Data\Sodexo.BackOffice.Data.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Ioc\Sodexo.BackOffice.Ioc.csproj" />
+    <ProjectReference Include="..\..\..\AccountStructureManagement\Src\Abstraction\Sodexo.BackOffice.AccountStructureManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\CardManagement\Src\Abstraction\Sodexo.BackOffice.CardManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\ConsumerManagement\Src\Abstraction\Sodexo.BackOffice.ConsumerManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\IntegrationManagement\Src\Abstraction\Sodexo.BackOffice.IntegrationManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\NotificationManagement\Src\Abstraction\Sodexo.BackOffice.NotificationManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.PaymentManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Infrastructure\Sodexo.BackOffice.PaymentManagement.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PropertyChanged.Fody" Version="4.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Commands\Functions\" />
+    <Folder Include="Commands\Packages\" />
+    <Folder Include="Commands\Procedures\" />
+    <Folder Include="Queries\Functions\" />
+    <Folder Include="Queries\Packages\" />
+    <Folder Include="Queries\Procedures\" />
+  </ItemGroup>
+
+</Project>

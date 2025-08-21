@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Context\ConsumerManagement.ConsumerContext.cs" />
+    <Compile Include="Repository\ConsumerRepository.cs" />
+    <Compile Include="Repository\MarketingRepository.cs" />
+    <Compile Include="Repository\PackageRepository.cs" />
+    <Compile Include="Repository\PeriodEmployeesRepository.cs" />
+    <Compile Include="Repository\UserCardRepository.cs" />
+    <Compile Include="Repository\UserCommentRepository.cs" />
+    <Compile Include="Repository\UserHelpGuideRepository.cs" />
+    <Compile Include="Repository\UserPermissionRepository.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Data\Sodexo.BackOffice.Data.csproj" />
+    <ProjectReference Include="..\..\..\CardManagement\Src\Abstraction\Sodexo.BackOffice.CardManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\SecurityManagement\Src\Abstraction\Sodexo.BackOffice.SecurityManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.ConsumerManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Domain\Sodexo.BackOffice.ConsumerManagement.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

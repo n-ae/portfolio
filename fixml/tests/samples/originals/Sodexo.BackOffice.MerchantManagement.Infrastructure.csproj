@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+    <ProjectGuid>{33BD94AB-C0B3-47F5-9A7D-3C81F6C7DE3E}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Context\MerchantManagement.MerchantContext.cs" />
+    <Compile Include="Data\SoftPosUserQueries.cs" />
+    <Compile Include="Repository\AffBranchOperationRepository.cs" />
+    <Compile Include="Repository\AffFirmOperationRepository.cs" />
+    <Compile Include="Repository\AffFirmServiceRepository.cs" />
+    <Compile Include="Repository\AffInvoiceCardRepository.cs" />
+    <Compile Include="Repository\AffMemberRequestRepository.cs" />
+    <Compile Include="Repository\OnlineSwVersionRepository.cs" />
+    <Compile Include="Repository\SoftPosUserRepository.cs" />
+    <Compile Include="Repository\TerminalRepository.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Data\Sodexo.BackOffice.Data.csproj" />
+    <ProjectReference Include="..\Sodexo.BackOffice.MerchantManagement.Abstraction\Sodexo.BackOffice.MerchantManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Sodexo.BackOffice.MerchantManagement.Domain\Sodexo.BackOffice.MerchantManagement.Domain.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Entities\PaymentManagement.BoPayment.cs" />
+    <Compile Include="Entities\PaymentManagement.BoPayment.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.ExchangeBalanceTransaction.cs" />
+    <Compile Include="Entities\PaymentManagement.ExchangeBalanceTransaction.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.ExternalTopup.cs" />
+    <Compile Include="Entities\PaymentManagement.ExternalTopup.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.ExternalTopupBalance.cs" />
+    <Compile Include="Entities\PaymentManagement.ExternalTopupBalance.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.ExternalTopupPayment3dInfo.cs" />
+    <Compile Include="Entities\PaymentManagement.ExternalTopupPayment3dInfo.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.InvoiceInfo.cs" />
+    <Compile Include="Entities\PaymentManagement.InvoiceInfo.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.MobilePaymentOtp.cs" />
+    <Compile Include="Entities\PaymentManagement.MobilePaymentOtp.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.Payment.cs" />
+    <Compile Include="Entities\PaymentManagement.Payment.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.PSodexopayIntegratorCategory.cs" />
+    <Compile Include="Entities\PaymentManagement.PSodexopayIntegratorCategory.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.SodexopayActionToken.cs" />
+    <Compile Include="Entities\PaymentManagement.SodexopayActionToken.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.SodexopayActionTokenLog.cs" />
+    <Compile Include="Entities\PaymentManagement.SodexopayActionTokenLog.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.SodexopayIntegrator.cs" />
+    <Compile Include="Entities\PaymentManagement.SodexopayIntegrator.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.SodexopayIntegratorCard.cs" />
+    <Compile Include="Entities\PaymentManagement.SodexopayIntegratorCard.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.SodexopayIntegratorCategory.cs" />
+    <Compile Include="Entities\PaymentManagement.SodexopayIntegratorCategory.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.SodexopayIntegratorCity.cs" />
+    <Compile Include="Entities\PaymentManagement.SodexopayIntegratorCity.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.SoftposUser.cs" />
+    <Compile Include="Entities\PaymentManagement.SoftposUser.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.SoftposUserBranch.cs" />
+    <Compile Include="Entities\PaymentManagement.SoftposUserBranch.Generated.cs" />
+    <Compile Include="Entities\PaymentManagement.SoftposUserLog.cs" />
+    <Compile Include="Entities\PaymentManagement.SoftposUserLog.Generated.cs" />
+    <Compile Include="Repository\INewExchangeBalanceRepository.cs" />
+    <Compile Include="Repository\IExchangeBalanceToBeDeletedRepository.cs" />
+    <Compile Include="Repository\IExchangeBalanceRepository.cs" />
+    <Compile Include="Repository\IPaymentRepository.cs" />
+    <Compile Include="Repository\ITopupExternalRepository.cs" />
+    <Compile Include="Repository\ISodexopayIntegratorRepository.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\AccountStructureManagement\Src\Abstraction\Sodexo.BackOffice.AccountStructureManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.PaymentManagement.Abstraction.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,94 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{CA73EBAB-BD8C-43AC-8A18-5759154749F2}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Entities\BPMManagement.MrkAction.cs" />
+    <Compile Include="Entities\BPMManagement.MrkAction.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.MrkCallsLog.cs" />
+    <Compile Include="Entities\BPMManagement.MrkCallsLog.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.MrkCallWork.cs" />
+    <Compile Include="Entities\BPMManagement.MrkCallWork.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.MrkMActCategory.cs" />
+    <Compile Include="Entities\BPMManagement.MrkMActCategory.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.MrkMActionType.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.ACallOwner.cs" />
+    <Compile Include="Entities\BPMManagement.ACallOwner.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.ActionDef.cs" />
+    <Compile Include="Entities\BPMManagement.ActionDef.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.ActionDefMetaDb.cs" />
+    <Compile Include="Entities\BPMManagement.ActionDefMetaDb.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.ActionDefMetaDll.cs" />
+    <Compile Include="Entities\BPMManagement.ActionDefMetaDll.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.ActionDefType.cs" />
+    <Compile Include="Entities\BPMManagement.ActionDefType.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.ConditionDef.cs" />
+    <Compile Include="Entities\BPMManagement.ConditionDef.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.ConditionDefMetaDll.cs" />
+    <Compile Include="Entities\BPMManagement.ConditionDefMetaDll.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.ConditionDefMetaExp.cs" />
+    <Compile Include="Entities\BPMManagement.ConditionDefMetaExp.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.ConditionDefType.cs" />
+    <Compile Include="Entities\BPMManagement.ConditionDefType.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.FlowDef.cs" />
+    <Compile Include="Entities\BPMManagement.FlowDef.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.FlowDefComponentType.cs" />
+    <Compile Include="Entities\BPMManagement.FlowDefComponentType.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.MrkCall.cs" />
+    <Compile Include="Entities\BPMManagement.MrkCall.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.MrkCallContactType.cs" />
+    <Compile Include="Entities\BPMManagement.MrkCallContactType.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.MrkCallSolution.cs" />
+    <Compile Include="Entities\BPMManagement.MrkCallSolution.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.MrkCallStatus.cs" />
+    <Compile Include="Entities\BPMManagement.MrkCallStatus.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.MrkMActionType.cs" />
+    <Compile Include="Entities\BPMManagement.MrkMCallType.cs" />
+    <Compile Include="Entities\BPMManagement.MrkMCallType.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.Process.cs" />
+    <Compile Include="Entities\BPMManagement.Process.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.ProcessDef.cs" />
+    <Compile Include="Entities\BPMManagement.ProcessDef.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.ProcessDefDefaultFilter.cs" />
+    <Compile Include="Entities\BPMManagement.ProcessDefDefaultFilter.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.ProcessDefMeta.cs" />
+    <Compile Include="Entities\BPMManagement.ProcessDefMeta.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.ProcessDetail.cs" />
+    <Compile Include="Entities\BPMManagement.ProcessDetail.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.Task.cs" />
+    <Compile Include="Entities\BPMManagement.Task.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.TaskDef.cs" />
+    <Compile Include="Entities\BPMManagement.TaskDef.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.TaskDefAuth.cs" />
+    <Compile Include="Entities\BPMManagement.TaskDefAuth.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.TaskDetail.cs" />
+    <Compile Include="Entities\BPMManagement.TaskDetail.Generated.cs" />
+    <Compile Include="Entities\BPMManagement.TaskStatus.cs" />
+    <Compile Include="Entities\BPMManagement.TaskStatus.Generated.cs" />
+    <Compile Include="Model\Action\ActionFlowStepModel.cs" />
+    <Compile Include="Model\Condition\ConditionFlowStepModel.cs" />
+    <Compile Include="Model\Action\DbObjectActionFlowStepModel.cs" />
+    <Compile Include="Model\Action\DllActionFlowStepModel.cs" />
+    <Compile Include="Model\Condition\DllConditionFlowStepModel.cs" />
+    <Compile Include="Model\Condition\ExpressionConditionFlowStepModel.cs" />
+    <Compile Include="Model\FlowModel.cs" />
+    <Compile Include="Model\FlowStepModel.cs" />
+    <Compile Include="Model\GenerateFlowStepModel.cs" />
+    <Compile Include="Model\Task\TaskAuthModel.cs" />
+    <Compile Include="Model\Task\TaskFlowStepModel.cs" />
+    <Compile Include="Repository\IMrkMActionTypeRepository.cs" />
+    <Compile Include="Repository\IBpmActionCustomRepository.cs" />
+    <Compile Include="Repository\IBpmCustomRepository.cs" />
+    <Compile Include="Repository\IBpmFlowCustomRepository.cs" />
+    <Compile Include="Repository\IBpmMrkCallsRepository.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Z.Expressions.Eval" Version="4.0.22" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.BPMManagement.Abstraction.csproj" />
+  </ItemGroup>
+</Project>

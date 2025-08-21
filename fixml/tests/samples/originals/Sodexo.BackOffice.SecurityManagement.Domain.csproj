@@ -1,0 +1,123 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{B8869AFE-D65B-449D-B3B7-6CE9596B1BB2}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Entities\ParseUser.cs" />
+    <Compile Include="Entities\SecurityManagement.ADmlActionType.cs" />
+    <Compile Include="Entities\SecurityManagement.ADmlActionType.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.AForm.cs" />
+    <Compile Include="Entities\SecurityManagement.AForm.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.AFormsClearLogDetail.cs" />
+    <Compile Include="Entities\SecurityManagement.AFormsClearLogDetail.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.AGroup.cs" />
+    <Compile Include="Entities\SecurityManagement.AGroup.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.AGroupRole.cs" />
+    <Compile Include="Entities\SecurityManagement.AGroupRole.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ALogMObjectType.cs" />
+    <Compile Include="Entities\SecurityManagement.ALogMObjectType.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ALogObject.cs" />
+    <Compile Include="Entities\SecurityManagement.ALogObject.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ALogReportAdmin.cs" />
+    <Compile Include="Entities\SecurityManagement.ALogReportAdmin.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ALogUserRight.cs" />
+    <Compile Include="Entities\SecurityManagement.ALogUserRight.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.AMenuItemsAuthorization.cs" />
+    <Compile Include="Entities\SecurityManagement.AMenuItemsAuthorization.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiAdministration.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiAdministration.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiAuthorization.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiAuthorization.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiDefinition.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiDefinition.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiParentDefinition.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiParentDefinition.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiParentDefinitionRelation.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiParentDefinitionRelation.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiPropertyAuthorization.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiPropertyAuthorization.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiPropertyDefinition.cs" />
+    <Compile Include="Entities\SecurityManagement.ApiPropertyDefinition.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.AProgram.cs" />
+    <Compile Include="Entities\SecurityManagement.AProgram.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ARole.cs" />
+    <Compile Include="Entities\SecurityManagement.ARole.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.AUser.cs" />
+    <Compile Include="Entities\SecurityManagement.AUser.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.AUserActiontype.cs" />
+    <Compile Include="Entities\SecurityManagement.AUserActiontype.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.AUserGroup.cs" />
+    <Compile Include="Entities\SecurityManagement.AUserGroup.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.AUserRole.cs" />
+    <Compile Include="Entities\SecurityManagement.AUserRole.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.AUsersLog.cs" />
+    <Compile Include="Entities\SecurityManagement.AUsersLog.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.CiamAccount.cs" />
+    <Compile Include="Entities\SecurityManagement.CiamAccount.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.CiamLoginid.cs" />
+    <Compile Include="Entities\SecurityManagement.CiamLoginid.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.CiamSetting.cs" />
+    <Compile Include="Entities\SecurityManagement.CiamSetting.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ConsumerProfile.cs" />
+    <Compile Include="Entities\SecurityManagement.ConsumerProfile.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ConsumerProfileInfoDetail.cs" />
+    <Compile Include="Entities\SecurityManagement.ConsumerProfileInfoDetail.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ConsumerProfileLog.cs" />
+    <Compile Include="Entities\SecurityManagement.ConsumerProfileLog.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.DeleteAccount.cs" />
+    <Compile Include="Entities\SecurityManagement.DeleteAccount.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.Deleteparse.cs" />
+    <Compile Include="Entities\SecurityManagement.Deleteparse.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.Employee.cs" />
+    <Compile Include="Entities\SecurityManagement.Employee.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.EspiUser.cs" />
+    <Compile Include="Entities\SecurityManagement.EspiUser.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ImpRight.cs" />
+    <Compile Include="Entities\SecurityManagement.ImpRight.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ItdDepartment.cs" />
+    <Compile Include="Entities\SecurityManagement.ItdDepartment.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ItdDirectorate.cs" />
+    <Compile Include="Entities\SecurityManagement.ItdDirectorate.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.ItdDirectorateDepartment.cs" />
+    <Compile Include="Entities\SecurityManagement.ItdDirectorateDepartment.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.LkConsumerStatu.cs" />
+    <Compile Include="Entities\SecurityManagement.LkConsumerStatu.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.MCoordinateGroup.cs" />
+    <Compile Include="Entities\SecurityManagement.MCoordinateGroup.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.MerchantProfile.cs" />
+    <Compile Include="Entities\SecurityManagement.MerchantProfile.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.MerchantProfileFirm.cs" />
+    <Compile Include="Entities\SecurityManagement.MerchantProfileFirm.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.MerchantProfileRole.cs" />
+    <Compile Include="Entities\SecurityManagement.MerchantProfileRole.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.PartnerParameter.cs" />
+    <Compile Include="Entities\SecurityManagement.PartnerParameter.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.PartnershipProfile.cs" />
+    <Compile Include="Entities\SecurityManagement.PartnershipProfile.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.RepUserSecurity.cs" />
+    <Compile Include="Entities\SecurityManagement.RepUserSecurity.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.UserAudit.cs" />
+    <Compile Include="Entities\SecurityManagement.UserAudit.Generated.cs" />
+    <Compile Include="Entities\SecurityManagement.VARolesUser.cs" />
+    <Compile Include="Entities\SecurityManagement.VARolesUser.Generated.cs" />
+    <Compile Include="Enums\CoordinateGroup.cs" />
+    <Compile Include="Entities\SecurityManagement.AMenuItem.cs" />
+    <Compile Include="Entities\SecurityManagement.AMenuItem.Generated.cs" />
+    <Compile Include="Repository\ICiamRepository.cs" />
+    <Compile Include="Repository\IAUserRepository.cs" />
+    <Compile Include="Repository\IMultiBenefitProfileRepository.cs" />
+    <Compile Include="Repository\ICustomerProfileRepository.cs" />
+    <Compile Include="Repository\IMerchantProfileRepository.cs" />
+    <Compile Include="Repository\IConsumerProfileRepository.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.SecurityManagement.Abstraction.csproj" />
+  </ItemGroup>
+
+</Project>

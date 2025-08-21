@@ -1,0 +1,140 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{936278E9-298B-4B63-A80A-73DEBABE8CEC}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ClientService\IDdlMailSendInfoClientService.cs" />
+    <Compile Include="ClientService\IDocumentsClientService.cs" />
+    <Compile Include="ClientService\ILookupNotificationClientService.cs" />
+    <Compile Include="ClientService\IMapiFolderAccessClientService.cs" />
+    <Compile Include="ClientService\IMailAppInputTypesClientService.cs" />
+    <Compile Include="ClientService\IMapiFolderClientService.cs" />
+    <Compile Include="ClientService\IMapiFolderClientService.cs" />
+    <Compile Include="ClientService\IMapiMailItemsClientService.cs" />
+    <Compile Include="ClientService\INotificationsClientService.cs" />
+    <Compile Include="ClientService\IOrderNotificationProvider.cs" />
+    <Compile Include="ClientService\IOtpClientService.cs" />
+    <Compile Include="ClientService\IPushClientService.cs" />
+    <Compile Include="ClientService\IMailClientService.cs" />
+    <Compile Include="CommandResult\CreateDdlMailSendInfoCommandApiResult.cs" />
+    <Compile Include="CommandResult\CreateMapiMailCommandResult.cs" />
+    <Compile Include="CommandResult\CreateMailAndMrkCallCommandResult.cs" />
+    <Compile Include="CommandResult\UpdateDdlMailSendInfoCommandApiResult.cs" />
+    <Compile Include="Command\BulkSendSmsByTemplateIdForJobCommand.cs" />
+    <Compile Include="Command\BulkSendSmsByTemplateIdCommand.cs" />
+    <Compile Include="Command\CreateDdlSmsCommand.cs" />
+    <Compile Include="Command\CreateMapiFolderAccessCommand.cs" />
+    <Compile Include="Command\CreateMailAndMrkCallCommand.cs" />
+    <Compile Include="Command\CreateMapiMailCommand.cs" />
+    <Compile Include="Command\SendBulkEmailCommand.cs" />
+    <Compile Include="Command\SendBulkExtreCommand.cs" />
+    <Compile Include="Command\SendBulkExtreOnSingleFileCommand.cs" />
+    <Compile Include="Command\SendBulkInvoiceDetailCommand.cs" />
+    <Compile Include="Command\SendEmailAppCommand.cs" />
+    <Compile Include="Command\SendEmailCommand.cs" />
+    <Compile Include="Command\SendMobilePaymentPushCommand.cs" />
+    <Compile Include="Command\SendOneTimePasswordCommand.cs" />
+    <Compile Include="Command\SendSmsDataCommand.cs" />
+    <Compile Include="Command\SetOtpStatusCommand.cs" />
+    <Compile Include="Command\UpdateDdlSmsCommand.cs" />
+    <Compile Include="Dto\DdlDocumentsDto.cs" />
+    <Compile Include="Dto\DdlHtmlDocContentDto.cs" />
+    <Compile Include="Dto\DdlMailSendInfoDto.cs" />
+    <Compile Include="Dto\DdlSmsDto.cs" />
+    <Compile Include="Dto\DdlHtmlDocDto.cs" />
+    <Compile Include="Dto\MailAppListDto.cs" />
+    <Compile Include="Dto\MailAppDto.cs" />
+    <Compile Include="Dto\MailAppInputTypeListDto.cs" />
+    <Compile Include="Dto\MapiFolderAccessDto.cs" />
+    <Compile Include="Dto\MapiMailItemDto.cs" />
+    <Compile Include="Dto\NotificationDto.cs" />
+    <Compile Include="Dto\OtpDto.cs" />
+    <Compile Include="Dto\OtpTypeDto.cs" />
+    <Compile Include="ClientService\ISmsClientService.cs" />
+    <Compile Include="Dto\SmsInfoDto.cs" />
+    <Compile Include="Dto\SmsParam.cs" />
+    <Compile Include="Dto\SourceMailAppCountDto.cs" />
+    <Compile Include="Enums\DdlSmsSendResult.cs" />
+    <Compile Include="Enums\DdlDocumentStatus.cs" />
+    <Compile Include="Enums\DdlSmsStatus.cs" />
+    <Compile Include="Enums\EmailTemplateType.cs" />
+    <Compile Include="Enums\MailAppInputType.cs" />
+    <Compile Include="Enums\MailAppQueueStatus.cs" />
+    <Compile Include="Enums\MailSendInfo.cs" />
+    <Compile Include="Enums\NotificationManagementErrorCode.cs" />
+    <Compile Include="Enums\OrderNotification.cs" />
+    <Compile Include="Enums\OtpStatus.cs" />
+    <Compile Include="Enums\SmsTemplateType.cs" />
+    <Compile Include="QueryResult\GetMailsByMailAddressQueryResult.cs" />
+    <Compile Include="QueryResult\GetDdlMailSendInfoListQueryResult.cs" />
+    <Compile Include="QueryResult\GetMailsByMailAddressQueryResult.cs" />
+    <Compile Include="QueryResult\GetMapiFolderAccessDepartmentListQueryResult.cs" />
+    <Compile Include="QueryResult\GetMapiFolderQueryResult.cs" />
+    <Compile Include="QueryResult\GetMrkCallsMapiMailItemQueryResult.cs" />
+    <Compile Include="QueryResult\IsSmsIdAvailableQueryResult.cs" />
+    <Compile Include="Query\GetAllMailAppInputTypeListQuery.cs" />
+    <Compile Include="Query\GetDdlHtmlDocListQuery.cs" />
+    <Compile Include="Query\GetDdlHtmlDocContentQuery.cs" />
+    <Compile Include="Query\GetDdlHtmlDocQuery.cs" />
+    <Compile Include="Query\GetDdlDocumentInfoQuery.cs" />
+    <Compile Include="Query\GetDdlMailSendInfoQuery.cs" />
+    <Compile Include="Query\GetDdlMailSendInfoListQuery.cs" />
+    <Compile Include="Query\GetMailsByMailAddressQuery.cs" />
+    <Compile Include="Query\GetInboxQuery.cs" />
+    <Compile Include="Query\GetMailAppListByMailAppIdListQuery.cs" />
+    <Compile Include="Query\GetMailsByMailAddressQuery.cs" />
+    <Compile Include="Query\GetMailTypeListQuery.cs" />
+    <Compile Include="Query\GetMapiFolderAccessDepartmentListQuery.cs" />
+    <Compile Include="Query\GetMapiFolderListQuery.cs" />
+    <Compile Include="Query\GetMapiMailItemWithRawMailQuery.cs" />
+    <Compile Include="Query\GetMrkCallsMapiMailItemQuery.cs" />
+    <Compile Include="Query\GetMrkMMailFromListQuery.cs" />
+    <Compile Include="Query\GetMrkMMailToListQuery.cs" />
+    <Compile Include="Query\GetMrkMSmsToListQuery.cs" />
+    <Compile Include="Query\GetSourceMailAppCountQuery.cs" />
+    <Compile Include="Query\GetMailAppListQuery.cs" />
+    <Compile Include="Query\GetMailAppInfoQuery.cs" />
+    <Compile Include="Query\GetMailAppInputTypeListQuery.cs" />
+    <Compile Include="Query\GetMapiFolderAccessListQuery.cs" />
+    <Compile Include="Query\GetMapiMailItemListQuery.cs" />
+    <Compile Include="Query\GetMapiMailItemQuery.cs" />
+    <Compile Include="Query\GetPushResultQuery.cs" />
+    <Compile Include="Command\SendPushCommand.cs" />
+    <Compile Include="Query\GetSmsBySmsTelNoQuery.cs" />
+    <Compile Include="Query\IsSmsIdAvailableQuery.cs" />
+    <Compile Include="Request\SendSmsOrEmailByUserTypeIdRequest.cs" />
+    <Compile Include="Request\VerifyOtpRequest.cs" />
+    <Compile Include="Response\SendOtpResponse.cs" />
+    <Compile Include="Enums\OtpType.cs" />
+    <Compile Include="Response\VerifyOtpResponse.cs" />
+    <Compile Include="Settings\MailRawSettings.cs" />
+    <Compile Include="Settings\CryptographySettings.cs" />
+    <Compile Include="Settings\FeatureToggleSettings.cs" />
+    <Compile Include="Settings\MailRawSettings.cs" />
+    <Compile Include="Settings\OrderNotificationSettings.cs" />
+    <Compile Include="Validator\GetMailsByMailAddressQueryValidator.cs" />
+    <Compile Include="Util\MimeTypeHelper.cs" />
+    <Compile Include="Util\PathHelper.cs" />
+    <Compile Include="Settings\OtpSettings.cs" />
+    <Compile Include="Util\CreateOtp.cs" />
+    <Compile Include="Request\SendSmsByTemplateIdRequest.cs" />
+    <Compile Include="Validator\GetMapiMailItemListQueryValidator.cs" />
+    <Compile Include="Validator\GetMapiMailItemQueryValidator.cs" />
+    <Compile Include="Validator\SendBulkExtreCommandValidator.cs" />
+    <Compile Include="Validator\SendBulkExtreOnSingleFileCommandValidator.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\ApiBase\Sodexo.BackOffice.ApiBase.csproj" />
+    <ProjectReference Include="..\..\..\ConsumerManagement\Src\Abstraction\Sodexo.BackOffice.ConsumerManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\IntegrationManagement\Src\Abstraction\Sodexo.BackOffice.IntegrationManagement.Abstraction.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="IntegrationEvents\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PropertyChanged.Fody" Version="4.1.0" />
+  </ItemGroup>
+</Project>

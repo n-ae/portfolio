@@ -1,0 +1,150 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ApplicationIcon />
+    <OutputType>Library</OutputType>
+    <StartupObject />
+    <ProjectGuid>{DCE3D422-55FA-4FB9-BC37-7C78901CADA7}</ProjectGuid>
+    <DebugType>portable</DebugType>
+	<DockerfileRunArguments>-p 5000:5000</DockerfileRunArguments>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ApiHost.cs" />
+    <Compile Include="Bootstrappers\ApplicationHangfireBootstrapper.cs" />
+    <Compile Include="Bootstrappers\BaseBootstrapper.cs" />
+    <Compile Include="Bootstrappers\ContextAccessorBootstrapper.cs" />
+    <Compile Include="Bootstrappers\CorsBootsrapper.cs" />
+    <Compile Include="Bootstrappers\EventBusBootsrapper.cs" />
+    <Compile Include="Bootstrappers\HangfireBootstrapper.cs" />
+    <Compile Include="Bootstrappers\HealthCheckBootstrapper.cs" />
+    <Compile Include="Bootstrappers\IocBootstrapper.cs" />
+    <Compile Include="Bootstrappers\MvcBootstrapper.cs" />
+    <Compile Include="Bootstrappers\PrometheusBootstrapper.cs" />
+    <Compile Include="Bootstrappers\SwaggerBootsrapper.cs" />
+    <Compile Include="Filters\HangfireAuthorizationFilter.cs" />
+    <Compile Include="Filters\SwaggerFileOperationFilter.cs" />
+    <Compile Include="Controllers\ApiControllerBase.cs" />
+    <Compile Include="Extensions\MiddlewareExtensions.cs" />
+    <Compile Include="Extensions\HttpContextExtensions.cs" />
+    <Compile Include="HostedService\SodexoHostedServiceCreator.cs" />
+    <Compile Include="HttpClientFactory\Exceptions\InboundCallException.cs" />
+    <Compile Include="HttpClientFactory\SodexoHttpClientHandlerForInbound.cs" />
+    <Compile Include="HttpClientFactory\SodexoHttpClientHandlerForOutbound.cs" />
+    <Compile Include="Messaging\PagedQueryRequest.cs" />
+    <Compile Include="Messaging\RequestHeader.cs" />
+    <Compile Include="Messaging\Response.cs" />
+    <Compile Include="Messaging\ResponseHeader.cs" />
+    <Compile Include="Middlewares\ExceptionHandlingMiddleware.cs" />
+    <Compile Include="Middlewares\IdentityServerLoggingMiddleware.cs" />
+    <Compile Include="Middlewares\RequestResponseLoggingMiddleware.cs" />
+    <Compile Include="Middlewares\UserContextMiddleware.cs" />
+    <Compile Include="ModelBinders\CurrencyBinder.cs" />
+    <Compile Include="Modules\ClientServiceModule.cs" />
+    <Compile Include="Modules\ProxyServiceModule.cs" />
+    <Compile Include="Security\Policies\InternalServicePolicyRequirement.cs" />
+    <Compile Include="Security\Policies\InternalServicePolicyAuthorizationHandler.cs" />
+    <Compile Include="Security\Policies\MerchantPolicyAuthorizationHandler.cs" />
+    <Compile Include="Security\Policies\MobilePolicyAuthorizationHandler.cs" />
+    <Compile Include="Security\Policies\MobilePolicyRequirement.cs" />
+    <Compile Include="Security\Policies\MerchantPolicyRequirement.cs" />
+    <Compile Include="Security\Policies\PluxeeOnlinePolicyAuthorizationHandler.cs" />
+    <Compile Include="Security\Policies\PluxeeOnlinePolicyRequirement.cs" />
+    <Compile Include="Security\Policies\SodexoPolicyAuthorizationHandler.cs">
+      <DependentUpon>SodexoAuthorizeAttribute.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Security\Policies\SodexoPolicyRequirement.cs">
+      <DependentUpon>SodexoAuthorizeAttribute.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Security\SodexoAuthorizeAttribute.cs" />
+    <Compile Include="Security\SodexoIdentityServerExtentions.cs" />
+    <Compile Include="Security\SodexoIdentityServerAuthenticationHandler.cs" />
+    <Compile Include="Security\SodexoJwtBearerHandler.cs" />
+    <Compile Include="Security\SodexoOAuth2IntrospectionHandler.cs" />
+    <Compile Include="Services\AuthorizationClientService\AuthorizationInfoDto.cs" />
+    <Compile Include="Services\AuthorizationClientService\GetAuthorizationInfoListQuery.cs" />
+    <Compile Include="Services\AuthorizationClientService\IAuthorizationClientService.cs" />
+    <Compile Include="Services\CustomerClientService\GetCustomerProfileInfoQuery.cs" />
+    <Compile Include="Services\CustomerClientService\ICustomerProfileClientService.cs" />
+    <Compile Include="Services\MerchantClientService\GetMerchantInfoQuery.cs" />
+    <Compile Include="Services\MerchantClientService\IMerchantProfileClientService.cs" />
+    <Compile Include="Services\ConsumerClientService\GetConsumerInfoQuery.cs" />
+    <Compile Include="Services\ConsumerClientService\IConsumerProfileClientService.cs" />
+    <Compile Include="Services\DepartmentClientService\IDepartmentClientService.cs" />
+    <Compile Include="Services\MultiBenefitClientService\GetMultiBenefitProfileInfoQuery.cs" />
+    <Compile Include="Services\MultiBenefitClientService\IMultiBenefitProfileClientService.cs" />
+    <Compile Include="Services\PartnerClientService\GetPartnerParameterInfoListQuery.cs" />
+    <Compile Include="Services\PartnerClientService\GetPartnerReconciliationIdsQuery.cs" />
+    <Compile Include="Services\PartnerClientService\GetPartnerInfoByIdQuery.cs" />
+    <Compile Include="Services\PartnerClientService\GetPartnerInfoQuery.cs" />
+    <Compile Include="Services\PartnerClientService\GetPartnerParameterInfoQuery.cs" />
+    <Compile Include="Services\PartnerClientService\IPartnerClientService.cs" />
+    <Compile Include="Services\RenderService\ViewRenderService.cs" />
+    <Compile Include="Services\SodexoHttpContextAccessor.cs" />
+    <Compile Include="Services\UserClientService\GetUserInfoQuery.cs" />
+    <Compile Include="Services\UserClientService\GetUserOrGroupQuery.cs" />
+    <Compile Include="Services\UserClientService\GetUsersByUserIdQuery.cs" />
+    <Compile Include="Services\UserClientService\IUserProfileClientService.cs" />
+    <Compile Include="Services\UserClientService\UserDto.cs" />
+    <Compile Include="Services\UserClientService\UserOrGroupDto.cs" />
+    <Compile Include="Startup.cs" />
+    <Compile Include="Validation\ExceptionProblemDetails\AuthorizationExceptionProblemDetails.cs" />
+    <Compile Include="Validation\ExceptionProblemDetails\DbUpdateExceptionProblemDetails.cs" />
+    <Compile Include="Validation\ExceptionProblemDetails\ConcurrencyExceptionProblemDetails.cs" />
+    <Compile Include="Validation\ExceptionProblemDetails\CiamExceptionProblemDetails.cs" />
+    <Compile Include="Validation\ExceptionProblemDetails\InboundCallExceptionProblemDetails.cs" />
+    <Compile Include="Validation\ExceptionProblemDetails\OracleExceptionProblemDetails.cs" />
+    <Compile Include="Validation\ExceptionProblemDetails\BusinessExceptionProblemDetails.cs" />
+    <Compile Include="Validation\ExceptionProblemDetails\BackofficeProblemDetails.cs" />
+    <Compile Include="Validation\ExceptionProblemDetails\UnknownExceptionProblemDetails.cs" />
+    <Compile Include="Validation\ExceptionProblemDetails\ValidationExceptionProblemDetails.cs" />
+    <Compile Include="Validation\SystemErrorCode.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.Hangfire" Version="6.0.1" />
+    <PackageReference Include="AspNetCore.HealthChecks.MongoDb" Version="6.0.1" />
+    <PackageReference Include="AspNetCore.HealthChecks.Oracle" Version="6.0.1" />
+    <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" Version="6.0.1" />
+    <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="6.0.1" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI" Version="6.0.3" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="6.0.3" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="6.0.3" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.SQLite.Storage" Version="6.0.3" />
+    <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
+    <PackageReference Include="Hangfire.MemoryStorage" Version="1.7.0" />
+    <PackageReference Include="Hangfire.Mongo" Version="1.9.5" />
+    <PackageReference Include="Hangfire.Redis.StackExchange" Version="1.9.0" />
+    <PackageReference Include="IdentityServer4.AccessTokenValidation" Version="3.0.1" />
+    <PackageReference Include="Mapster.DependencyInjection" Version="1.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="3.1.11" />
+    <PackageReference Include="RazorLight" Version="2.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.2" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.10" />
+    <PackageReference Include="Prometheus.Client.AspNetCore" Version="4.5.1" />
+    <PackageReference Include="Prometheus.Client.DependencyInjection" Version="1.0.0" />
+    <PackageReference Include="Prometheus.Client.HttpRequestDurations" Version="3.4.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.2.3" />
+    <PackageReference Include="Winton.Extensions.Configuration.Consul" Version="3.1.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\Background\Sodexo.BackOffice.Background.csproj" />
+    <ProjectReference Include="..\Core\Sodexo.BackOffice.Core.csproj" />
+    <ProjectReference Include="..\Data\Sodexo.BackOffice.Data.csproj" />
+    <ProjectReference Include="..\Domain\Sodexo.BackOffice.Domain.csproj" />
+    <ProjectReference Include="..\EventBus\Sodexo.BackOffice.EventBus.csproj" />
+    <ProjectReference Include="..\Ioc\Sodexo.BackOffice.Ioc.csproj" />
+    <ProjectReference Include="..\Localization\Sodexo.BackOffice.Localization.csproj" />
+    <ProjectReference Include="..\Logging\Sodexo.BackOffice.Logging.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="HibernatingRhinos.Profiler.Appender">
+      <HintPath>..\..\Libraries\HibernatingRhinos.Profiler.Appender.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.2" />
+  </ItemGroup>
+</Project>

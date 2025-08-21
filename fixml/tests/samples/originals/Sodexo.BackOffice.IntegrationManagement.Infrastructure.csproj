@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{38164470-76A8-4AE9-B09E-2992541754EB}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Repository\MailRuleRepository.cs" />
+    <Compile Include="WCFLogging\ServiceEndpointExtensions.cs" />
+    <Compile Include="Context\BIContext.cs" />
+    <Compile Include="Context\IntegrationManagement.SodexoMerchantContext.cs" />
+    <Compile Include="Context\IntegrationManagement.IntegrationContext.cs" />
+    <Compile Include="Context\IntegrationManagement.NavisionContext.cs" />
+    <Compile Include="Context\WebHookDocumentContext.cs" />
+    <Compile Include="Repository\ChannelTerminalRepository.cs" />
+    <Compile Include="Repository\BalanceTransferRepository.cs" />
+    <Compile Include="Repository\CardRepository.cs" />
+    <Compile Include="Repository\SodexoPaymentRepository.cs" />
+    <Compile Include="Repository\VendorRepository.cs" />
+    <Compile Include="Repository\TopupRepository.cs" />
+    <Compile Include="Repository\VendorRepository.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Data\Sodexo.BackOffice.Data.csproj" />
+    <ProjectReference Include="..\..\..\AccountStructureManagement\Src\Abstraction\Sodexo.BackOffice.AccountStructureManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.IntegrationManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Domain\Sodexo.BackOffice.IntegrationManagement.Domain.csproj" />
+  </ItemGroup>
+</Project>

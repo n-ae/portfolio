@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{F8BB47F2-2DE8-40C7-A4E2-26D6A95AB77E}</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Context\InvoiceManagement.InvoiceContext.cs" />
+    <Compile Include="Repository\AccCrInvoiceRepository.cs" />
+    <Compile Include="Repository\AccDbInvoiceRepository.cs" />
+    <Compile Include="Repository\CamethroughtypeRepository.cs" />
+    <Compile Include="Repository\ConsumerInvoiceRepository.cs" />
+    <Compile Include="Repository\AccInvoiceDirectionRepository.cs" />
+    <Compile Include="Repository\EfaturaReturnDetailRepository.cs" />
+    <Compile Include="Repository\EfaturaSenderBoxRepository.cs" />
+    <Compile Include="Repository\FoInvoiceIssueNewLogRepository.cs" />
+    <Compile Include="Repository\FoInvoiceIssueRepository.cs" />
+    <Compile Include="Repository\NavisionTransferRepository.cs" />
+    <Compile Include="Repository\MInvoicesStatusRepository.cs" />
+    <Compile Include="Repository\PayPaymentConfirmRepository.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Data\Sodexo.BackOffice.Data.csproj" />
+    <ProjectReference Include="..\..\..\AccountStructureManagement\Src\Abstraction\Sodexo.BackOffice.AccountStructureManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.InvoiceManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Domain\Sodexo.BackOffice.InvoiceManagement.Domain.csproj" />
+  </ItemGroup>
+</Project>

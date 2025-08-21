@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns:x="test" Sdk="Microsoft.NET.Sdk">
+  <!-- comment -->
+  <PropertyGroup Condition="true">
+    <TargetFramework>net6.0</TargetFramework>
+      <Title>测试 &amp; test</Title>
+        <Data><![CDATA[<xml>content</xml>]]></Data>
+      </PropertyGroup>
+      <ItemGroup>
+        <PackageReference Include="Test"/>
+        <Compile Include="*.cs"/>
+      </ItemGroup>
+    </Project>

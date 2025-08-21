@@ -1,0 +1,35 @@
+# OCaml build artifacts
+*.cmo
+*.cmi
+*.cmx
+*.cmxa
+*.cma
+*.a
+*.o
+*.so
+*.cmti
+*.annot
+*.spot
+*.spit
+
+# Local executables
+fixml
+*.exe
+
+# Dune build directory
+_build/
+
+# Opam switch directory
+_opam/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*~

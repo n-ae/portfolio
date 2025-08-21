@@ -1,0 +1,57 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{9419A71A-CE7F-4A55-856D-A35AD2C4E46E}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Bootstrappers\AuthenticationBootstrapper.cs" />
+    <Compile Include="Bootstrappers\Config.cs" />
+    <Compile Include="Bootstrappers\IdentityServerBootsrapper.cs" />
+    <Compile Include="Bootstrappers\SettingBootstrapper.cs" />
+    <Compile Include="Controllers\AGroupController.cs" />
+    <Compile Include="Controllers\ALogReportAdminsController.cs" />
+    <Compile Include="Controllers\ALogUserRightsController.cs" />
+    <Compile Include="Controllers\ApiAuthorizationController.cs" />
+    <Compile Include="Controllers\ApiDefinitionController.cs" />
+    <Compile Include="Controllers\ARoleController.cs" />
+    <Compile Include="Controllers\AUserActionTypesController.cs" />
+    <Compile Include="Controllers\AuthGroupController.cs" />
+    <Compile Include="Controllers\ActionsController.cs" />
+    <Compile Include="Controllers\AuthorizationController.cs" />
+    <Compile Include="Controllers\CiamController.cs" />
+    <Compile Include="Controllers\CiamUserController.cs" />
+    <Compile Include="Controllers\DirectorateController.cs" />
+    <Compile Include="Controllers\ImpRightsController.cs" />
+    <Compile Include="Controllers\MultiBenefitController.cs" />
+    <Compile Include="Controllers\CustomerController.cs" />
+    <Compile Include="Controllers\ALogObjectsController.cs" />
+    <Compile Include="Controllers\LookupController.cs" />
+    <Compile Include="Controllers\MerchantController.cs" />
+    <Compile Include="Controllers\ConsumerController.cs" />
+    <Compile Include="Controllers\DepartmentsController.cs" />
+    <Compile Include="Controllers\LoginTypeController.cs" />
+    <Compile Include="Controllers\AdministrationsController.cs" />
+    <Compile Include="Controllers\MenuItemController.cs" />
+    <Compile Include="Controllers\MenusController.cs" />
+    <Compile Include="Controllers\ModulesController.cs" />
+    <Compile Include="Controllers\PartnerController.cs" />
+    <Compile Include="Controllers\RolesController.cs" />
+    <Compile Include="Controllers\AUserController.cs" />
+    <Compile Include="Controllers\UsersController.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\ApiBase\Sodexo.BackOffice.ApiBase.csproj" />
+    <ProjectReference Include="..\Application\Sodexo.BackOffice.SecurityManagement.Application.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.SecurityManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Domain\Sodexo.BackOffice.SecurityManagement.Domain.csproj" />
+    <ProjectReference Include="..\Infrastructure\Sodexo.BackOffice.SecurityManagement.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="IdentityServer4.Contrib.RedisStore" Version="4.0.0" />
+  </ItemGroup>
+</Project>

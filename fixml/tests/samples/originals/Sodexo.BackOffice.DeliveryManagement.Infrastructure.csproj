@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{E27556B0-E671-4CC4-9757-2F75227E40CB}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Context\DeliveryManagement.DeliveryContext.cs" />
+    <Compile Include="Repository\DelAddressTemporaryRepository.cs" />
+    <Compile Include="Repository\DelLogisticDocumentRepository.cs" />
+    <Compile Include="Repository\DelLogisticParcelRepository.cs" />
+    <Compile Include="Repository\DelOrdPackageRepository.cs" />
+    <Compile Include="Repository\DelOrdPackageTypeRepository.cs" />
+    <Compile Include="Repository\DelParcelRepository.cs" />
+    <Compile Include="Repository\DelPackagesOtherRepository.cs" />
+    <Compile Include="Repository\DelOrdTempAddressRepository.cs" />
+    <Compile Include="Repository\DelParcelsOtherRepository.cs" />
+    <Compile Include="Repository\DelVUserRepository.cs" />
+    <Compile Include="Repository\MDeliveryRegionRepository.cs" />
+    <Compile Include="Repository\MSodexhoRegionsDeliveryRepository.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\Infrastructure\Data\Sodexo.BackOffice.Data.csproj" />
+    <ProjectReference Include="..\..\SecurityManagement\Src\Abstraction\Sodexo.BackOffice.SecurityManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Domain\Sodexo.BackOffice.DeliveryManagement.Domain.csproj" />
+  </ItemGroup>
+</Project>

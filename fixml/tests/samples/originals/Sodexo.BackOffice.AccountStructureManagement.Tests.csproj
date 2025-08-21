@@ -1,0 +1,60 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <ProjectGuid>{76CD233E-B2F4-191C-BD96-8A3263BC3874}</ProjectGuid>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="CheckContactWithCompanyAuthorizedPerson\CheckAuthorizationWithFirmContactExceptionQueryHandlerTest.cs" />
+    <Compile Include="Commands\AuthorizedContactCommands\CreateAuthorizedContact\CreateAuthorizedContactCommandHandlerTest.cs" />
+    <Compile Include="Commands\IysCommands\CreateIys\CreateIysRequestCommandHandlerTest.cs" />
+    <Compile Include="Commands\UpdateSbdApproval\UpdateSbdApprovalCommandHandlerTest.cs" />
+    <Compile Include="Commands\PluxeeOnlineUpdateOpportunityReferenceNumber\PluxeeOnlineUpdateOpportunityReferenceNumberCommandHandlerTest.cs" />
+    <Compile Include="Entities\CliContractTest.cs" />
+    <Compile Include="Commands\PluxeeOnlineUpdateOpportunityReferenceNumber\PluxeeOnlineUpdateOpportunityReferenceNumberCommandHandlerTest.cs" />
+    <Compile Include="FluentData\FluentBranchSystem.cs" />
+    <Compile Include="FluentData\FluentContactOperationObj.cs" />
+    <Compile Include="FluentData\FluentContractDetail.cs" />
+    <Compile Include="FluentData\FluentMrkBranchSystem.cs" />
+    <Compile Include="FluentData\FluentMrkFirmSystem.cs" />
+    <Compile Include="GetContractGiftSupplierPackage\GetContractGiftSupplierPackageQueryHandlerTest.cs" />
+    <Compile Include="IntegrationEventHandlers\CrmToAnkaEvents\ClientContract\SupplierGiftClientContractCreatedEventHandlerTest.cs" />
+    <Compile Include="Repository\ContractRepositoryTest.cs" />
+    <Compile Include="Validator\ContractGiftSupplierTransfer\ContractTransferRatesListValidatorTest.cs" />
+    <Compile Include="Validator\ContractGiftSupplierTransfer\UpdateContractGiftSupplierTransferValidatorTest.cs" />
+    <Compile Include="Validator\ContractGiftSupplierTransfer\UpdatePackageTransferRatesBatchCommandValidatorTest.cs" />
+    <Compile Include="Validator\ContractGiftSupplierTransfer\UpdatePackageTransferRateValidatorTest.cs" />
+    <Compile Include="Queries\ContactQueries\GetContactOperationLog\GetContactOperationLogQueryHandlerTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="5.10.3" />
+    <PackageReference Include="JetBrains.Annotations" Version="2025.1.0-eap1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
+    <PackageReference Include="Moq" Version="4.16.1" />
+    <PackageReference Include="NBuilder" Version="6.1.0" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.msbuild" Version="2.9.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="ReportGenerator" Version="4.6.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Test\Sodexo.BackOffice.Test\Sodexo.BackOffice.Test.csproj" />
+    <ProjectReference Include="..\..\..\IntegrationManagement\Src\Abstraction\Sodexo.BackOffice.IntegrationManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\NotificationManagement\Src\Abstraction\Sodexo.BackOffice.NotificationManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\Src\Abstraction\Sodexo.BackOffice.AccountStructureManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\Src\Application\Sodexo.BackOffice.AccountStructureManagement.Application.csproj" />
+    <ProjectReference Include="..\..\Src\Infrastructure\Sodexo.BackOffice.AccountStructureManagement.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Src\Domain\Sodexo.BackOffice.AccountStructureManagement.Domain.csproj" />
+    <Compile Include="Queries\ContactQueries\GetContactOperationLog\GetContactOperationLogQueryHandlerTest.cs" />
+  </ItemGroup>
+
+</Project>

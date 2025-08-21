@@ -1,0 +1,229 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="IntergrationEvents\**" />
+    <EntityDeploy Remove="IntergrationEvents\**" />
+    <None Remove="IntergrationEvents\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="ClientService\IPackageClientService.cs" />
+    <Compile Include="ClientService\IUserPermissionClientService.cs" />
+    <Compile Include="ClientService\IUserCardClientService.cs" />
+    <Compile Include="ClientService\IConsumerClientService.cs" />
+    <Compile Include="CommandResult\ConsumerFavoriteCommandResult.cs" />
+    <Compile Include="CommandResult\CreateUserPermissionCommandResult.cs" />
+    <Compile Include="CommandResult\ImportMarketingCampaignCodeCommandResult.cs" />
+    <Compile Include="CommandResult\UpdateUserPermissionCommandResult.cs" />
+    <Compile Include="CommandResult\UploadMarketingCampaignCodeExcelCommandResult.cs" />
+    <Compile Include="Command\DeleteOldUserCardsCommmand.cs" />
+    <Compile Include="Command\AddCardCommand.cs" />
+    <Compile Include="Command\AddCardWithGsmCommand.cs" />
+    <Compile Include="Command\CheckDataConsistencyCommand.cs" />
+    <Compile Include="Command\ChequeExpireDateNotificationCommand.cs" />
+    <Compile Include="Command\AddUserCardsCommand.cs" />
+    <Compile Include="Command\CreateMarketingCampaignCategoryCommand.cs" />
+    <Compile Include="Command\CreateMarketingCampaignCommand.cs" />
+    <Compile Include="Command\DeleteUpdateDashboardCacheCommand.cs" />
+    <Compile Include="Command\DeleteUserAllCardCommand.cs" />
+    <Compile Include="Command\ConsumerFavoriteCommand.cs" />
+    <Compile Include="Command\CreateUserHelpGuideCommand.cs" />
+    <Compile Include="Command\CreateUserPermissionCommand.cs" />
+    <Compile Include="Command\EmailUnsubscribeCommand.cs" />
+    <Compile Include="Command\DoFlexoGiftModernizationDataMigrationCommand.cs" />
+    <Compile Include="Command\ImportAndSendPushToEmailExcelCommand.cs" />
+    <Compile Include="Command\ImportMarketingCampaignCodeCommand.cs" />
+    <Compile Include="Command\EnableUserCommand.cs" />
+    <Compile Include="Command\DisableUserCommand.cs" />
+    <Compile Include="Command\InsertMarketingPromotionCommand.cs" />
+    <Compile Include="Command\MakeUserGiftCardOnboardedCommand.cs" />
+    <Compile Include="Command\PaymentDoneCommand.cs" />
+    <Compile Include="Command\PaymentDonePushDataCommand.cs" />
+    <Compile Include="Command\RemoveAllCardsCommand.cs" />
+    <Compile Include="Command\RemoveExpiredUserCardsCommand.cs" />
+    <Compile Include="Command\RemoveMarketingCampaignCategoryCommand.cs" />
+    <Compile Include="Command\RemoveMarketingCampaignCommand.cs" />
+    <Compile Include="Command\RemoveMarketPlaceSubCardForTestCommand.cs" />
+    <Compile Include="Command\RemoveMarketPlaceSubCardCommand.cs" />
+    <Compile Include="Command\RemoveSingleCardProfileCommand.cs" />
+    <Compile Include="Command\RemoveUserCardCommand.cs" />
+    <Compile Include="Command\ReportNotificationCommand.cs" />
+    <Compile Include="Command\ReportNotificationPushDataCommand.cs" />
+    <Compile Include="Command\SendMobilePushFromEmailCommand.cs" />
+    <Compile Include="Command\UpdateLoyaltyStatusCommand.cs" />
+    <Compile Include="Command\UpdateMarketingCampaignCategoryCommand.cs" />
+    <Compile Include="Command\UpdateMarketingCampaingCommand.cs" />
+    <Compile Include="Command\UpdateUserCardStatuIdCommand.cs" />
+    <Compile Include="Command\RemoveUserCardForConsumerCommand.cs" />
+    <Compile Include="Command\SendMobilePushCommand.cs" />
+    <Compile Include="Command\TakeMarketingCampaingCodeCommand.cs" />
+    <Compile Include="Command\ChangePasswordFromSecurityCommand.cs" />
+    <Compile Include="Command\UpdateUserFromSecurityCommand.cs" />
+    <Compile Include="Command\UpdateUserCardCommand.cs" />
+    <Compile Include="Command\UpdateUserHelpGuideCommand.cs" />
+    <Compile Include="Command\DeleteUserPermissionCommand.cs" />
+    <Compile Include="Command\UpdateUserPermissionCommand.cs" />
+    <Compile Include="Command\UpdateProfileImagePathFromSecurityCommand.cs" />
+    <Compile Include="Command\UploadAndSendPushToEmailExcelCommand.cs" />
+    <Compile Include="Command\UploadMarketingCampaignCodeExcelCommand.cs" />
+    <Compile Include="Constants\ConsumerRedisConstants.cs" />
+    <Compile Include="Constants\ProceedNewProductTypeNameMapper.cs" />
+    <Compile Include="Dto\AddCardDto.cs" />
+    <Compile Include="Dto\ApplicationParameterDto.cs" />
+    <Compile Include="Dto\BrandContactIdDto.cs" />
+    <Compile Include="Dto\ChequeExpireInfoDto.cs" />
+    <Compile Include="Dto\ConsumerPreferencesDto.cs" />
+    <Compile Include="Dto\DashboardOrderDto.cs" />
+    <Compile Include="Dto\MarketingCampaignsWithCategoriesDto.cs" />
+    <Compile Include="Dto\MarketingCampaingCategoryDto.cs" />
+    <Compile Include="Dto\MarketingCampaingDto.cs" />
+    <Compile Include="Dto\MarketingPromotionDto.cs" />
+    <Compile Include="Dto\NewUserDashboardDto.cs" />
+    <Compile Include="Dto\OrderBasicInfoDto.cs" />
+    <Compile Include="Dto\TakeMarketingCampaingCodeDto.cs" />
+    <Compile Include="Dto\DashboardInfoDto.cs" />
+    <Compile Include="Dto\UserNewDashboardMerlinInfoDto.cs" />
+    <Compile Include="Dto\UserDashboardMerlinInfoDto.cs" />
+    <Compile Include="Dto\UserMarketingCampaignTransactionDto.cs" />
+    <Compile Include="Dto\UserMasterCardDto.cs" />
+    <Compile Include="Dto\UserCardDto.cs" />
+    <Compile Include="Dto\UserCommentDto.cs" />
+    <Compile Include="Dto\UserDashboardInfoDto.cs" />
+    <Compile Include="Dto\UserDashboardMerlinInfoDto.cs" />
+    <Compile Include="Dto\UserHelpGuideDto.cs" />
+    <Compile Include="Command\UserHelpMailCommand.cs" />
+    <Compile Include="Dto\UserHelpMailResponseDto.cs" />
+    <Compile Include="Dto\UserIdDto.cs" />
+    <Compile Include="Dto\UserMarketingCampaignCodeDto.cs" />
+    <Compile Include="Dto\UserMasterCardDto.cs" />
+    <Compile Include="Dto\UserPermissionDto.cs" />
+    <Compile Include="Dto\UserPermissionItemDto.cs" />
+    <Compile Include="Enums\CampaignStatuId.cs" />
+    <Compile Include="Enums\CardSourceState.cs" />
+    <Compile Include="Enums\ConsumerManagementCacheConstants.cs" />
+    <Compile Include="Enums\IsActive.cs" />
+    <Compile Include="Enums\MarketingCampaignCodeStatu.cs" />
+    <Compile Include="Enums\MarketingCampaignType.cs" />
+    <Compile Include="Enums\MobileRegisterState.cs" />
+    <Compile Include="Enums\LoyaltyState.cs" />
+    <Compile Include="Enums\MPRegister.cs" />
+
+    <Compile Include="Enums\PermissionStatus.cs" />
+
+    <Compile Include="Enums\ProceedNewProductType.cs" />
+    <Compile Include="Enums\PushSourceType.cs" />
+
+    <Compile Include="Enums\PermissionStatus.cs" />
+
+    <Compile Include="Enums\RegisterSource.cs" />
+
+    <Compile Include="Enums\SendEmail.cs" />
+    <Compile Include="Enums\UserCardActivation.cs" />
+    <Compile Include="Enums\UserCardMobileDisplay.cs" />
+    <Compile Include="Enums\VirtualCardState.cs" />
+    <Compile Include="Enums\ProceedProductType.cs" />
+    <Compile Include="Enums\TransactionType.cs" />
+    <Compile Include="Enums\BrandState.cs" />
+    <Compile Include="Enums\CardSourceState.cs" />
+    <Compile Include="Enums\ConsumerManagementErrorCode.cs" />
+    <Compile Include="Enums\LoyaltyState.cs" />
+    <Compile Include="Enums\FavoriteProccessType.cs" />
+    <Compile Include="Enums\MerchantCommentRateStatu.cs" />
+    <Compile Include="Enums\MobileRegisterState.cs" />
+    <Compile Include="Enums\PermissionType.cs" />
+    <Compile Include="Command\AddUserCardCommand.cs" />
+    <Compile Include="Enums\ProceedProductType.cs" />
+    <Compile Include="Enums\Statu.cs" />
+    <Compile Include="Enums\UserCardActivation.cs" />
+    <Compile Include="Enums\UserHelpCategory.cs" />
+    <Compile Include="Enums\UserCardStatu.cs" />
+    <Compile Include="Enums\UserHelpGuideStatu.cs" />
+    <Compile Include="Enums\VirtualCardState.cs" />
+    <Compile Include="IntegrationEvents\ReportNotificationPublishCommand.cs" />
+    <Compile Include="IntegrationEvents\ReportNotificationTriggered.cs" />
+    <Compile Include="IntegrationEvents\UploadAndSendPushToEmailExcelTriggered.cs" />
+    <Compile Include="IntegrationEvents\UserRegisteredEvent.cs" />
+    <Compile Include="JobResult\SendMobilePushFromEmailJobResult.cs" />
+    <Compile Include="Model\AddCardCacheModel.cs" />
+    <Compile Include="Model\FlexoGiftModernizationDataMigrationModel.cs" />
+    <Compile Include="Model\MakeUserGiftCardOnboardedResult.cs" />
+    <Compile Include="Model\PaymentDoneCacheModel.cs" />
+    <Compile Include="QueryResult\GetConsumerPreferencesQueryResult.cs" />
+    <Compile Include="QueryResult\GetMbfEmployeeCountsResult.cs" />
+    <Compile Include="QueryResult\GetUserCardWithCardIdQueryResult.cs" />
+    <Compile Include="QueryResult\GetUserCardWithCardNoQueryResult.cs" />
+    <Compile Include="IntegrationEvents\PaymentDonePublishCommand.cs" />
+    <Compile Include="IntegrationEvents\PaymentDoneTriggered.cs" />
+    <Compile Include="Query\CheckPilotConsumerQuery.cs" />
+    <Compile Include="Query\GetAllSubCardListQuery.cs" />
+    <Compile Include="Query\CheckUserConsumerQuery.cs" />
+    <Compile Include="Query\GetBulkUserDashboardForMerlinQuery.cs" />
+    <Compile Include="Query\GetCardDetailConsumerQuery.cs" />
+    <Compile Include="Query\GetChequeExpireInfoQuery.cs" />
+    <Compile Include="Query\GetConsumerPreferencesQuery.cs" />
+    <Compile Include="Query\GetContactIdByQuery.cs" />
+    <Compile Include="Query\GetMarketingCampaignByIdQuery.cs" />
+    <Compile Include="Query\GetMarketingCampaignCategoriesQuery.cs" />
+    <Compile Include="Query\GetMarketingCampaignsWithCategoriesQuery.cs" />
+    <Compile Include="Query\GetMarketingCampaingCategoryListQuery.cs" />
+    <Compile Include="Query\GetMbfEmployeeCountsQuery.cs" />
+    <Compile Include="Query\GetNewUserDashboardForMerlinQuery.cs" />
+    <Compile Include="Query\GetSendPushToEmailJobStatusQuery.cs" />
+    <Compile Include="Query\GetSubCardListForMerlinQuery.cs" />
+    <Compile Include="Query\GetSubCardListWithMastercardQuery.cs" />
+    <Compile Include="Query\GetSubCardListQuery.cs" />
+    <Compile Include="Query\GetUserAllCardListQuery.cs" />
+    <Compile Include="Query\GetUserCardWithCardIdQuery.cs" />
+    <Compile Include="Query\GetUserCardWithCardNoQuery.cs" />
+    <Compile Include="Query\GetUserMasterCardListQuery.cs" />
+    <Compile Include="Query\GetUserDashboardForMerlinQuery.cs" />
+    <Compile Include="Query\GetMarketingCampaingListQuery.cs" />
+    <Compile Include="Query\GetMarketingPromotionListQuery.cs" />
+    <Compile Include="Query\GetIsCardAuthorisedQuery.cs" />
+    <Compile Include="Query\GetUserCardListQuery.cs" />
+    <Compile Include="Query\GetUserContactIdListQuery.cs" />
+    <Compile Include="Query\GetUserContactIdQuery.cs" />
+    <Compile Include="Query\GetUserDashboardForMerlinQuery.cs" />
+    <Compile Include="Query\GetUserFavoriteBranchIdsQuery.cs" />
+    <Compile Include="Query\GetUserIdsQuery.cs" />
+    <Compile Include="Query\GetUserMasterCardListQuery.cs" />
+    <Compile Include="Query\GetNewUserCardListQuery.cs" />
+    <Compile Include="Query\GetUserPermissionsQuery.cs" />
+    <Compile Include="Query\UserPermissionExistQuery.cs" />
+    <Compile Include="Query\UserMarketingCampaignCodeQuery.cs" />
+    <Compile Include="Request\MarketingPromotionItem.cs" />
+    <Compile Include="Request\UpdateUserCommentRequest.cs" />
+    <Compile Include="Request\UpdateUserHelpGuideRequest.cs" />
+    <Compile Include="Request\UpdateUserPermissionRequest.cs" />
+    <Compile Include="Request\UserPermissionItem.cs" />
+    <Compile Include="Services\Masterpass\IMasterpassService.cs" />
+    <Compile Include="Settings\AddCardSettings.cs" />
+    <Compile Include="Settings\AutomaticLoyaltyPointsUsageSettings.cs" />
+    <Compile Include="Settings\CardSettings.cs" />
+    <Compile Include="Settings\CryptographySettings.cs" />
+    <Compile Include="Settings\EMailListForPushNotificationExcelSettings.cs" />
+    <Compile Include="Settings\FeatureToggleSettings.cs" />
+    <Compile Include="Settings\FlexoGiftModernizationDataMigrationSettings.cs" />
+    <Compile Include="Settings\GetCardServicesCategoryDefinitionSettings.cs" />
+    <Compile Include="Settings\MarketingCampaignExcelSettings.cs" />
+    <Compile Include="Settings\NewTransactionsSummarySettings.cs" />
+    <Compile Include="Utils\PhoneHelper.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\CardManagement\Src\Abstraction\Sodexo.BackOffice.CardManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\OrderManagement\Src\Abstraction\Sodexo.BackOffice.OrderManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\SecurityManagement\Src\Abstraction\Sodexo.BackOffice.SecurityManagement.Abstraction.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PropertyChanged.Fody" Version="4.1.0" />
+  </ItemGroup>
+
+</Project>

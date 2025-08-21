@@ -1,0 +1,81 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{0C4262B7-58CF-43EC-86E4-96C53622A457}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Remove="GetMrkActionList\**" />
+    <EmbeddedResource Remove="GetMrkMActCategoryList\**" />
+    <EmbeddedResource Remove="Mappers\**" />
+    <EntityDeploy Remove="GetMrkActionList\**" />
+    <EntityDeploy Remove="GetMrkMActCategoryList\**" />
+    <EntityDeploy Remove="Mappers\**" />
+    <None Remove="GetMrkActionList\**" />
+    <None Remove="GetMrkMActCategoryList\**" />
+    <None Remove="Mappers\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BackProcess\BackProcessCommand.cs" />
+    <Compile Include="BackProcess\BackProcessCommandHandler.cs" />
+    <Compile Include="BackProcess\BackProcessCommandValidator.cs" />
+    <Compile Include="CreateProcess\CreateProcessCommand.cs" />
+    <Compile Include="CreateProcess\CreateProcessCommandHandler.cs" />
+    <Compile Include="CreateProcess\CreateProcessCommandValidator.cs" />
+    <Compile Include="GetAvailableProcessList\GetAvailableProcessListQuery.cs" />
+    <Compile Include="GetAvailableProcessList\GetAvailableProcessListQueryHandler.cs" />
+    <Compile Include="GetAvailableProcessList\GetAvailableProcessListQueryValidator.cs" />
+    <Compile Include="GetFlow\GetFlowQuery.cs" />
+    <Compile Include="GetFlow\GetFlowQueryHandler.cs" />
+    <Compile Include="GetFlow\GetFlowQueryValidator.cs" />
+    <Compile Include="GetDoneProcessList\GetDoneProcessListQuery.cs" />
+    <Compile Include="GetDoneProcessList\GetDoneProcessListQueryHandler.cs" />
+    <Compile Include="GetDoneProcessList\GetDoneProcessListQueryValidator.cs" />
+    <Compile Include="GetProcessHistory\GetProcessHistoryQuery.cs" />
+    <Compile Include="GetProcessHistory\GetProcessHistoryQueryHandler.cs" />
+    <Compile Include="GetProcessHistory\GetProcessHistoryQueryValidator.cs" />
+    <Compile Include="OpenProcess\OpenProcessQuery.cs" />
+    <Compile Include="OpenProcess\OpenProcessQueryHandler.cs" />
+    <Compile Include="OpenProcess\OpenProcessQueryValidator.cs" />
+    <Compile Include="GetWorkingProcessList\GetWorkingProcessListQuery.cs" />
+    <Compile Include="GetWorkingProcessList\GetWorkingProcessListHandler.cs" />
+    <Compile Include="GetWorkingProcessList\GetWorkingProcessListQueryValidator.cs" />
+    <Compile Include="GetProcessList\GetProcessListQuery.cs" />
+    <Compile Include="GetProcessList\GetProcessListQueryHandler.cs" />
+    <Compile Include="GetProcessTaskList\GetProcessTaskListQueryValidator.cs" />
+    <Compile Include="GetProcessTaskList\GetProcessTaskListQuery.cs" />
+    <Compile Include="GetProcessTaskList\GetProcessTaskListQueryHandler.cs" />
+    <Compile Include="GetTaskList\GetTaskListQuery.cs" />
+    <Compile Include="GetTaskList\GetTaskListQueryHandler.cs" />
+    <Compile Include="IoCModules\BPMModule.cs" />
+    <Compile Include="LockProcess\LockProcessCommand.cs" />
+    <Compile Include="LockProcess\LockProcessCommandHandler.cs" />
+    <Compile Include="LockProcess\LockProcessCommandValidator.cs" />
+    <Compile Include="NextProcess\NextProcessCommand.cs" />
+    <Compile Include="NextProcess\NextProcessCommandHandler.cs" />
+    <Compile Include="NextProcess\NextProcessCommandValidator.cs" />
+    <Compile Include="SaveProcess\SaveProcessCommand.cs" />
+    <Compile Include="SaveProcess\SaveProcessCommandHandler.cs" />
+    <Compile Include="SaveProcess\SaveProcessCommandValidator.cs" />
+    <Compile Include="UnlockProcess\UnLockProcessCommand.cs" />
+    <Compile Include="UnlockProcess\UnLockProcessCommandHandler.cs" />
+    <Compile Include="UnlockProcess\UnLockProcessCommandValidator.cs" />
+    <Compile Include="UpdateMrkCall\UpdateMrkCallCommandHandler.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Data\Sodexo.BackOffice.Data.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\EventBus\Sodexo.BackOffice.EventBus.csproj" />
+    <ProjectReference Include="..\..\..\AccountStructureManagement\Src\Abstraction\Sodexo.BackOffice.AccountStructureManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\NotificationManagement\Src\Abstraction\Sodexo.BackOffice.NotificationManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\SecurityManagement\Src\Abstraction\Sodexo.BackOffice.SecurityManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.BPMManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Infrastructure\Sodexo.BackOffice.BPMManagement.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="IntegrationEventHandlers\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PropertyChanged.Fody" Version="4.1.0" />
+  </ItemGroup>
+</Project>

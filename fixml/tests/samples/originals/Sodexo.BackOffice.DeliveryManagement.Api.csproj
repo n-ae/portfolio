@@ -1,0 +1,66 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{9671FB92-96FC-4584-B90E-6723DF4AD971}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Bootstrappers\DeliveryBootstrapper.cs" />
+    <Compile Include="Controllers\DelArchiveParcelController.cs" />
+    <Compile Include="Controllers\DelArchiveDocumentController.cs" />
+    <Compile Include="Controllers\DelCompInvoiceController.cs" />
+    <Compile Include="Controllers\DeliveryController.cs" />
+    <Compile Include="Controllers\DelLogisticDocumentController.cs" />
+    <Compile Include="Controllers\DelLogisticParcelController.cs" />
+    <Compile Include="Controllers\DelOrdPackageController.cs" />
+    <Compile Include="Controllers\DelOrdTempAddressHistoryController.cs" />
+    <Compile Include="Controllers\DelParPackageController.cs" />
+    <Compile Include="Controllers\DelYkDocumentController.cs" />
+    <Compile Include="Controllers\ExcelFileController.cs" />
+    <Compile Include="Controllers\DelPackagesOtherController.cs" />
+    <Compile Include="Controllers\DelOrdTempAddressController.cs" />
+    <Compile Include="Controllers\DelParcelController.cs" />
+    <Compile Include="Controllers\DelParcelsOtherController.cs" />
+    <Compile Include="Controllers\LookupController.cs" />
+    <Compile Include="Controllers\MSodexhoRegionsDeliveryController.cs" />
+    <Compile Include="Controllers\OrderDeliveryController.cs" />
+    <Compile Include="Controllers\CardDeliveryController.cs" />
+    <Compile Include="Controllers\ParcelController.cs" />
+    <Compile Include="Controllers\XlsCreateDelPackageOtherController.cs" />
+    <Compile Include="Controllers\YkShippingController.cs" />
+    <Compile Include="Controllers\YkShippingDetailCargoController.cs" />
+    <Compile Include="Controllers\YkShippingDetailController.cs" />
+    <Compile Include="Controllers\YkShippingDetailFieldController.cs" />
+    <Compile Include="Models\BaseReportModel.cs" />
+    <Compile Include="Models\ParcelDeliveryDocumentPdfModel.cs" />
+    <Compile Include="Models\DelParcelPackageListDocumentPdfModel.cs" />
+    <Compile Include="Models\DelParcelsOtherPackageListDocumentPdfModel.cs" />
+    <Compile Include="Models\DelLogisticParcelModel.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\Infrastructure\ApiBase\Sodexo.BackOffice.ApiBase.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.DeliveryManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Application\Sodexo.BackOffice.DeliveryManagement.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Views\Reports\del-logististic-parcel-doc-report.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Views\Reports\del-package-other-list-barcode-report.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Views\Reports\del-parcel-package-list-detail-report.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Views\Reports\del-parcel-package-list-report.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Views\Reports\del-parcels-other-package-list-doc-report.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Views\Reports\parcel-delivery-document-reportt.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,60 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{78ECEEB8-1F9D-4540-A129-EDDD7E38363B}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Entities\IntegrationManagement.BoBalanceTransfer.cs" />
+    <Compile Include="Entities\IntegrationManagement.BoBalanceTransfer.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.BoContact.cs" />
+    <Compile Include="Entities\IntegrationManagement.BoContact.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.BoMerchantAreaCard.cs" />
+    <Compile Include="Entities\IntegrationManagement.BoMerchantAreaCard.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.BoCardCredit.cs" />
+    <Compile Include="Entities\IntegrationManagement.BoCardCredit.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.BoRemoveCardProfile.cs" />
+    <Compile Include="Entities\IntegrationManagement.BoRemoveCardProfile.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.BoScCard.cs" />
+    <Compile Include="Entities\IntegrationManagement.BoScCard.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.BoTopupToPrepaid.cs" />
+    <Compile Include="Entities\IntegrationManagement.BoTopupToPrepaid.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.EfaturaSenderbox.cs" />
+    <Compile Include="Entities\IntegrationManagement.EfaturaSenderbox.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.FoBatchDetail.cs" />
+    <Compile Include="Entities\IntegrationManagement.FoBatchDetail.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.FoBatchHeader.cs" />
+    <Compile Include="Entities\IntegrationManagement.FoBatchHeader.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.MApprovedType.cs" />
+    <Compile Include="Entities\IntegrationManagement.MApprovedType.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.MTransactionSource.cs" />
+    <Compile Include="Entities\IntegrationManagement.MTransactionSource.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.PTransactionStatus.cs" />
+    <Compile Include="Entities\IntegrationManagement.PTransactionStatus.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.PTransferMethod.cs" />
+    <Compile Include="Entities\IntegrationManagement.PTransferMethod.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.PTransferStatus.cs" />
+    <Compile Include="Entities\IntegrationManagement.PTransferStatus.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.SodexoPayChannelTerminalStatus.cs" />
+    <Compile Include="Entities\IntegrationManagement.SodexoPayChannelTerminalStatus.Generated.cs" />
+    <Compile Include="Entities\IntegrationManagement.VendorToken.cs" />
+    <Compile Include="Entities\IntegrationManagement.VendorToken.Generated.cs" />
+    <Compile Include="Entities\MailRule.cs" />
+    <Compile Include="Entities\MailRule.Generated.cs" />
+    <Compile Include="Entities\WebhookPayload.cs" />
+    <Compile Include="Entities\WebhookResponse.cs" />
+    <Compile Include="Entities\WebhookSubscription.cs" />
+    <Compile Include="Repository\IBalanceTransferRepository.cs" />
+    <Compile Include="Repository\IChannelTerminalRepository.cs" />
+    <Compile Include="Repository\ICardRepository.cs" />
+    <Compile Include="Repository\IMailRuleRepository.cs" />
+    <Compile Include="Repository\ISodexoPaymentRepository.cs" />
+    <Compile Include="Repository\IVendorRepository.cs" />
+    <Compile Include="Repository\ITopupRepository.cs" />
+    <Compile Include="Repository\IVendorRepository.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.IntegrationManagement.Abstraction.csproj" />
+  </ItemGroup>
+</Project>

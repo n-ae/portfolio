@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{854F69C5-ED1C-485F-AE0A-FF1E22BCCE5B}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="BackgroundJobActivator.cs" />
+    <Compile Include="BackgroundJobActivatorScope.cs" />
+    <Compile Include="BackgroundJobFilter.cs" />
+    <Compile Include="BackgroundJobManager.cs" />
+    <Compile Include="BatchService.cs" />
+    <Compile Include="IBackgroundJobAuthenticator.cs" />
+    <Compile Include="DependencyExtensions.cs" />
+    <Compile Include="Modules\BackgroundModule.cs" />
+    <Compile Include="PeriodicJobDto.cs" />
+    <Compile Include="Settings\HangfireSettings.cs" />
+    <Compile Include="Settings\RecuringJobLoginOptions.cs" />
+    <Compile Include="SuspectHangfireJobs.cs" />
+    <Compile Include="SuspendingJobStorageExtensions.cs" />
+    <Compile Include="SuspendJobClient.cs" />
+    <Compile Include="SuspendJobsPage.cs" />
+    <Compile Include="TokenResponseObject.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.2" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\Ioc\Sodexo.BackOffice.Ioc.csproj" />
+    <ProjectReference Include="..\Logging\Sodexo.BackOffice.Logging.csproj" />
+  </ItemGroup>
+</Project>

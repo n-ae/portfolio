@@ -1,0 +1,171 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="AddCardWithGsm\NewAddCardWithGsmCommandHandler.cs" />
+    <Compile Include="AddCardWithGsm\AddCardWithGsmCommandHandler.cs" />
+    <Compile Include="AddCard\NewAddCardCommandHandler.cs" />
+    <Compile Include="AddCard\AddCardCommandHandler.cs" />
+    <Compile Include="AddUserCard\AddUserCardsCommandHandler.cs" />
+    <Compile Include="AddUserCard\AddUserCardCommandHandler.cs" />
+    <Compile Include="AddUserCard\UserCardCreated.cs" />
+    <Compile Include="AddUserCard\UserCardCreatedHandler.cs" />
+    <Compile Include="BatchServices\BatchServiceAuthenticator.cs" />
+    <Compile Include="BatchServices\CheckDataConsistency\CheckDataConsistencyJob.cs" />
+    <Compile Include="BatchServices\CheckDataConsistency\ICheckDataConsistencyJob.cs" />
+    <Compile Include="BatchServices\FlexoGiftModernizationDataMigration\FgmdJob.cs" />
+    <Compile Include="BatchServices\FlexoGiftModernizationDataMigration\IFgmdJob.cs" />
+    <Compile Include="BatchServices\IUploadAndSendPushToEmailExcelJob.cs" />
+    <Compile Include="BatchServices\RecurringJobService.cs" />
+    <Compile Include="BatchServices\UploadAndSendPushToEmailExcelJob.cs" />
+    <Compile Include="BatchServices\UploadAndSendPushToEmailExcelJobData.cs" />
+    <Compile Include="CheckDataConsistency\CheckDataConsistencyCommandHandler.cs" />
+    <Compile Include="CheckPilotConsumer\CheckPilotConsumerQueryHandler.cs" />
+    <Compile Include="CheckUserConsumer\CheckUserConsumerQueryHandler.cs" />
+    <Compile Include="ChequeExpireInfo\GetChequeExpireInfoQueryHandler.cs" />
+    <Compile Include="ChequeExpireDateNotification\ChequeExpireDateNotificationCommandHandler.cs" />
+    <Compile Include="ConsumerFavorite\ConsumerFavoriteCommandHandler.cs" />
+    <Compile Include="ConsumerFavorite\GetUserFavoriteBranchIds\GetUserFavoriteBranchIdsQueryHandler.cs" />
+    <Compile Include="CreateMarketingCampaignCategory\CreateMarketingCampaignCategoryCommandHandler.cs" />
+    <Compile Include="CreateMarketingCampaign\CreateMarketingCampaignCommandHandler.cs" />
+    <Compile Include="CreateUserComment\CreateUserCommentCommand.cs" />
+    <Compile Include="CreateUserComment\CreateUserCommentCommandHandler.cs" />
+    <Compile Include="CreateUserHelpGuide\CreateUserHelpGuideCommandHandler.cs" />
+    <Compile Include="DeleteUpdateDashboardCache\DeleteUpdateDashboardCacheCommandHandler.cs" />
+    <Compile Include="DoFlexoGiftModernizationDataMigration\DoFlexoGiftModernizationDataMigrationCommandHandler.cs" />
+    <Compile Include="EmailUnsubscribe\EmailUnsubscribeCommandHandler.cs" />
+    <Compile Include="EnableUser\EnableUserCommandHandler.cs" />
+    <Compile Include="DisableUser\DisableUserCommandHandler.cs" />
+    <Compile Include="GetAllSubCardList\GetAllSubCardListQueryHandler.cs" />
+    <Compile Include="GetApplicationParameterList\GetApplicationParameterListQuery.cs" />
+    <Compile Include="GetApplicationParameterList\GetApplicationParameterListQueryHandler.cs" />
+    <Compile Include="GetConsumerPreferences\GetConsumerPreferencesQueryHandler.cs" />
+    <Compile Include="GetContactIdBy\GetContactIdByQueryHandler.cs" />
+    <Compile Include="GetIsCardAuthorised\GetIsCardAuthorisedQueryHandler.cs" />
+    <Compile Include="GetMarketingCampaignById\GetMarketingCampaignByIdQueryHandler.cs" />
+    <Compile Include="GetMarketingCampaignCategories\GetMarketingCampaignCategoriesQueryHandler.cs" />
+    <Compile Include="GetMarketingCampaignsWithCategories\GetMarketingCampaignsWithCategoriesQueryHandler.cs" />
+    <Compile Include="GetMarketingCampaingCategoryList\GetMarketingCampaingCategoryListQueryHandler.cs" />
+    <Compile Include="GetMarketingCampaingList\GetMarketingCampaingListQueryHandler.cs" />
+    <Compile Include="GetMarketingPromotionList\GetMarketingPromotionListQueryHandler.cs" />
+    <Compile Include="GetMbfEmployeeCounts\GetMbfEmployeeCountsQueryHandler.cs" />
+    <Compile Include="GetMerchantCommentList\GetMerchantCommentListQuery.cs" />
+    <Compile Include="GetMerchantCommentList\GetMerchantCommentListQueryHandler.cs" />
+    <Compile Include="GetCardDetailConsumer\GetCardDetailConsumerQueryHandler.cs" />
+    <Compile Include="GetNewUserDashboardForMerlin\GetNewUserDashboardForMerlinQueryHandler.cs" />
+    <Compile Include="GetPackageBrandCoupons\GetPackageBrandCouponsQuery.cs" />
+    <Compile Include="GetPackageBrandCoupons\GetPackageBrandCouponsQueryHandler.cs" />
+    <Compile Include="GetPackageCoupons\GetPackageCouponsQuery.cs" />
+    <Compile Include="GetPackageCoupons\GetPackageCouponsQueryHandler.cs" />
+    <Compile Include="GetPackages\GetPackagesQuery.cs" />
+    <Compile Include="GetPackages\GetPackagesQueryHandler.cs" />
+    <Compile Include="GetSendPushToEmailJobStatus\GetSendPushToEmailJobStatusQueryHandler.cs" />
+    <Compile Include="GetSubCardListForMerlin\GetSubCardListForMerlinQueryHandler.cs" />
+    <Compile Include="GetUserAllCardList\GetUserAllCardListQueryHandler.cs" />
+    <Compile Include="GetUserCardWithCardId\GetUserCardWithCardIdQueryHandler.cs" />
+    <Compile Include="GetUserCardWithCardNo\GetUserCardWithCardNoQueryHandler.cs" />
+    <Compile Include="GetUserDashboard\GetUserDashboardV2QueryHandler.cs" />
+    <Compile Include="GetUserDashboard\GetUserCardQueryHandler.cs" />
+    <Compile Include="GetUserDashboard\GetNewUserDashboardQueryHandler.cs" />
+    <Compile Include="GetNewUserCardList\GetNewUserCardListQueryHandler.cs" />
+    <Compile Include="GetUserDashboard\GetNewUserDashboardV2QueryHandler.cs" />
+    <Compile Include="ImportAndSendPushToEmailExcel\ImportAndSendPushToEmailExcelCommandHandler.cs" />
+    <Compile Include="ImportMarketingCampaignCode\ImportMarketingCampaignCodeCommandHandler.cs" />
+	<Compile Include="IntegrationEventHandlers\PaymentDoneTriggeredEventHandler.cs" />
+	<Compile Include="IntegrationEventHandlers\ReportNotificationTriggeredEventHandler.cs" />
+	<Compile Include="IntegrationEventHandlers\UploadAndSendPushToEmailExcelTriggeredEventHandler.cs" />
+	<Compile Include="MakeUserGiftCardOnboarded\MakeUserGiftCardOnboardedCommandHandler.cs" />
+	<Compile Include="PackageModels\PackagesResponse.cs" />
+	<Compile Include="PaymentDone\PaymentDoneBackgroundService.cs" />
+	<Compile Include="PaymentDone\PaymentDonePushDataWorker.cs" />
+	<Compile Include="DeleteOldUserCards\DeleteOldUserCardsCommmandHandler.cs" />
+	<Compile Include="ReportNotification\ReportNotificationBackgroundService.cs" />
+	<Compile Include="ReportNotification\ReportNotificationPushDataWorker.cs" />
+	<Compile Include="Services\Masterpass\MasterpassService.cs" />
+	<Compile Include="Strategies\Abstract\ICardPackageStrategy.cs" />
+	<Compile Include="Strategies\Concrete\CardStrategy.cs" />
+	<Compile Include="Strategies\Concrete\GiftMarketplaceStrategy.cs" />
+	<Compile Include="UpdateDashboard\NewUpdateDashboardCommandHandler.cs" />
+	<Compile Include="UpdateLoyaltyStatus\UpdateLoyaltyStatusCommandHandler.cs" />
+	<Compile Include="UpdateUserCard\UpdateUserCardWithUserIdCommandHandler.cs" />
+	<Compile Include="UserPermissionExist\UserPermissionExistQueryHandler.cs" />
+    <Compile Include="GetSubCardListWithMastercard\GetSubCardListWithMastercardQueryHandler.cs" />
+    <Compile Include="PaymentDone\PaymentDoneCommandHandler.cs" />
+    <Compile Include="PaymentDonePushData\PaymentDonePushDataCommandHandler.cs" />
+    <Compile Include="RemoveAllCards\RemoveAllCardsCommandHandler.cs" />
+    <Compile Include="RemoveExpiredUserCards\RemoveExpiredUserCardsCommandHandler.cs" />
+    <Compile Include="RemoveMarketingCampaignCategory\RemoveMarketingCampaignCategoryCommandHandler.cs" />
+    <Compile Include="RemoveMarketingCampaign\RemoveMarketingCampaignCommandHandler.cs" />
+    <Compile Include="RemoveMarketPlaceSubCardForTest\RemoveMarketPlaceSubCardForTestCommandHandler.cs" />
+    <Compile Include="RemoveMarketPlaceSubCard\RemoveMarketPlaceSubCardCommandHandler.cs" />
+    <Compile Include="DeleteUserAllCard\DeleteUserAllCardCommandHandler.cs" />
+    <Compile Include="GetSubCardList\GetSubCardListQueryHandler.cs" />
+    <Compile Include="RemoveSingleCardProfile\RemoveSingleCardProfileCommandHandler.cs" />
+    <Compile Include="ActivateUserCard\ActivateUserCardCommandHandler.cs" />
+    <Compile Include="ReportNotification\ReportNotificationCommandHandler.cs" />
+    <Compile Include="SendMobilePushFromEmail\SendMobilePushFromEmailCommandHandler.cs" />
+    <Compile Include="UpdateDashboard\UpdateDashboardCommand.cs" />
+    <Compile Include="UpdateDashboard\UpdateDashboardCommandHandler.cs" />
+    <Compile Include="GetUserMasterCardList\GetUserMasterCardListQueryHandler.cs" />
+    <Compile Include="GetUserCardList\GetUserCardListQueryHandler.cs" />
+    <Compile Include="GetUserCommentList\GetUserCommentListQuery.cs" />
+    <Compile Include="GetUserCommentList\GetUserCommentListQueryHandler.cs" />
+    <Compile Include="GetUserContactIdList\GetUserContactIdListQueryHandler.cs" />
+    <Compile Include="GetBulkUserDashboardForMerlin\GetBulkUserDashboardForMerlinQueryHandler.cs" />
+    <Compile Include="GetUserDashboardForMerlin\GetUserDashboardForMerlinQueryHandler.cs" />
+    <Compile Include="GetUserUserIds\GetUserIdsQueryHandler.cs" />
+    <Compile Include="GetUserContactId\GetUserContactIdQueryHandler.cs" />
+    <Compile Include="GetUserDashboard\GetUserDashboardQuery.cs" />
+    <Compile Include="GetUserDashboard\GetUserDashboardQueryHandler.cs" />
+    <Compile Include="GetUserHelpGuide\GetUserHelpGuideQuery.cs" />
+    <Compile Include="GetUserHelpGuide\GetUserHelpGuideQueryHandler.cs" />
+    <Compile Include="GetUserPermissions\GetUserPermissionsQueryHandler.cs" />
+    <Compile Include="CreateUserPermission\CreateUserPermissionCommandHandler.cs" />
+    <Compile Include="InsertMarketingPromotion\InsertMarketingPromotionCommandHandler.cs" />
+    <Compile Include="IoCModules\ConsumerModule.cs" />
+    <Compile Include="RemoveUserCardForConsumer\RemoveUserCardForConsumerCommandHandler.cs" />
+    <Compile Include="RemoveUserCard\RemoveUserCardCommandHandler.cs" />
+    <Compile Include="SendEmail\UserHelpMailCommandHandler.cs" />
+    <Compile Include="SendMobilePush\SendMobilePushCommandHandler.cs" />
+    <Compile Include="TakeMarketingCampaingCode\TakeMarketingCampaingCodeCommandHandler.cs" />
+    <Compile Include="UpdateMarketingCampaignCategory\UpdateMarketingCampaignCategoryCommandHandler.cs" />
+    <Compile Include="UpdateMarketingCampaing\UpdateMarketingCampaingCommandHandler.cs" />
+    <Compile Include="UpdateUserCard\UpdateUserCardCommandHandler.cs" />
+    <Compile Include="UpdateUserComment\UpdateUserCommentCommand.cs" />
+    <Compile Include="UpdateUserComment\UpdateUserCommentCommandHandler.cs" />
+    <Compile Include="ChangePasswordFromSecurity\ChangePasswordFromSecurityCommandHandler.cs" />
+    <Compile Include="UpdateUserHelpGuide\UpdateUserHelpGuideCommandHandler.cs" />
+    <Compile Include="UpdateUserCardStatuId\UpdateUserCardStatuIdCommandHandler.cs" />
+    <Compile Include="DeleteUserPermission\DeleteUserPermissionCommandHandler.cs" />
+    <Compile Include="UpdateUserPermission\UpdateUserPermissionCommandHandler.cs" />
+    <Compile Include="UpdateUserFromSecurityCommand\UpdateUserFromSecurityCommandHandler.cs" />
+    <Compile Include="UploadAndSendPushToEmailExcel\UploadAndSendPushToEmailExcelCommandHandler.cs" />
+    <Compile Include="UploadMarketingCampaignCodeExcel\UploadMarketingCampaignCodeExcelCommandHandler.cs" />
+    <Compile Include="UploadProfileImagePathFromSecurity\UploadProfileImagePathFromSecurityCommandHandler.cs" />
+    <Compile Include="UserMarketingCampaignCode\UserMarketingCampaignCodeQueryHandler.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
+    <PackageReference Include="PropertyChanged.Fody" Version="4.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Data\Sodexo.BackOffice.Data.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\EventBus\Sodexo.BackOffice.EventBus.csproj" />
+    <ProjectReference Include="..\..\..\CardManagement\Src\Application\Sodexo.BackOffice.CardManagement.Application.csproj" />
+    <ProjectReference Include="..\..\..\NotificationManagement\Src\Abstraction\Sodexo.BackOffice.NotificationManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.ConsumerManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Infrastructure\Sodexo.BackOffice.ConsumerManagement.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Mappers\" />
+  </ItemGroup>
+
+</Project>

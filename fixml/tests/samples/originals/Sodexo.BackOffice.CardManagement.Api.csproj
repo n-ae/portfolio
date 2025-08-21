@@ -1,0 +1,99 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ProjectGuid>{90812BCD-DB8A-4571-9245-90F5BDA3B31A}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Bootstrappers\SettingBootstrapper.cs" />
+    <Compile Include="Controllers\BinInfoController.cs" />
+    <Compile Include="Controllers\BoAffScCardController.cs" />
+    <Compile Include="Controllers\BoRemoveCardProfileController.cs" />
+    <Compile Include="Controllers\CardFlowController.cs" />
+    <Compile Include="Controllers\CardOperationsController.cs" />
+    <Compile Include="Controllers\FoCardBlockageRequestController.cs" />
+    <Compile Include="Controllers\GiftPackageCardsController.cs" />
+    <Compile Include="Controllers\ScCardServiceController.cs" />
+    <Compile Include="Controllers\BoScCardServiceController.cs" />
+    <Compile Include="Controllers\BoScCardServicesAffController.cs" />
+    <Compile Include="Controllers\BoScCardsAffController.cs" />
+    <Compile Include="Controllers\ApprovedTypesController.cs" />
+    <Compile Include="Controllers\BalanceTransferController.cs" />
+    <Compile Include="Controllers\BlackListsController.cs" />
+    <Compile Include="Controllers\BoAffScCardServiceController.cs" />
+    <Compile Include="Controllers\BoPointFinancialController.cs" />
+    <Compile Include="Controllers\BoScCardLossController.cs" />
+    <Compile Include="Controllers\BoTopupToPrepaidController.cs" />
+    <Compile Include="Controllers\CardAreasController.cs" />
+    <Compile Include="Controllers\CliDeductLoadingOrderController.cs" />
+    <Compile Include="Controllers\DdlBatchMailContactController.cs" />
+    <Compile Include="Controllers\CardLVStatusController.cs" />
+    <Compile Include="Controllers\ExcelFilesController.cs" />
+    <Compile Include="Controllers\FoCardLostRequestController.cs" />
+    <Compile Include="Controllers\FoSoContactCardController.cs" />
+    <Compile Include="Controllers\LvApprovalRequestController.cs" />
+    <Compile Include="Controllers\MerchantAreaCodeController.cs" />
+    <Compile Include="Controllers\OnlineCardTransactionsController.cs" />
+    <Compile Include="Controllers\CardBlockOrdersController.cs" />
+    <Compile Include="Controllers\CardLimitController.cs" />
+    <Compile Include="Controllers\CardStockController.cs" />
+    <Compile Include="Controllers\CardStatusesController.cs" />
+    <Compile Include="Controllers\ChequesController.cs" />
+    <Compile Include="Controllers\BrandController.cs" />
+    <Compile Include="Controllers\ExternalChequeCodeController.cs" />
+    <Compile Include="Controllers\FoBatchHeadersController.cs" />
+    <Compile Include="Controllers\LoyaltyController.cs" />
+    <Compile Include="Controllers\LookupController.cs" />
+    <Compile Include="Controllers\MobilePaymentController.cs" />
+    <Compile Include="Controllers\OnlineCardsController.cs" />
+    <Compile Include="Controllers\CardOrdersController.cs" />
+    <Compile Include="Controllers\CardOrderStatusesController.cs" />
+    <Compile Include="Controllers\CardsController.cs" />
+    <Compile Include="Controllers\MobileCardsController.cs" />
+    <Compile Include="Controllers\OrdMcCardController.cs" />
+    <Compile Include="Controllers\OrdMcCardDetailController.cs" />
+    <Compile Include="Controllers\OrdMcOrdersController.cs" />
+    <Compile Include="Controllers\ProductProfilesController.cs" />
+    <Compile Include="Controllers\CardTypesController.cs" />
+    <Compile Include="Controllers\CardUserTypesController.cs" />
+    <Compile Include="Controllers\ContactOrdersController.cs" />
+    <Compile Include="Controllers\ContactOrderServiceController.cs" />
+    <Compile Include="Controllers\GrayListsController.cs" />
+    <Compile Include="Controllers\LostCardsController.cs" />
+    <Compile Include="Controllers\ProceedProductsController.cs" />
+    <Compile Include="Controllers\ScCardLossBalancesController.cs" />
+    <Compile Include="Controllers\ScCardTempServiceController.cs" />
+    <Compile Include="Controllers\ScContactOrderController.cs" />
+    <Compile Include="Controllers\ScContactOrdServiceController.cs" />
+    <Compile Include="Controllers\SCMCardCollectStatusesController.cs" />
+    <Compile Include="Controllers\SCMCardLossStatusesController.cs" />
+    <Compile Include="Controllers\SCMInvoiceStatusesController.cs" />
+    <Compile Include="Controllers\SCMRequestTypesController.cs" />
+    <Compile Include="Controllers\SCMTransferTypesController.cs" />
+    <Compile Include="Controllers\ScReturnedCardInfoController.cs" />
+    <Compile Include="Controllers\ScReturnUserCardInfoController.cs" />
+    <Compile Include="Controllers\ScReturnUserCardServiceController.cs" />
+    <Compile Include="Controllers\SonlineBoScCardController.cs" />
+    <Compile Include="Controllers\VirtualCardOperationsController.cs" />
+    <Compile Include="Controllers\VirtualCardOrderController.cs" />
+    <Compile Include="Controllers\VirtualCardOrderDetailController.cs" />
+    <Compile Include="Controllers\VirtualCardOrdersController.cs" />
+    <Compile Include="Controllers\VoucherController.cs" />
+    <Compile Include="Controllers\XlsBlockCardToOrdEntranceController.cs" />
+    <Compile Include="Controllers\XlsCardInfoUpdateController.cs" />
+    <Compile Include="Controllers\XlsDeactivateCardStatusController.cs" />
+    <Compile Include="Controllers\XlsPointFinancialController.cs" />
+    <Compile Include="Controllers\XlsVirtualOrderGeneralController.cs" />
+    <Compile Include="Controllers\GiftPackageCardsController.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\ApiBase\Sodexo.BackOffice.ApiBase.csproj" />
+    <ProjectReference Include="..\..\..\..\Infrastructure\Domain\Sodexo.BackOffice.Domain.csproj" />
+    <ProjectReference Include="..\..\..\IntegrationManagement\Src\Abstraction\Sodexo.BackOffice.IntegrationManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Abstraction\Sodexo.BackOffice.CardManagement.Abstraction.csproj" />
+    <ProjectReference Include="..\Application\Sodexo.BackOffice.CardManagement.Application.csproj" />
+    <ProjectReference Include="..\Domain\Sodexo.BackOffice.CardManagement.Domain.csproj" />
+    <ProjectReference Include="..\Infrastructure\Sodexo.BackOffice.CardManagement.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

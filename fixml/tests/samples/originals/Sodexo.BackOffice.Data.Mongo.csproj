@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Repository\MongoRepositoryFactory.cs" />
+    <Compile Include="Extensions\DependencyExtensions.cs" />
+    <Compile Include="Repository\MongoRepository{TDocument}.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ioc\Sodexo.BackOffice.Ioc.csproj" />
+  </ItemGroup>
+
+</Project>

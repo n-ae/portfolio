@@ -1,0 +1,124 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+    <ProjectGuid>{B76FE2FA-0E40-4754-A67E-8D8E2FC77168}</ProjectGuid>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Remove="Enums\**" />
+    <None Remove="Enums\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Entities\MerchantManagement.BoListOkcCompany.cs" />
+    <Compile Include="Entities\MerchantManagement.BoListOkcCompany.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.BoListOkcProvider.cs" />
+    <Compile Include="Entities\MerchantManagement.BoListOkcProvider.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.BoMerchant.cs" />
+    <Compile Include="Entities\MerchantManagement.BoMerchant.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.BoMerchantProduct.cs" />
+    <Compile Include="Entities\MerchantManagement.BoMerchantProduct.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.ExcelFile.cs" />
+    <Compile Include="Entities\MerchantManagement.FoTerminal.cs" />
+    <Compile Include="Entities\MerchantManagement.FoTerminal.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.MerchantProduct.cs" />
+    <Compile Include="Entities\MerchantManagement.MerchantProduct.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.MTerminalModelLog.cs" />
+    <Compile Include="Entities\MerchantManagement.MTerminalModelLog.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.OkcMCompanyLog.cs" />
+    <Compile Include="Entities\MerchantManagement.OkcMCompanyLog.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.OkcMProvider.cs" />
+    <Compile Include="Entities\MerchantManagement.OkcMProvider.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.OkcMProviderLog.cs" />
+    <Compile Include="Entities\MerchantManagement.OkcMProviderLog.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.XlsCreateRefund.cs" />
+    <Compile Include="Entities\MerchantManagement.AffBranchOperation.cs" />
+    <Compile Include="Entities\MerchantManagement.AffBranchOperation.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.AffBranchOprLog.cs" />
+    <Compile Include="Entities\MerchantManagement.AffBranchOprLog.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.AffFirmOperation.cs" />
+    <Compile Include="Entities\MerchantManagement.AffFirmOperation.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.AffFirmService.cs" />
+    <Compile Include="Entities\MerchantManagement.AffFirmService.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.AffInvoiceCard.cs" />
+    <Compile Include="Entities\MerchantManagement.AffInvoiceCard.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.AffOnlineBranchRequest.cs" />
+    <Compile Include="Entities\MerchantManagement.AffOnlineBranchRequest.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.AffWebUser.cs" />
+    <Compile Include="Entities\MerchantManagement.AffWebUser.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.AffWebUserChannel.cs" />
+    <Compile Include="Entities\MerchantManagement.AffWebUserChannel.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.Campaign.cs" />
+    <Compile Include="Entities\MerchantManagement.Campaign.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.CampaignAuthDay.cs" />
+    <Compile Include="Entities\MerchantManagement.CampaignAuthDay.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.CampaignAuthGroup.cs" />
+    <Compile Include="Entities\MerchantManagement.CampaignAuthGroup.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.CampaignAuthService.cs" />
+    <Compile Include="Entities\MerchantManagement.CampaignAuthService.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.ExcelFile.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.FoAffMemberRequest.cs" />
+    <Compile Include="Entities\MerchantManagement.FoAffMemberRequest.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.FoBatchDetail.cs" />
+    <Compile Include="Entities\MerchantManagement.FoBatchDetail.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.FoBatchHeader.cs" />
+    <Compile Include="Entities\MerchantManagement.FoBatchHeader.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.MAffSegment.cs" />
+    <Compile Include="Entities\MerchantManagement.MAffSegment.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.MCardTransType.cs" />
+    <Compile Include="Entities\MerchantManagement.MCardTransType.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.MMemberRequestDetailResult.cs" />
+    <Compile Include="Entities\MerchantManagement.MMemberRequestDetailResult.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.MOnlineInstallStatus.cs" />
+    <Compile Include="Entities\MerchantManagement.MOnlineInstallStatus.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.MService.cs" />
+    <Compile Include="Entities\MerchantManagement.MService.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.MTablePosition.cs" />
+    <Compile Include="Entities\MerchantManagement.MTablePosition.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.MTerminalModel.cs" />
+    <Compile Include="Entities\MerchantManagement.MTerminalModel.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.OkcMCompany.cs" />
+    <Compile Include="Entities\MerchantManagement.OkcMCompany.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.OnlineSwVersion.cs" />
+    <Compile Include="Entities\MerchantManagement.OnlineSwVersion.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.OnlineTerminalLog.cs" />
+    <Compile Include="Entities\MerchantManagement.OnlineTerminalLog.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.OnlineTermTransactionType.cs" />
+    <Compile Include="Entities\MerchantManagement.OnlineTermTransactionType.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.PEndOfDay.cs" />
+    <Compile Include="Entities\MerchantManagement.PEndOfDay.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.PMerchant.cs" />
+    <Compile Include="Entities\MerchantManagement.PMerchant.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.PSoftposUserStatus.cs" />
+    <Compile Include="Entities\MerchantManagement.PSoftposUserStatus.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.PTerminalRemoteDownIp.cs" />
+    <Compile Include="Entities\MerchantManagement.PTerminalRemoteDownIp.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.PTerminalType.cs" />
+    <Compile Include="Entities\MerchantManagement.PTerminalType.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.Service.cs" />
+    <Compile Include="Entities\MerchantManagement.Service.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.Terminal.cs" />
+    <Compile Include="Entities\MerchantManagement.Terminal.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.TerminalGroup.cs" />
+    <Compile Include="Entities\MerchantManagement.TerminalGroup.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.TerminalProduct.cs" />
+    <Compile Include="Entities\MerchantManagement.TerminalProduct.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.TerminalService.cs" />
+    <Compile Include="Entities\MerchantManagement.TerminalService.Generated.cs" />
+    <Compile Include="Entities\MerchantManagement.XlsCreateRefund.Generated.cs" />
+    <Compile Include="Repository\IAffBranchOperationRepository.cs" />
+    <Compile Include="Repository\IAffFirmOperationRepository.cs" />
+    <Compile Include="Repository\IAffFirmServiceRepository.cs" />
+    <Compile Include="Repository\IAffInvoiceCardRepository.cs" />
+    <Compile Include="Repository\IAffMemberRequestRepository.cs" />
+    <Compile Include="Repository\IOnlineSwVersionRepository.cs" />
+    <Compile Include="Repository\ISoftPosUserRepository.cs" />
+    <Compile Include="Repository\ITerminalRepository.cs" />
+    <Compile Include="Views\MerchantManagement.VwMerchantApplyList.cs" />
+    <Compile Include="Views\MerchantManagement.VwMerchantApplyList.Generated.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Infrastructure\Abstraction\Sodexo.BackOffice.Abstraction.csproj" />
+    <ProjectReference Include="..\Sodexo.BackOffice.MerchantManagement.Abstraction\Sodexo.BackOffice.MerchantManagement.Abstraction.csproj" />
+  </ItemGroup>
+</Project>
