@@ -13,6 +13,17 @@ Usage: lua fixml_ultra_optimized.lua [--organize] [--replace] [--fix-warnings] <
 
 local XML_DECLARATION = '<?xml version="1.0" encoding="utf-8"?>\n'
 
+-- Pre-cache common ASCII characters for performance
+local char_cache = {}
+for i = 0, 255 do
+	char_cache[i] = string.char(i)
+end
+
+-- Pre-compile patterns for performance
+local SELF_CONTAINED_PATTERN = "<[^>]+>[^<]*</[^>]+>"
+local SPACE_OR_SLASH_GT_PATTERN = "[ />]"
+local SELF_CLOSING_PATTERN = "/>"
+
 -- Parse command line arguments (optimized)
 local function parse_args()
 	local organize, replace, fix_warnings, file = false, false, false, nil
@@ -71,7 +82,7 @@ local function clean_content(content)
 			end
 		else
 			result_size = result_size + 1
-			result[result_size] = content:sub(i, i)
+			result[result_size] = char_cache[b]
 			i = i + 1
 		end
 	end
@@ -122,8 +133,8 @@ local function normalize_whitespace_preserving_attributes(s)
 	local prev_space = false
 	
 	for i = 1, len do
-		local c = s:sub(i, i)
 		local b = s:byte(i)
+		local c = char_cache[b]
 		
 		if not in_quotes and (c == '"' or c == "'") then
 			in_quotes = true
@@ -173,7 +184,7 @@ local function create_element_key(element_str)
 	-- Fast tag extraction without regex
 	if trimmed:byte(1) ~= 60 then return trimmed end -- not '<'
 	
-	local tag_end = trimmed:find("[ />]")
+	local tag_end = trimmed:find(SPACE_OR_SLASH_GT_PATTERN)
 	if not tag_end then return trimmed end
 	
 	local tag = trimmed:sub(2, tag_end - 1)
@@ -371,13 +382,16 @@ local function process_xml_file(organize_mode, replace_mode, fix_warnings, input
 	process_lines(cleaned_content, function(line, line_num)
 		local trimmed = fast_trim(line)
 		if #trimmed > 0 then
-			-- Simple line-based deduplication with normalized whitespace (preserve attribute values)
-			local key = normalize_whitespace_preserving_attributes(trimmed)
+			-- Simplified deduplication: use trimmed line directly for better performance
+			local key = trimmed
 			
-			-- Never deduplicate XML container elements (opening/closing tags without attributes or content)
-			-- These are structural elements that group other elements and should never be deduplicated
-			local is_container = trimmed:match("^<%s*[%w:%-]+%s*>%s*$") or  -- opening container tag
-			                    trimmed:match("^<%s*/[%w:%-]+%s*>%s*$")     -- closing container tag
+			-- Fast container detection: simple tags without spaces (no attributes)
+			local is_container = false
+			local len = #trimmed
+			if len > 2 and trimmed:byte(1) == 60 and trimmed:byte(len) == 62 then -- '<' and '>'
+				-- Check if contains space (indicates attributes)
+				is_container = not trimmed:find(" ", 2, true) -- plain text search from position 2
+			end
 			
 			if not is_container and seen_elements[key] then
 				duplicates_removed = duplicates_removed + 1
@@ -400,8 +414,8 @@ local function process_xml_file(organize_mode, replace_mode, fix_warnings, input
 				-- Adjust indent for opening tags AFTER applying indentation
 				-- Only increase indent if it's an opening tag that's NOT self-contained
 				if trimmed:byte(1) == 60 and trimmed:byte(2) ~= 47 and 
-				   trimmed:byte(2) ~= 63 and not trimmed:find("/>") and
-				   not trimmed:find("<[^>]+>[^<]*</[^>]+>") then -- not self-contained
+				   trimmed:byte(2) ~= 63 and not trimmed:find(SELF_CLOSING_PATTERN) and
+				   not trimmed:find(SELF_CONTAINED_PATTERN) then -- not self-contained
 					indent_level = indent_level + 1
 				end
 			end
@@ -426,8 +440,8 @@ local function process_xml_file(organize_mode, replace_mode, fix_warnings, input
 		error("Could not create output file: " .. output_filename)
 	end
 	
-	-- Ultra-fast bulk write
-	local chunk_size = 8192
+	-- Ultra-fast bulk write with larger chunks
+	local chunk_size = 65536  -- 64KB chunks for better I/O performance
 	local current_chunk = {}
 	local chunk_len = 0
 	
