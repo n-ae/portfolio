@@ -120,7 +120,7 @@ fn normalizeWhitespace(allocator: std.mem.Allocator, s: []const u8) ![]u8 {
     const trimmed = std.mem.trim(u8, s, " \t\r\n");
     if (trimmed.len == 0) return try allocator.dupe(u8, "");
     
-    var result = ArrayList(u8).init(allocator);
+    var result = std.ArrayList(u8){};
     var in_quotes = false;
     var quote_char: u8 = 0;
     var prev_space = false;
@@ -129,24 +129,24 @@ fn normalizeWhitespace(allocator: std.mem.Allocator, s: []const u8) ![]u8 {
         if (!in_quotes and (c == '"' or c == '\'')) {
             in_quotes = true;
             quote_char = c;
-            try result.append(c);
+            try result.append(allocator, c);
             prev_space = false;
         } else if (in_quotes and c == quote_char) {
             in_quotes = false;
-            try result.append(c);
+            try result.append(allocator, c);
             prev_space = false;
         } else if (in_quotes) {
             // Inside quotes: preserve all whitespace
-            try result.append(c);
+            try result.append(allocator, c);
             prev_space = false;
         } else if (c == ' ' or c == '\t' or c == '\n' or c == '\r') {
             // Outside quotes: normalize whitespace
             if (!prev_space) {
-                try result.append(' ');
+                try result.append(allocator, ' ');
                 prev_space = true;
             }
         } else {
-            try result.append(c);
+            try result.append(allocator, c);
             prev_space = false;
         }
     }
@@ -162,8 +162,8 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
         return .{ .content = try allocator.dupe(u8, content), .duplicates = 0 };
     }
 
-    var result = ArrayList(u8).init(allocator);
-    defer result.deinit();
+    var result = std.ArrayList(u8){};
+    defer result.deinit(allocator);
 
     var seen_elements = std.StringHashMap(void).init(allocator);
     defer {
@@ -220,11 +220,11 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
         // Apply indentation
         const spaces_needed = @as(usize, @intCast(indent_level * 2));
         for (0..spaces_needed) |_| {
-            try result.append(' ');
+            try result.append(allocator, ' ');
         }
         
-        try result.appendSlice(trimmed);
-        try result.append('\n');
+        try result.appendSlice(allocator, trimmed);
+        try result.append(allocator, '\n');
         
         // Adjust indent level for opening tags AFTER writing line
         if (is_opening_tag and !isSelfContained(trimmed)) {
@@ -232,7 +232,7 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
         }
     }
 
-    return .{ .content = try result.toOwnedSlice(), .duplicates = duplicates_removed };
+    return .{ .content = try result.toOwnedSlice(allocator), .duplicates = duplicates_removed };
 }
 
 // Optimized XML declaration detection - check only first 200 bytes
@@ -283,20 +283,20 @@ fn processFile(allocator: std.mem.Allocator, args: Args) !void {
     defer allocator.free(process_result.content);
 
     // Build final content with minimal allocations
-    var final_content = ArrayList(u8).init(allocator);
-    defer final_content.deinit();
+    var final_content = std.ArrayList(u8){};
+    defer final_content.deinit(allocator);
 
     const final_capacity = process_result.content.len + if (args.fix_warnings and !has_xml_decl) XML_DECLARATION.len else 0;
-    try final_content.ensureTotalCapacity(final_capacity);
+    try final_content.ensureTotalCapacity(allocator, final_capacity);
 
     if (args.fix_warnings and !has_xml_decl) {
-        try final_content.appendSlice(XML_DECLARATION);
+        try final_content.appendSlice(allocator, XML_DECLARATION);
         print("🔧 Applied fixes:\n", .{});
         print("  ✓ Added XML declaration\n", .{});
         print("\n", .{});
     }
 
-    try final_content.appendSlice(process_result.content);
+    try final_content.appendSlice(allocator, process_result.content);
 
     const output_filename = try getOutputFilename(allocator, args.file, args.replace);
     defer allocator.free(output_filename);
