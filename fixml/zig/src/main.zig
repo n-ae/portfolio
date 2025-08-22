@@ -50,15 +50,15 @@ fn parseArgs(allocator: std.mem.Allocator) !Args {
 fn isContainerElement(s: []const u8) bool {
     const trimmed = std.mem.trim(u8, s, " \t\r\n");
     if (trimmed.len < 3) return false;
-    
+
     if (trimmed[0] == '<' and trimmed[trimmed.len - 1] == '>') {
         if (trimmed.len > 2 and trimmed[1] == '/') {
             // Closing tag: </tag>
-            const inner = trimmed[2..trimmed.len - 1];
+            const inner = trimmed[2 .. trimmed.len - 1];
             return isValidTagName(inner);
         } else {
             // Opening tag: <tag>
-            const inner = trimmed[1..trimmed.len - 1];
+            const inner = trimmed[1 .. trimmed.len - 1];
             return isValidTagName(inner);
         }
     }
@@ -68,10 +68,11 @@ fn isContainerElement(s: []const u8) bool {
 // Check if string contains only valid tag name characters
 fn isValidTagName(s: []const u8) bool {
     for (s) |c| {
-        if (!((c >= 'a' and c <= 'z') or 
-              (c >= 'A' and c <= 'Z') or
-              (c >= '0' and c <= '9') or
-              c == ':' or c == '-' or c == '.')) {
+        if (!((c >= 'a' and c <= 'z') or
+            (c >= 'A' and c <= 'Z') or
+            (c >= '0' and c <= '9') or
+            c == ':' or c == '-' or c == '.'))
+        {
             return false;
         }
     }
@@ -79,18 +80,18 @@ fn isValidTagName(s: []const u8) bool {
 }
 
 // Check if element is self-contained like <tag>content</tag>
-// Matches Go regex: ^<[^>]+>[^<]*</[^>]+>$  
+// Matches Go regex: ^<[^>]+>[^<]*</[^>]+>$
 fn isSelfContained(s: []const u8) bool {
     const trimmed = std.mem.trim(u8, s, " \t\r\n");
     if (trimmed.len < 7) return false; // minimum: <a>x</a>
-    
+
     // Must start with < and end with >
     if (trimmed[0] != '<' or trimmed[trimmed.len - 1] != '>') return false;
-    
+
     // Find first > and last <
     var first_gt: ?usize = null;
     var last_lt: ?usize = null;
-    
+
     for (trimmed, 0..) |c, i| {
         if (c == '>' and first_gt == null) {
             first_gt = i;
@@ -99,19 +100,19 @@ fn isSelfContained(s: []const u8) bool {
             last_lt = i;
         }
     }
-    
+
     if (first_gt == null or last_lt == null) return false;
     if (first_gt.? >= last_lt.?) return false;
-    
+
     // Check that closing tag starts with </
     if (last_lt.? + 1 >= trimmed.len or trimmed[last_lt.? + 1] != '/') return false;
-    
+
     // Check that content between tags contains no <
-    const content = trimmed[first_gt.? + 1..last_lt.?];
+    const content = trimmed[first_gt.? + 1 .. last_lt.?];
     for (content) |c| {
         if (c == '<') return false;
     }
-    
+
     return true;
 }
 
@@ -119,12 +120,12 @@ fn isSelfContained(s: []const u8) bool {
 fn normalizeWhitespace(allocator: std.mem.Allocator, s: []const u8) ![]u8 {
     const trimmed = std.mem.trim(u8, s, " \t\r\n");
     if (trimmed.len == 0) return try allocator.dupe(u8, "");
-    
+
     var result = std.ArrayList(u8){};
     var in_quotes = false;
     var quote_char: u8 = 0;
     var prev_space = false;
-    
+
     for (trimmed) |c| {
         if (!in_quotes and (c == '"' or c == '\'')) {
             in_quotes = true;
@@ -150,7 +151,7 @@ fn normalizeWhitespace(allocator: std.mem.Allocator, s: []const u8) ![]u8 {
             prev_space = false;
         }
     }
-    
+
     // Final trim to remove trailing spaces
     const final_result = std.mem.trim(u8, result.items, " ");
     return try allocator.dupe(u8, final_result);
@@ -173,59 +174,59 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
         }
         seen_elements.deinit();
     }
-    
+
     var duplicates_removed: u32 = 0;
     var indent_level: i32 = 0;
 
     // Split content into lines
     var lines = std.mem.splitScalar(u8, content, '\n');
-    
+
     while (lines.next()) |line| {
         const trimmed = std.mem.trim(u8, line, " \t\r\n");
         if (trimmed.len == 0) continue;
-        
+
         // XML-agnostic container detection
         const is_container = isContainerElement(trimmed);
-        
+
         // Deduplication with normalized whitespace (like Go's regex)
         const normalized_key = try normalizeWhitespace(allocator, trimmed);
-        
+
         if (!is_container and seen_elements.contains(normalized_key)) {
             duplicates_removed += 1;
             allocator.free(normalized_key);
             continue; // Skip duplicate
         }
-        
+
         if (!is_container) {
             try seen_elements.put(normalized_key, {});
         } else {
             allocator.free(normalized_key);
         }
-        
+
         // Determine if this is a closing tag
         const is_closing_tag = std.mem.startsWith(u8, trimmed, "</");
-        
+
         // Determine if this is an opening tag (not self-contained)
         const is_opening_tag = std.mem.startsWith(u8, trimmed, "<") and
-                              !std.mem.startsWith(u8, trimmed, "</") and
-                              !std.mem.startsWith(u8, trimmed, "<!--") and
-                              !std.mem.startsWith(u8, trimmed, "<?") and
-                              !std.mem.endsWith(u8, trimmed, "/>");
-        
+            !std.mem.startsWith(u8, trimmed, "</") and
+            !std.mem.startsWith(u8, trimmed, "<!--") and
+            !std.mem.startsWith(u8, trimmed, "<?") and
+            !std.mem.endsWith(u8, trimmed, "/>");
+
         // Adjust indent level for closing tags BEFORE writing line
         if (is_closing_tag) {
             indent_level = @max(0, indent_level - 1);
         }
-        
+
         // Apply indentation
         const spaces_needed = @as(usize, @intCast(indent_level * 2));
         for (0..spaces_needed) |_| {
             try result.append(allocator, ' ');
         }
-        
+
         try result.appendSlice(allocator, trimmed);
         try result.append(allocator, '\n');
-        
+
         // Adjust indent level for opening tags AFTER writing line
         if (is_opening_tag and !isSelfContained(trimmed)) {
             indent_level += 1;

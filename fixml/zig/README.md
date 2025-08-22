@@ -6,7 +6,7 @@ Ultra-high-performance Zig XML processor - **Champion** 🏆
 - `fixml` - Native macOS binary (ARM64)
 - `fixml_linux_x64` - Linux AMD64 binary  
 - `fixml_windows_x64.exe` - Windows AMD64 binary
-- `src/fixml_simple.zig` - Zig source code (v2.0.0)
+- `src/main.zig` - Zig source code (v2.0.0)
 
 ## Usage
 ```bash
@@ -31,9 +31,21 @@ Options:
 - Custom indentation buffer to avoid allocations
 - Systems-level performance optimizations
 
-## Cross-Platform Binaries
-All binaries are optimized with `-O ReleaseFast` for maximum performance.
+## Building from Source
 
-```
-zig build-exe hello.zig -target -O ReleaseFast x86_64-linux-gnu
-```
+This project is built with Zig version 0.15.1. You can build it for different targets using the following commands:
+
+- **macOS (aarch64):**
+  ```bash
+  zig build -Dtarget=aarch64-macos
+  ```
+- **Linux (x86_64):**
+  ```bash
+  zig build -Dtarget=x86_64-linux
+  ```
+- **Windows (x86_64):**
+  ```bash
+  zig build -Dtarget=x86_64-windows
+  ```
+
+The compiled binaries will be located in the `zig-out/bin` directory.
