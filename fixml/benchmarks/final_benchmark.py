@@ -12,7 +12,7 @@ def benchmark_impl(name, command, test_file, iterations=30):
     
     for i in range(iterations):
         # Clean up previous output
-        output_file = test_file.replace('.csproj', '.organized.csproj')
+        output_file = test_file.replace('.xml', '.organized.xml')
         if os.path.exists(output_file):
             os.remove(output_file)
         
@@ -53,12 +53,11 @@ def main():
         ('Zig v2.0.0 (Optimized)', ['../zig/fixml']),
     ]
     
-    # Comprehensive test files across size spectrum
+    # Test files across size spectrum  
     test_files = [
-        '../tests/samples/test-none-update.csproj',          # 0.6 KB - tiny
-        '../tests/samples/sample-with-duplicates.csproj',    # 1.2 KB - small  
-        '../tests/samples/Sodexo.BackOffice.Api.csproj',     # 11 KB - medium
-        '../tests/samples/a.csproj'                          # 940 KB - large
+        '../tests/samples/sample.xml',                        # 0.9 KB - small
+        '../tests/samples/medium-test.xml',                   # 49 KB - medium
+        '../tests/samples/large-test.xml'                     # 3231 KB - large
     ]
     
     print("🚀 Final Optimized XML Processor Benchmark")
