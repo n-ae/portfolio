@@ -168,13 +168,29 @@ fn is_self_contained(s: &str) -> bool {
     false
 }
 
-// Normalize whitespace by replacing multiple spaces with single space
+// Normalize whitespace by replacing multiple spaces with single space, preserving attribute values
 fn normalize_whitespace(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
+    let mut in_quotes = false;
+    let mut quote_char = '\0';
     let mut prev_was_space = false;
     
     for ch in s.chars() {
-        if ch.is_whitespace() {
+        if !in_quotes && (ch == '"' || ch == '\'') {
+            in_quotes = true;
+            quote_char = ch;
+            result.push(ch);
+            prev_was_space = false;
+        } else if in_quotes && ch == quote_char {
+            in_quotes = false;
+            result.push(ch);
+            prev_was_space = false;
+        } else if in_quotes {
+            // Inside quotes: preserve all whitespace
+            result.push(ch);
+            prev_was_space = false;
+        } else if ch.is_whitespace() {
+            // Outside quotes: normalize whitespace
             if !prev_was_space {
                 result.push(' ');
                 prev_was_space = true;

@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
 	<None Include="Views/File574.resx" />
 		<Compile Include="wwwroot/js/File82.resx" />
        <None Include="Controllers/File369.xml" />
@@ -47,9 +48,7 @@
       <EmbeddedResource Include="Helpers/File900.css" />
 						<EmbeddedResource Include="wwwroot/css/File99.resx" />
             <EmbeddedResource Include="Resources/File128.css" />
-            </ItemGroup>
-
-   <Compile Include="Resources/File496.resx" />
+<Compile Include="Resources/File496.resx" />
 								<EmbeddedResource Include="Data/File192.md" />
 				<None Include="  Components/File10.resx   " />
 				<None Include="Components/File60.resx" />
@@ -97,9 +96,7 @@
  <Compile Include="Resources/File372.json" />
            <EmbeddedResource Include="wwwroot/js/File517.resx" />
 					<None Include="wwwroot/css/File680.cs" />
-					</ItemGroup>
-
-					<Content Include="Controllers/File252.css" />
+<Content Include="Controllers/File252.css" />
 							<None Include="Data/File775.js" />
 	<Content Include="wwwroot/js/File364.js" />
 		<Compile Include="Helpers/File631.cs" />
@@ -147,9 +144,7 @@
 		<EmbeddedResource Include="Models/File46.resx" />
 			<EmbeddedResource Include="Data/File891.js" />
 					<None Include="Data/File938.cs" />
-					</ItemGroup>
-
-      <Content Include="wwwroot/js/File400.cshtml" />
+<Content Include="wwwroot/js/File400.cshtml" />
 			<Content Include="wwwroot/css/File159.css" />
 		<EmbeddedResource Include="Services/File45.cshtml " />
 		<EmbeddedResource Include="Services/File595.cshtml" />
@@ -197,9 +192,7 @@
 			<Compile Include="Controllers/File471.resx" />
      <EmbeddedResource Include="Components/File169.css" />
 					<EmbeddedResource Include="Data/File877.json" />
-					</ItemGroup>
-
-   <EmbeddedResource Include="wwwroot/css/File622.css" />
+<EmbeddedResource Include="wwwroot/css/File622.css" />
 				<Content Include="  Models/File0.cs" />
 				<Content Include="Models/File950.cs" />
                  <EmbeddedResource Include="Models/File346.js" />
@@ -247,9 +240,7 @@
 				<EmbeddedResource Include="Controllers/File948.json" />
 							<None Include="Controllers/File880.css" />
 		<Compile Include="Controllers/File42.resx" />
-		</ItemGroup>
-
-                <Compile Include="Data/File344.css" />
+<Compile Include="Data/File344.css" />
            <None Include="Services/File965.js" />
 	<EmbeddedResource Include="Services/File585.xml" />
                     <EmbeddedResource Include="Data/File416.cshtml" />
@@ -297,9 +288,7 @@
 								<EmbeddedResource Include="Helpers/File333.xml" />
 	<EmbeddedResource Include="Components/File262.cshtml" />
 							<EmbeddedResource Include="Components/File490.js" />
-							</ItemGroup>
-
-		<None Include="Data/File140.js" />
+<None Include="Data/File140.js" />
 						<EmbeddedResource Include="wwwroot/css/File868.js" />
                <Content Include="Services/File720.xml" />
       <Content Include="wwwroot/css/File780.xml" />
@@ -347,9 +336,7 @@
         <Content Include="Resources/File316.cshtml" />
                   <EmbeddedResource Include="wwwroot/js/File641.css" />
       <None Include="Resources/File550.json" />
-      </ItemGroup>
-
-                          <Compile Include="Views/File466.cshtml" />
+<Compile Include="Views/File466.cshtml" />
        <EmbeddedResource Include="wwwroot/css/File634.cshtml" />
 							<EmbeddedResource Include="Components/File975.css" />
      <Content Include="Data/File313.xml" />
@@ -397,9 +384,7 @@
 				<None Include="Controllers/File705.js" />
 							<None Include="Data/File69.json" />
      <Compile Include="wwwroot/css/File391.cshtml" />
-     </ItemGroup>
-
-								<None Include="Models/File269.md" />
+<None Include="Models/File269.md" />
               <None Include="Resources/File163.md" />
 						<None Include="Controllers/File970.xml" />
               <None Include="Views/File774.js" />
@@ -447,9 +432,7 @@
 	<Compile Include="Resources/File513.cs" />
 	<EmbeddedResource Include="Services/File79.md" />
 			<None Include="Resources/File299.resx" />
-			</ItemGroup>
-
-						<EmbeddedResource Include="  Models/File26.css   " />
+<EmbeddedResource Include="  Models/File26.css   " />
 						<EmbeddedResource Include="Models/File476.css" />
            <EmbeddedResource Include="Resources/File204.cs" />
          <None Include="   Resources/File24.md   " />
@@ -497,9 +480,7 @@
 			<EmbeddedResource Include="Services/File541.css" />
 							<EmbeddedResource Include="Helpers/File485.resx" />
                         <Content Include="wwwroot/css/File764.css" />
-                        </ItemGroup>
-
-				<EmbeddedResource Include="Controllers/File38.resx" />
+<EmbeddedResource Include="Controllers/File38.resx" />
         <EmbeddedResource Include="Controllers/File883.cs" />
 							<Content Include="Models/File212.css" />
 				<None Include="Helpers/File925.css" />
@@ -547,9 +528,7 @@
 							<EmbeddedResource Include="Controllers/File538.cshtml" />
       <Compile Include="Components/File571.cs" />
 								<Compile Include="Helpers/File848.css" />
-								</ItemGroup>
-
-                       <Compile Include="wwwroot/css/File292.js" />
+<Compile Include="wwwroot/css/File292.js" />
            <Content Include="Views/File473.md" />
                 <Content Include="Helpers/File69.md" />
 				<Compile Include="Data/File288.xml" />
@@ -597,9 +576,7 @@
            <Compile Include="Resources/File200.xml" />
   <None Include="Data/File329.cshtml" />
                  <None Include="wwwroot/js/File882.js" />
-                 </ItemGroup>
-
-              <EmbeddedResource Include="wwwroot/js/File820.xml" />
+<EmbeddedResource Include="wwwroot/js/File820.xml" />
 			<Compile Include="Resources/File460.cshtml" />
                <EmbeddedResource Include="Views/File567.xml" />
               <EmbeddedResource Include="wwwroot/css/File8.md" />
@@ -647,9 +624,7 @@
 		<EmbeddedResource Include="Resources/File796.cshtml" />
 								<Compile Include="wwwroot/css/File869.json" />
 			<Compile Include="Models/File592.json" />
-			</ItemGroup>
-
-      <None Include="Data/File102.cshtml" />
+<None Include="Data/File102.cshtml" />
    <Compile Include="Views/File18.cshtml" />
            <Content Include="Services/File971.resx" />
             <None Include="Services/File219.cs" />
@@ -698,8 +673,7 @@
    <Compile Include="Models/File887.json" />
 				<None Include="   Views/File47.css" />
 				<None Include="Views/File897.css" />
-						<ItemGroup>
-						<EmbeddedResource Include="Resources/File805.json" />
+<EmbeddedResource Include="Resources/File805.json" />
                    <Compile Include="Data/File357.xml" />
 	<Compile Include="wwwroot/js/File744.md" />
 				<None Include="Controllers/File984.js" />
@@ -747,9 +721,7 @@
 								<None Include="Helpers/File542.cs" />
                     <Compile Include="wwwroot/js/File981.js" />
 			<None Include="Components/File931.json" />
-			</ItemGroup>
-
-						<Compile Include="Models/File522.resx" />
+<Compile Include="Models/File522.resx" />
            <Content Include="   Models/File22.cshtml   " />
            <Content Include="Models/File872.cshtml" />
               <Content Include="Models/File46.resx" />
@@ -797,9 +769,7 @@
         <None Include="Data/File688.cshtml" />
 							<None Include="Resources/File366.md" />
         <EmbeddedResource Include="Services/File758.json" />
-        </ItemGroup>
-
-		<Content Include="Services/File118.resx" />
+<Content Include="Services/File118.resx" />
         <Compile Include="wwwroot/js/File133.css" />
        <EmbeddedResource Include="Helpers/File330.cshtml" />
                  <EmbeddedResource Include="Data/File277.css" />
@@ -847,9 +817,7 @@
       <Compile Include="Components/File180.js" />
                  <Compile Include="Services/File303.json" />
 	<EmbeddedResource Include="Views/File999.md" />
-	</ItemGroup>
-
-							<None Include="Models/File171.css" />
+<None Include="Models/File171.css" />
     <EmbeddedResource Include="Resources/File13.json   " />
     <EmbeddedResource Include="Resources/File263.json" />
 					<EmbeddedResource Include="Resources/File784.css" />
@@ -897,9 +865,7 @@
    <None Include="Resources/File762.cshtml" />
      <Compile Include="Resources/File634.md" />
 								<Compile Include="wwwroot/css/File862.cs" />
-								</ItemGroup>
-
-                 <None Include="Views/File281.css" />
+<None Include="Views/File281.css" />
                    <Content Include="Components/File629.cshtml" />
            <Compile Include="Services/File79.css" />
         <EmbeddedResource Include="wwwroot/css/File273.resx" />
@@ -947,9 +913,7 @@
              <Compile Include="wwwroot/css/File64.cs" />
                    <EmbeddedResource Include="wwwroot/js/File432.cs" />
     <Content Include="Data/File797.css" />
-    </ItemGroup>
-
-       <Content Include="Helpers/File780.cs" />
+<Content Include="Helpers/File780.cs" />
 								<None Include="Views/File423.cs" />
       <Compile Include="Views/File315.cs" />
               <None Include="Models/File11.xml" />
@@ -997,4 +961,5 @@
     <EmbeddedResource Include="Components/File893.js" />
 			<Compile Include="Data/File56.md" />
 					<None Include="Services/File350.cs" />
-					</ItemGroup>
+  </ItemGroup>
+</Project>

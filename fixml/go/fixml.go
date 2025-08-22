@@ -141,9 +141,8 @@ func processAsText(args Args, content string, hasXMLDecl bool) error {
 		isContainer := openingContainerPattern.MatchString(trimmed) || 
 		              closingContainerPattern.MatchString(trimmed)
 		
-		// Deduplication with normalized whitespace
-		normalizedKey := regexp.MustCompile(`\s+`).ReplaceAllString(trimmed, " ")
-		normalizedKey = strings.TrimSpace(normalizedKey)
+		// Deduplication with normalized whitespace (preserve attribute values)
+		normalizedKey := normalizeWhitespacePreservingAttributes(trimmed)
 		
 		if !isContainer && seenElements[normalizedKey] {
 			duplicatesRemoved++
@@ -237,6 +236,46 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// normalizeWhitespacePreservingAttributes normalizes structural whitespace while preserving attribute values
+func normalizeWhitespacePreservingAttributes(s string) string {
+	result := strings.Builder{}
+	result.Grow(len(s))
+	
+	inQuotes := false
+	var quoteChar byte
+	prevSpace := false
+	
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		
+		if !inQuotes && (c == '"' || c == '\'') {
+			inQuotes = true
+			quoteChar = c
+			result.WriteByte(c)
+			prevSpace = false
+		} else if inQuotes && c == quoteChar {
+			inQuotes = false
+			result.WriteByte(c)
+			prevSpace = false
+		} else if inQuotes {
+			// Inside quotes: preserve all whitespace
+			result.WriteByte(c)
+			prevSpace = false
+		} else if c == ' ' || c == '\t' || c == '\n' || c == '\r' {
+			// Outside quotes: normalize whitespace
+			if !prevSpace {
+				result.WriteByte(' ')
+				prevSpace = true
+			}
+		} else {
+			result.WriteByte(c)
+			prevSpace = false
+		}
+	}
+	
+	return strings.TrimSpace(result.String())
 }
 
 func main() {

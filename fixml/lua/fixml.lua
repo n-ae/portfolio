@@ -110,6 +110,54 @@ local function fast_trim(s)
 	end
 end
 
+-- Normalize whitespace while preserving attribute values
+local function normalize_whitespace_preserving_attributes(s)
+	local len = #s
+	if len == 0 then return s end
+	
+	local result = {}
+	local result_size = 0
+	local in_quotes = false
+	local quote_char = nil
+	local prev_space = false
+	
+	for i = 1, len do
+		local c = s:sub(i, i)
+		local b = s:byte(i)
+		
+		if not in_quotes and (c == '"' or c == "'") then
+			in_quotes = true
+			quote_char = c
+			result_size = result_size + 1
+			result[result_size] = c
+			prev_space = false
+		elseif in_quotes and c == quote_char then
+			in_quotes = false
+			result_size = result_size + 1
+			result[result_size] = c
+			prev_space = false
+		elseif in_quotes then
+			-- Inside quotes: preserve all whitespace
+			result_size = result_size + 1
+			result[result_size] = c
+			prev_space = false
+		elseif b <= 32 then -- whitespace
+			-- Outside quotes: normalize whitespace
+			if not prev_space then
+				result_size = result_size + 1
+				result[result_size] = " "
+				prev_space = true
+			end
+		else
+			result_size = result_size + 1
+			result[result_size] = c
+			prev_space = false
+		end
+	end
+	
+	return fast_trim(table.concat(result, "", 1, result_size))
+end
+
 -- Ultra-optimized element key creation - avoid regex completely
 local function create_element_key(element_str)
 	local trimmed = fast_trim(element_str)
@@ -323,8 +371,8 @@ local function process_xml_file(organize_mode, replace_mode, fix_warnings, input
 	process_lines(cleaned_content, function(line, line_num)
 		local trimmed = fast_trim(line)
 		if #trimmed > 0 then
-			-- Simple line-based deduplication with normalized whitespace
-			local key = fast_trim(trimmed):gsub("%s+", " ")
+			-- Simple line-based deduplication with normalized whitespace (preserve attribute values)
+			local key = normalize_whitespace_preserving_attributes(trimmed)
 			
 			-- Never deduplicate XML container elements (opening/closing tags without attributes or content)
 			-- These are structural elements that group other elements and should never be deduplicated

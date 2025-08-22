@@ -79,30 +79,68 @@ fn isValidTagName(s: []const u8) bool {
 }
 
 // Check if element is self-contained like <tag>content</tag>
+// Matches Go regex: ^<[^>]+>[^<]*</[^>]+>$  
 fn isSelfContained(s: []const u8) bool {
     const trimmed = std.mem.trim(u8, s, " \t\r\n");
     if (trimmed.len < 7) return false; // minimum: <a>x</a>
     
-    if (trimmed[0] == '<' and trimmed[trimmed.len - 1] == '>') {
-        if (std.mem.indexOf(u8, trimmed, ">")) |first_gt| {
-            if (std.mem.lastIndexOf(u8, trimmed, "<")) |last_lt| {
-                return first_gt < last_lt and
-                       first_gt + 1 < last_lt and
-                       last_lt + 1 < trimmed.len and
-                       trimmed[last_lt + 1] == '/';
-            }
+    // Must start with < and end with >
+    if (trimmed[0] != '<' or trimmed[trimmed.len - 1] != '>') return false;
+    
+    // Find first > and last <
+    var first_gt: ?usize = null;
+    var last_lt: ?usize = null;
+    
+    for (trimmed, 0..) |c, i| {
+        if (c == '>' and first_gt == null) {
+            first_gt = i;
+        }
+        if (c == '<' and i > 0) { // Skip the initial <
+            last_lt = i;
         }
     }
-    return false;
+    
+    if (first_gt == null or last_lt == null) return false;
+    if (first_gt.? >= last_lt.?) return false;
+    
+    // Check that closing tag starts with </
+    if (last_lt.? + 1 >= trimmed.len or trimmed[last_lt.? + 1] != '/') return false;
+    
+    // Check that content between tags contains no <
+    const content = trimmed[first_gt.? + 1..last_lt.?];
+    for (content) |c| {
+        if (c == '<') return false;
+    }
+    
+    return true;
 }
 
-// Normalize whitespace by replacing multiple spaces with single space
+// Normalize structural whitespace only, preserving attribute values
 fn normalizeWhitespace(allocator: std.mem.Allocator, s: []const u8) ![]u8 {
+    const trimmed = std.mem.trim(u8, s, " \t\r\n");
+    if (trimmed.len == 0) return try allocator.dupe(u8, "");
+    
     var result = ArrayList(u8).init(allocator);
+    var in_quotes = false;
+    var quote_char: u8 = 0;
     var prev_space = false;
     
-    for (s) |c| {
-        if (c == ' ' or c == '\t' or c == '\n' or c == '\r') {
+    for (trimmed) |c| {
+        if (!in_quotes and (c == '"' or c == '\'')) {
+            in_quotes = true;
+            quote_char = c;
+            try result.append(c);
+            prev_space = false;
+        } else if (in_quotes and c == quote_char) {
+            in_quotes = false;
+            try result.append(c);
+            prev_space = false;
+        } else if (in_quotes) {
+            // Inside quotes: preserve all whitespace
+            try result.append(c);
+            prev_space = false;
+        } else if (c == ' ' or c == '\t' or c == '\n' or c == '\r') {
+            // Outside quotes: normalize whitespace
             if (!prev_space) {
                 try result.append(' ');
                 prev_space = true;
@@ -113,8 +151,9 @@ fn normalizeWhitespace(allocator: std.mem.Allocator, s: []const u8) ![]u8 {
         }
     }
     
-    const trimmed = std.mem.trim(u8, result.items, " \t\r\n");
-    return try allocator.dupe(u8, trimmed);
+    // Final trim to remove trailing spaces
+    const final_result = std.mem.trim(u8, result.items, " ");
+    return try allocator.dupe(u8, final_result);
 }
 
 // XML processing with deduplication and indentation
@@ -124,7 +163,7 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
     }
 
     var result = ArrayList(u8).init(allocator);
-    try result.ensureTotalCapacity(content.len + content.len / 4);
+    defer result.deinit();
 
     var seen_elements = std.StringHashMap(void).init(allocator);
     defer {
@@ -138,83 +177,58 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
     var duplicates_removed: u32 = 0;
     var indent_level: i32 = 0;
 
-    var i: usize = 0;
-    // Remove BOM if present
-    if (content.len >= 3 and content[0] == 0xEF and content[1] == 0xBB and content[2] == 0xBF) {
-        i = 3;
-    }
-
-    var line_start = i;
-
-    // Process content line by line
-    while (i <= content.len) {
-        if (i == content.len or content[i] == '\n' or content[i] == '\r') {
-            if (line_start < i) {
-                const line = content[line_start..i];
-                const trimmed = std.mem.trim(u8, line, " \t\r\n");
-                
-                if (trimmed.len > 0) {
-                    // XML-agnostic container detection
-                    const is_container = isContainerElement(trimmed);
-                    
-                    // Deduplication with normalized whitespace
-                    const normalized_key = try normalizeWhitespace(allocator, trimmed);
-                    defer allocator.free(normalized_key);
-                    
-                    if (!is_container and seen_elements.contains(normalized_key)) {
-                        duplicates_removed += 1;
-                        // Skip this duplicate line
-                    } else {
-                        if (!is_container) {
-                            const key_copy = try allocator.dupe(u8, normalized_key);
-                            try seen_elements.put(key_copy, {});
-                        }
-                        
-                        // Adjust indent for closing tags BEFORE applying indentation
-                        if (std.mem.startsWith(u8, trimmed, "</")) {
-                            indent_level = @max(0, indent_level - 1);
-                        }
-                        
-                        // Apply consistent 2-space indentation
-                        const spaces_needed = @as(usize, @intCast(indent_level * 2));
-                        for (0..spaces_needed) |_| {
-                            try result.append(' ');
-                        }
-                        
-                        try result.appendSlice(trimmed);
-                        try result.append('\n');
-                        
-                        // Adjust indent for opening tags AFTER applying indentation
-                        var is_opening_tag = std.mem.startsWith(u8, trimmed, "<") and
-                                            !std.mem.startsWith(u8, trimmed, "</") and
-                                            !std.mem.startsWith(u8, trimmed, "<?") and
-                                            !std.mem.endsWith(u8, trimmed, "/>");
-                        
-                        // Check if self-contained
-                        if (is_opening_tag and isSelfContained(trimmed)) {
-                            is_opening_tag = false;
-                        }
-                        
-                        if (is_opening_tag) {
-                            indent_level += 1;
-                        }
-                    }
-                }
-            }
-
-            // Skip line endings efficiently
-            if (i < content.len) {
-                if (content[i] == '\r' and i + 1 < content.len and content[i + 1] == '\n') {
-                    i += 2;
-                } else {
-                    i += 1;
-                }
-                line_start = i;
-            } else {
-                break;
-            }
+    // Split content into lines
+    var lines = std.mem.splitScalar(u8, content, '\n');
+    
+    while (lines.next()) |line| {
+        const trimmed = std.mem.trim(u8, line, " \t\r\n");
+        if (trimmed.len == 0) continue;
+        
+        // XML-agnostic container detection
+        const is_container = isContainerElement(trimmed);
+        
+        // Deduplication with normalized whitespace (like Go's regex)
+        const normalized_key = try normalizeWhitespace(allocator, trimmed);
+        
+        if (!is_container and seen_elements.contains(normalized_key)) {
+            duplicates_removed += 1;
+            allocator.free(normalized_key);
+            continue; // Skip duplicate
+        }
+        
+        if (!is_container) {
+            try seen_elements.put(normalized_key, {});
         } else {
-            i += 1;
+            allocator.free(normalized_key);
+        }
+        
+        // Determine if this is a closing tag
+        const is_closing_tag = std.mem.startsWith(u8, trimmed, "</");
+        
+        // Determine if this is an opening tag (not self-contained)
+        const is_opening_tag = std.mem.startsWith(u8, trimmed, "<") and
+                              !std.mem.startsWith(u8, trimmed, "</") and
+                              !std.mem.startsWith(u8, trimmed, "<!--") and
+                              !std.mem.startsWith(u8, trimmed, "<?") and
+                              !std.mem.endsWith(u8, trimmed, "/>");
+        
+        // Adjust indent level for closing tags BEFORE writing line
+        if (is_closing_tag) {
+            indent_level = @max(0, indent_level - 1);
+        }
+        
+        // Apply indentation
+        const spaces_needed = @as(usize, @intCast(indent_level * 2));
+        for (0..spaces_needed) |_| {
+            try result.append(' ');
+        }
+        
+        try result.appendSlice(trimmed);
+        try result.append('\n');
+        
+        // Adjust indent level for opening tags AFTER writing line
+        if (is_opening_tag and !isSelfContained(trimmed)) {
+            indent_level += 1;
         }
     }
 

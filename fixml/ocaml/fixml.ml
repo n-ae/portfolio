@@ -163,22 +163,33 @@ let is_self_contained s =
     with Not_found -> false
   else false
 
-(* Normalize whitespace *)
+(* Normalize whitespace while preserving attribute values *)
 let normalize_whitespace s =
   let result = Buffer.create (String.length s) in
-  let rec process i prev_space =
+  let rec process i prev_space in_quotes quote_char =
     if i >= String.length s then ()
     else
       let c = s.[i] in
-      if c = ' ' || c = '\t' || c = '\n' || c = '\r' then (
+      if not in_quotes && (c = '"' || c = '\'') then (
+        Buffer.add_char result c;
+        process (i + 1) false true c
+      ) else if in_quotes && c = quote_char then (
+        Buffer.add_char result c;
+        process (i + 1) false false '\000'
+      ) else if in_quotes then (
+        (* Inside quotes: preserve all whitespace *)
+        Buffer.add_char result c;
+        process (i + 1) false true quote_char
+      ) else if c = ' ' || c = '\t' || c = '\n' || c = '\r' then (
+        (* Outside quotes: normalize whitespace *)
         if not prev_space then Buffer.add_char result ' ';
-        process (i + 1) true
+        process (i + 1) true false '\000'
       ) else (
         Buffer.add_char result c;
-        process (i + 1) false
+        process (i + 1) false false '\000'
       )
   in
-  process 0 false;
+  process 0 false false '\000';
   trim (Buffer.contents result)
 
 (* Optimized XML processing with deduplication and indentation *)

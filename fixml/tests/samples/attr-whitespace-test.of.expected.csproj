@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- These should NOT be considered duplicates because attribute values are different -->
+    <Compile Include="  file.cs  " />
+    <!-- These should be considered duplicates because they are identical after normalization -->
+    <Content Include="same.js" />
+    <!-- Mixed case: different elements with same file should not be duplicates -->
+    <None Include=" test.xml " />
+    <EmbeddedResource Include="  test.xml " />
+  </ItemGroup>
+</Project>

@@ -1,3 +1,2 @@
-zig/.zig-cache
-.DS_Store zig/.DS_Store
-a.7z
+**/.DS_Store
+tests/samples/**/*.organized.*
