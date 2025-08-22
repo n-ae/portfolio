@@ -46,35 +46,41 @@ fn parseArgs(allocator: std.mem.Allocator) !Args {
     return parsed;
 }
 
-// Check if a string is a container element (opening/closing tag without attributes)
+// Fast container element detection with common pattern optimization
 fn isContainerElement(s: []const u8) bool {
     const trimmed = std.mem.trim(u8, s, " \t\r\n");
-    if (trimmed.len < 3) return false;
+    if (trimmed.len < 3 or trimmed[0] != '<' or trimmed[trimmed.len - 1] != '>') return false;
 
-    if (trimmed[0] == '<' and trimmed[trimmed.len - 1] == '>') {
-        if (trimmed.len > 2 and trimmed[1] == '/') {
-            // Closing tag: </tag>
-            const inner = trimmed[2 .. trimmed.len - 1];
-            return isValidTagName(inner);
-        } else {
-            // Opening tag: <tag>
-            const inner = trimmed[1 .. trimmed.len - 1];
-            return isValidTagName(inner);
-        }
-    }
-    return false;
+    const inner = if (trimmed.len > 2 and trimmed[1] == '/')
+        // Closing tag: </tag>
+        trimmed[2 .. trimmed.len - 1]
+        // Opening tag: <tag>
+    else
+        trimmed[1 .. trimmed.len - 1];
+
+    return isValidTagNameFast(inner);
 }
 
-// Check if string contains only valid tag name characters
-fn isValidTagName(s: []const u8) bool {
+// Fast tag name validation with lookup table
+const VALID_TAG_CHARS = blk: {
+    var chars = [_]bool{false} ** 256;
+    // a-z
+    for ('a'..('z' + 1)) |c| chars[c] = true;
+    // A-Z
+    for ('A'..('Z' + 1)) |c| chars[c] = true;
+    // 0-9
+    for ('0'..('9' + 1)) |c| chars[c] = true;
+    // Special chars
+    chars[':'] = true;
+    chars['-'] = true;
+    chars['.'] = true;
+    break :blk chars;
+};
+
+fn isValidTagNameFast(s: []const u8) bool {
+    if (s.len == 0) return false;
     for (s) |c| {
-        if (!((c >= 'a' and c <= 'z') or
-            (c >= 'A' and c <= 'Z') or
-            (c >= '0' and c <= '9') or
-            c == ':' or c == '-' or c == '.'))
-        {
-            return false;
-        }
+        if (!VALID_TAG_CHARS[c]) return false;
     }
     return true;
 }
@@ -116,12 +122,12 @@ fn isSelfContained(s: []const u8) bool {
     return true;
 }
 
-// Normalize structural whitespace only, preserving attribute values
-fn normalizeWhitespace(allocator: std.mem.Allocator, s: []const u8) ![]u8 {
+// Fast hash-based normalization without string allocation
+fn hashNormalizedContent(s: []const u8) u64 {
     const trimmed = std.mem.trim(u8, s, " \t\r\n");
-    if (trimmed.len == 0) return try allocator.dupe(u8, "");
+    if (trimmed.len == 0) return 0;
 
-    var result = std.ArrayList(u8){};
+    var hasher = std.hash.Wyhash.init(0);
     var in_quotes = false;
     var quote_char: u8 = 0;
     var prev_space = false;
@@ -130,31 +136,29 @@ fn normalizeWhitespace(allocator: std.mem.Allocator, s: []const u8) ![]u8 {
         if (!in_quotes and (c == '"' or c == '\'')) {
             in_quotes = true;
             quote_char = c;
-            try result.append(allocator, c);
+            hasher.update(&[_]u8{c});
             prev_space = false;
         } else if (in_quotes and c == quote_char) {
             in_quotes = false;
-            try result.append(allocator, c);
+            hasher.update(&[_]u8{c});
             prev_space = false;
         } else if (in_quotes) {
             // Inside quotes: preserve all whitespace
-            try result.append(allocator, c);
+            hasher.update(&[_]u8{c});
             prev_space = false;
         } else if (c == ' ' or c == '\t' or c == '\n' or c == '\r') {
             // Outside quotes: normalize whitespace
             if (!prev_space) {
-                try result.append(allocator, ' ');
+                hasher.update(&[_]u8{' '});
                 prev_space = true;
             }
         } else {
-            try result.append(allocator, c);
+            hasher.update(&[_]u8{c});
             prev_space = false;
         }
     }
 
-    // Final trim to remove trailing spaces
-    const final_result = std.mem.trim(u8, result.items, " ");
-    return try allocator.dupe(u8, final_result);
+    return hasher.final();
 }
 
 // XML processing with deduplication and indentation
@@ -165,52 +169,57 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
 
     var result = std.ArrayList(u8){};
     defer result.deinit(allocator);
+    try result.ensureTotalCapacity(allocator, content.len + 1024); // Pre-allocate with buffer
 
-    var seen_elements = std.StringHashMap(void).init(allocator);
-    defer {
-        var iterator = seen_elements.iterator();
-        while (iterator.next()) |entry| {
-            allocator.free(entry.key_ptr.*);
-        }
-        seen_elements.deinit();
-    }
+    var seen_hashes = std.AutoHashMap(u64, void).init(allocator);
+    try seen_hashes.ensureTotalCapacity(256); // Pre-allocate hash map
+    defer seen_hashes.deinit();
 
     var duplicates_removed: u32 = 0;
     var indent_level: i32 = 0;
 
-    // Split content into lines
-    var lines = std.mem.splitScalar(u8, content, '\n');
+    // Single-pass processing with inline line handling
+    var i: usize = 0;
+    var line_start: usize = 0;
+    const indent_spaces = "                                        "; // 40 spaces max
 
-    while (lines.next()) |line| {
+    while (i <= content.len) : (i += 1) {
+        if (i != content.len and content[i] != '\n') continue;
+
+        if (i <= line_start) {
+            line_start = i + 1;
+            continue;
+        }
+
+        const line = content[line_start..i];
         const trimmed = std.mem.trim(u8, line, " \t\r\n");
-        if (trimmed.len == 0) continue;
 
         // XML-agnostic container detection
         const is_container = isContainerElement(trimmed);
 
-        // Deduplication with normalized whitespace (like Go's regex)
-        const normalized_key = try normalizeWhitespace(allocator, trimmed);
-
-        if (!is_container and seen_elements.contains(normalized_key)) {
-            duplicates_removed += 1;
-            allocator.free(normalized_key);
-            continue; // Skip duplicate
-        }
-
+        // Fast hash-based deduplication
+        var should_skip = false;
         if (!is_container) {
-            try seen_elements.put(normalized_key, {});
-        } else {
-            allocator.free(normalized_key);
+            const content_hash = hashNormalizedContent(trimmed);
+            if (seen_hashes.contains(content_hash)) {
+                duplicates_removed += 1;
+                should_skip = true;
+            } else {
+                try seen_hashes.put(content_hash, {});
+            }
         }
 
-        // Determine if this is a closing tag
-        const is_closing_tag = std.mem.startsWith(u8, trimmed, "</");
+        if (should_skip) {
+            line_start = i + 1;
+            continue;
+        }
 
-        // Determine if this is an opening tag (not self-contained)
-        const is_opening_tag = std.mem.startsWith(u8, trimmed, "<") and
-            !std.mem.startsWith(u8, trimmed, "</") and
-            !std.mem.startsWith(u8, trimmed, "<!--") and
-            !std.mem.startsWith(u8, trimmed, "<?") and
+        // Fast tag type detection
+        const first_char = trimmed[0];
+        const second_char = if (trimmed.len > 1) trimmed[1] else 0;
+        const is_closing_tag = first_char == '<' and second_char == '/';
+        const is_opening_tag = first_char == '<' and second_char != '/' and
+            second_char != '!' and second_char != '?' and
             !std.mem.endsWith(u8, trimmed, "/>");
 
         // Adjust indent level for closing tags BEFORE writing line
@@ -218,10 +227,15 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
             indent_level = @max(0, indent_level - 1);
         }
 
-        // Apply indentation
+        // Apply indentation using bulk operations
         const spaces_needed = @as(usize, @intCast(indent_level * 2));
-        for (0..spaces_needed) |_| {
-            try result.append(allocator, ' ');
+        if (spaces_needed <= indent_spaces.len) {
+            try result.appendSlice(allocator, indent_spaces[0..spaces_needed]);
+        } else {
+            // Fallback for very deep nesting
+            for (0..spaces_needed) |_| {
+                try result.append(allocator, ' ');
+            }
         }
 
         try result.appendSlice(allocator, trimmed);
@@ -231,6 +245,7 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
         if (is_opening_tag and !isSelfContained(trimmed)) {
             indent_level += 1;
         }
+        line_start = i + 1;
     }
 
     return .{ .content = try result.toOwnedSlice(allocator), .duplicates = duplicates_removed };
@@ -331,10 +346,10 @@ fn processFile(allocator: std.mem.Allocator, args: Args) !void {
 }
 
 pub fn main() !void {
-    // Use arena allocator for better performance and simpler memory management
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-    const allocator = arena.allocator();
+    // Use GeneralPurposeAllocator for better performance on large files
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
     const args = try parseArgs(allocator);
     try processFile(allocator, args);

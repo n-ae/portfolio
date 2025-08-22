@@ -137,20 +137,22 @@ end
 local function build_language(lang)
 	local build_commands = {
 		go = "pushd go && go build -o fixml fixml.go && popd",
-		rust = "pushd rust && rustc -O -o fixml fixml.rs && popd", 
+		rust = "pushd rust && rustc -O -o fixml fixml.rs && popd",
 		ocaml = "pushd ocaml && ocamlopt -I +unix -I +str unix.cmxa str.cmxa -o fixml fixml.ml && popd",
-		zig = "pushd zig && zig build -Doptimize=ReleaseFast && cp zig-out/bin/fixml . && popd"
+		zig = "pushd zig && zig build -Doptimize=ReleaseFast && cp zig-out/bin/fixml . && popd",
 	}
-	
+
 	local cmd = build_commands[lang]
-	if not cmd then return true end -- Lua doesn't need building
-	
+	if not cmd then
+		return true
+	end -- Lua doesn't need building
+
 	print("Building " .. lang .. "...")
 	-- Don't suppress stderr for build commands to see build errors
 	local handle = io.popen(cmd .. " 2>&1")
 	local output = handle:read("*a")
 	local success = handle:close()
-	
+
 	if not success then
 		print(lang .. ": build failed")
 		if output and output ~= "" then
@@ -195,7 +197,7 @@ for _, lang in ipairs(languages) do
 	if not build_language(lang) then
 		goto continue
 	end
-	
+
 	local exec_paths = { go = "./go/fixml", rust = "./rust/fixml", ocaml = "./ocaml/fixml", zig = "./zig/fixml" }
 	local executable_exists = (lang == "lua" and file_exists("lua/fixml.lua")) or file_exists(exec_paths[lang])
 
@@ -242,4 +244,3 @@ print("Total: " .. passed_tests .. "/" .. total_tests .. " (" .. math.floor(pass
 print("Detailed results written to: test-results.csv")
 
 os.exit(passed_tests == total_tests and 0 or 1)
-

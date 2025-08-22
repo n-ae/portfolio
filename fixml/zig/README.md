@@ -3,14 +3,20 @@
 Ultra-high-performance Zig XML processor - **Champion** 🏆
 
 ## Files
-- `fixml` - Native macOS binary (ARM64)
-- `fixml_linux_x64` - Linux AMD64 binary  
-- `fixml_windows_x64.exe` - Windows AMD64 binary
+- `fixml-aarch64-macos` - Native macOS binary (ARM64)
+- `fixml-x86_64-linux` - Linux AMD64 binary  
+- `fixml-x86_64-windows.exe` - Windows AMD64 binary
 - `src/main.zig` - Zig source code (v2.0.0)
 
 ## Usage
 ```bash
-./fixml [options] <xml-file>
+./fixml-aarch64-macos [options] <xml-file>
+
+# For Linux
+./fixml-x86_64-linux [options] <xml-file>
+
+# For Windows
+./fixml-x86_64-windows.exe [options] <xml-file>
 
 Options:
   --organize, -o      Apply logical organization
