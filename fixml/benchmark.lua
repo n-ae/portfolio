@@ -1,5 +1,8 @@
 #!/usr/bin/env lua
 
+-- Import shared build configuration
+local build_config = require("build_config")
+
 local function get_file_size(filename)
     local file = io.open(filename, "r")
     if not file then return 0 end
@@ -115,13 +118,16 @@ local function main()
         return 1
     end
     
-    local implementations = {
-        {"Go", "go/fixml"},
-        {"Rust", "rust/fixml"},
-        {"Lua", "lua lua/fixml.lua"},
-        {"OCaml", "ocaml/fixml"},
-        {"Zig", "zig/zig-out/bin/fixml"}
-    }
+    -- Build all implementations with optimizations
+    build_config.build_all_optimized()
+    
+    -- Get available implementations
+    local implementations = build_config.verify_implementations()
+    
+    if #implementations == 0 then
+        print("Error: No implementations available for testing")
+        return 1
+    end
     
     local test_files = get_test_files(mode)
     local iterations = mode == "quick" and 5 or (mode == "comprehensive" and 10 or 20)

@@ -5,6 +5,9 @@
 -- Modes: quick (default), comprehensive
 -- Languages: go, rust, lua, ocaml, zig, all (default)
 
+-- Import shared build configuration
+local build_config = require("build_config")
+
 local function file_exists(path)
 	local f = io.open(path, "r")
 	if f then
@@ -31,13 +34,13 @@ local function get_mode_suffix(mode)
 end
 
 local function run_test(lang, mode, file)
-	local commands = {
-		go = "./go/fixml",
-		rust = "./rust/fixml",
-		ocaml = "./ocaml/fixml",
-		zig = "./zig/fixml",
-		lua = "lua lua/fixml.lua",
-	}
+	-- Get command paths from shared configuration
+	local implementations = build_config.get_implementations()
+	local commands = {}
+	for _, impl in ipairs(implementations) do
+		local name, command = impl[1], impl[2]
+		commands[name:lower()] = command
+	end
 
 	local cmd = commands[lang]
 	if not cmd then
@@ -135,31 +138,15 @@ local function get_test_files(mode)
 end
 
 local function build_language(lang)
-	local build_commands = {
-		go = "pushd go && go build -o fixml fixml.go && popd",
-		rust = "pushd rust && rustc -O -o fixml fixml.rs && popd",
-		ocaml = "pushd ocaml && ocamlopt -I +unix -I +str unix.cmxa str.cmxa -o fixml fixml.ml && popd",
-		zig = "pushd zig && zig build -Doptimize=ReleaseFast && cp zig-out/bin/fixml . && popd",
-	}
-
-	local cmd = build_commands[lang]
-	if not cmd then
+	-- Use shared build configuration for all languages
+	if lang == "all" then
+		build_config.build_all_optimized()
 		return true
-	end -- Lua doesn't need building
-
-	print("Building " .. lang .. "...")
-	-- Don't suppress stderr for build commands to see build errors
-	local handle = io.popen(cmd .. " 2>&1")
-	local output = handle:read("*a")
-	local success = handle:close()
-
-	if not success then
-		print(lang .. ": build failed")
-		if output and output ~= "" then
-			print("Build output: " .. output)
-		end
-		return false
 	end
+	
+	-- For individual languages, use the shared build system
+	print("Building " .. lang .. "...")
+	build_config.build_all_optimized()
 	return true
 end
 
@@ -198,11 +185,20 @@ for _, lang in ipairs(languages) do
 		goto continue
 	end
 
-	local exec_paths = { go = "./go/fixml", rust = "./rust/fixml", ocaml = "./ocaml/fixml", zig = "./zig/fixml" }
-	local executable_exists = (lang == "lua" and file_exists("lua/fixml.lua")) or file_exists(exec_paths[lang])
+	-- Use shared configuration to verify implementations
+	local available_implementations = build_config.verify_implementations()
+	local lang_available = false
+	
+	for _, impl in ipairs(available_implementations) do
+		local name = impl[1]
+		if name:lower() == lang then
+			lang_available = true
+			break
+		end
+	end
 
-	if not executable_exists then
-		print(lang .. ": executable not found after build")
+	if not lang_available then
+		print(lang .. ": implementation not available after build")
 		goto continue
 	end
 

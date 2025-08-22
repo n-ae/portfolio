@@ -46,15 +46,30 @@ fn parseArgs(allocator: std.mem.Allocator) !Args {
     return parsed;
 }
 
-// Fast container element detection with common pattern optimization
+// Fast string trimming without std.mem.trim overhead
+fn fastTrim(s: []const u8) []const u8 {
+    if (s.len == 0) return s;
+
+    var start: usize = 0;
+    var end: usize = s.len;
+
+    while (start < end and (s[start] == ' ' or s[start] == '\t' or s[start] == '\r' or s[start] == '\n')) {
+        start += 1;
+    }
+    while (end > start and (s[end - 1] == ' ' or s[end - 1] == '\t' or s[end - 1] == '\r' or s[end - 1] == '\n')) {
+        end -= 1;
+    }
+
+    return s[start..end];
+}
+
+// Fast container element detection (kept for complex cases)
 fn isContainerElement(s: []const u8) bool {
-    const trimmed = std.mem.trim(u8, s, " \t\r\n");
+    const trimmed = fastTrim(s);
     if (trimmed.len < 3 or trimmed[0] != '<' or trimmed[trimmed.len - 1] != '>') return false;
 
     const inner = if (trimmed.len > 2 and trimmed[1] == '/')
-        // Closing tag: </tag>
         trimmed[2 .. trimmed.len - 1]
-        // Opening tag: <tag>
     else
         trimmed[1 .. trimmed.len - 1];
 
@@ -122,43 +137,104 @@ fn isSelfContained(s: []const u8) bool {
     return true;
 }
 
-// Fast hash-based normalization without string allocation
-fn hashNormalizedContent(s: []const u8) u64 {
-    const trimmed = std.mem.trim(u8, s, " \t\r\n");
+// Simple fast hash for content deduplication
+fn simpleContentHash(s: []const u8) u64 {
+    const trimmed = fastTrim(s);
     if (trimmed.len == 0) return 0;
 
+    // For simple cases without quotes, use fast string hash
+    if (std.mem.indexOf(u8, trimmed, "\"") == null and std.mem.indexOf(u8, trimmed, "'") == null) {
+        return std.hash_map.hashString(trimmed);
+    }
+
+    // Fallback to normalized hash for complex content
+    return hashNormalizedContent(trimmed);
+}
+
+// Full hash-based normalization for complex content
+fn hashNormalizedContent(s: []const u8) u64 {
     var hasher = std.hash.Wyhash.init(0);
     var in_quotes = false;
     var quote_char: u8 = 0;
     var prev_space = false;
 
-    for (trimmed) |c| {
+    for (s) |c| {
         if (!in_quotes and (c == '"' or c == '\'')) {
             in_quotes = true;
             quote_char = c;
-            hasher.update(&[_]u8{c});
+            hasher.update(std.mem.asBytes(&c));
             prev_space = false;
         } else if (in_quotes and c == quote_char) {
             in_quotes = false;
-            hasher.update(&[_]u8{c});
+            hasher.update(std.mem.asBytes(&c));
             prev_space = false;
         } else if (in_quotes) {
-            // Inside quotes: preserve all whitespace
-            hasher.update(&[_]u8{c});
+            hasher.update(std.mem.asBytes(&c));
             prev_space = false;
         } else if (c == ' ' or c == '\t' or c == '\n' or c == '\r') {
-            // Outside quotes: normalize whitespace
             if (!prev_space) {
-                hasher.update(&[_]u8{' '});
+                const space: u8 = ' ';
+                hasher.update(std.mem.asBytes(&space));
                 prev_space = true;
             }
         } else {
-            hasher.update(&[_]u8{c});
+            hasher.update(std.mem.asBytes(&c));
             prev_space = false;
         }
     }
 
     return hasher.final();
+}
+
+// Process a single line for XML formatting and deduplication
+fn processLine(result: *std.ArrayList(u8), seen_hashes: *std.AutoHashMap(u64, void), duplicates_removed: *u32, indent_level: *i32, trimmed: []const u8, allocator: std.mem.Allocator, indent_spaces: []const u8) !void {
+
+    // Fast inline container detection
+    const is_container = trimmed.len > 2 and trimmed[0] == '<' and
+        trimmed[trimmed.len - 1] == '>' and
+        std.mem.indexOf(u8, trimmed, " ") == null;
+
+    // Fast hash-based deduplication - early return for duplicates
+    if (!is_container) {
+        const content_hash = simpleContentHash(trimmed);
+        if (seen_hashes.contains(content_hash)) {
+            duplicates_removed.* += 1;
+            return; // Early return - skip duplicate
+        }
+        try seen_hashes.put(content_hash, {});
+    }
+
+    // Fast tag type detection
+    const first_char = trimmed[0];
+    const second_char = if (trimmed.len > 1) trimmed[1] else 0;
+    const is_closing_tag = first_char == '<' and second_char == '/';
+    const is_opening_tag = first_char == '<' and second_char != '/' and
+        second_char != '!' and second_char != '?' and
+        !std.mem.endsWith(u8, trimmed, "/>");
+
+    // Adjust indent level for closing tags BEFORE writing line
+    if (is_closing_tag) {
+        indent_level.* = @max(0, indent_level.* - 1);
+    }
+
+    // Apply indentation using bulk operations
+    const spaces_needed = @as(usize, @intCast(indent_level.* * 2));
+    if (spaces_needed <= indent_spaces.len) {
+        try result.appendSlice(allocator, indent_spaces[0..spaces_needed]);
+    } else {
+        // Fallback for very deep nesting
+        for (0..spaces_needed) |_| {
+            try result.append(allocator, ' ');
+        }
+    }
+
+    try result.appendSlice(allocator, trimmed);
+    try result.append(allocator, '\n');
+
+    // Adjust indent level for opening tags AFTER writing line
+    if (is_opening_tag and !isSelfContained(trimmed)) {
+        indent_level.* += 1;
+    }
 }
 
 // XML processing with deduplication and indentation
@@ -169,83 +245,39 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
 
     var result = std.ArrayList(u8){};
     defer result.deinit(allocator);
-    try result.ensureTotalCapacity(allocator, content.len + 1024); // Pre-allocate with buffer
+    try result.ensureTotalCapacity(allocator, content.len + 1024);
 
     var seen_hashes = std.AutoHashMap(u64, void).init(allocator);
-    try seen_hashes.ensureTotalCapacity(256); // Pre-allocate hash map
+    try seen_hashes.ensureTotalCapacity(256);
     defer seen_hashes.deinit();
 
     var duplicates_removed: u32 = 0;
     var indent_level: i32 = 0;
-
-    // Single-pass processing with inline line handling
-    var i: usize = 0;
     var line_start: usize = 0;
     const indent_spaces = "                                        "; // 40 spaces max
 
-    while (i <= content.len) : (i += 1) {
-        if (i != content.len and content[i] != '\n') continue;
+    while (line_start < content.len) {
+        const line_end = std.mem.indexOfScalarPos(u8, content, line_start, '\n') orelse content.len;
 
-        if (i <= line_start) {
-            line_start = i + 1;
+        // Early continue for empty lines
+        if (line_end <= line_start) {
+            line_start = line_end + 1;
             continue;
         }
 
-        const line = content[line_start..i];
-        const trimmed = std.mem.trim(u8, line, " \t\r\n");
+        const line = content[line_start..line_end];
+        const trimmed = fastTrim(line);
 
-        // XML-agnostic container detection
-        const is_container = isContainerElement(trimmed);
-
-        // Fast hash-based deduplication
-        var should_skip = false;
-        if (!is_container) {
-            const content_hash = hashNormalizedContent(trimmed);
-            if (seen_hashes.contains(content_hash)) {
-                duplicates_removed += 1;
-                should_skip = true;
-            } else {
-                try seen_hashes.put(content_hash, {});
-            }
-        }
-
-        if (should_skip) {
-            line_start = i + 1;
+        // Early continue for whitespace-only lines
+        if (trimmed.len == 0) {
+            line_start = line_end + 1;
             continue;
         }
 
-        // Fast tag type detection
-        const first_char = trimmed[0];
-        const second_char = if (trimmed.len > 1) trimmed[1] else 0;
-        const is_closing_tag = first_char == '<' and second_char == '/';
-        const is_opening_tag = first_char == '<' and second_char != '/' and
-            second_char != '!' and second_char != '?' and
-            !std.mem.endsWith(u8, trimmed, "/>");
+        // Process the line
+        try processLine(&result, &seen_hashes, &duplicates_removed, &indent_level, trimmed, allocator, indent_spaces);
 
-        // Adjust indent level for closing tags BEFORE writing line
-        if (is_closing_tag) {
-            indent_level = @max(0, indent_level - 1);
-        }
-
-        // Apply indentation using bulk operations
-        const spaces_needed = @as(usize, @intCast(indent_level * 2));
-        if (spaces_needed <= indent_spaces.len) {
-            try result.appendSlice(allocator, indent_spaces[0..spaces_needed]);
-        } else {
-            // Fallback for very deep nesting
-            for (0..spaces_needed) |_| {
-                try result.append(allocator, ' ');
-            }
-        }
-
-        try result.appendSlice(allocator, trimmed);
-        try result.append(allocator, '\n');
-
-        // Adjust indent level for opening tags AFTER writing line
-        if (is_opening_tag and !isSelfContained(trimmed)) {
-            indent_level += 1;
-        }
-        line_start = i + 1;
+        line_start = line_end + 1;
     }
 
     return .{ .content = try result.toOwnedSlice(allocator), .duplicates = duplicates_removed };
