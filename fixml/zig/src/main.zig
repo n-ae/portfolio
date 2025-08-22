@@ -92,6 +92,15 @@ const VALID_TAG_CHARS = blk: {
     break :blk chars;
 };
 
+// Lookup table for XML special characters for faster tag type detection
+const XML_SPECIAL_CHARS = blk: {
+    var chars = [_]bool{false} ** 256;
+    chars['/'] = true;
+    chars['!'] = true;
+    chars['?'] = true;
+    break :blk chars;
+};
+
 fn isValidTagNameFast(s: []const u8) bool {
     if (s.len == 0) return false;
     for (s) |c| {
@@ -103,7 +112,7 @@ fn isValidTagNameFast(s: []const u8) bool {
 // Check if element is self-contained like <tag>content</tag>
 // Matches Go regex: ^<[^>]+>[^<]*</[^>]+>$
 fn isSelfContained(s: []const u8) bool {
-    const trimmed = std.mem.trim(u8, s, " \t\r\n");
+    const trimmed = fastTrim(s);
     if (trimmed.len < 7) return false; // minimum: <a>x</a>
 
     // Must start with < and end with >
@@ -138,17 +147,17 @@ fn isSelfContained(s: []const u8) bool {
 }
 
 // Simple fast hash for content deduplication
+// Note: input is already trimmed from processLine
 fn simpleContentHash(s: []const u8) u64 {
-    const trimmed = fastTrim(s);
-    if (trimmed.len == 0) return 0;
+    if (s.len == 0) return 0;
 
     // For simple cases without quotes, use fast string hash
-    if (std.mem.indexOf(u8, trimmed, "\"") == null and std.mem.indexOf(u8, trimmed, "'") == null) {
-        return std.hash_map.hashString(trimmed);
+    for (s) |c| {
+        if (c == '"' or c == '\'') {
+            return hashNormalizedContent(s);
+        }
     }
-
-    // Fallback to normalized hash for complex content
-    return hashNormalizedContent(trimmed);
+    return std.hash_map.hashString(s);
 }
 
 // Full hash-based normalization for complex content
@@ -208,9 +217,8 @@ fn processLine(result: *std.ArrayList(u8), seen_hashes: *std.AutoHashMap(u64, vo
     const first_char = trimmed[0];
     const second_char = if (trimmed.len > 1) trimmed[1] else 0;
     const is_closing_tag = first_char == '<' and second_char == '/';
-    const is_opening_tag = first_char == '<' and second_char != '/' and
-        second_char != '!' and second_char != '?' and
-        !std.mem.endsWith(u8, trimmed, "/>");
+    const is_opening_tag = first_char == '<' and !XML_SPECIAL_CHARS[second_char] and
+        !(trimmed.len >= 2 and trimmed[trimmed.len - 2] == '/' and trimmed[trimmed.len - 1] == '>');
 
     // Adjust indent level for closing tags BEFORE writing line
     if (is_closing_tag) {
@@ -232,8 +240,31 @@ fn processLine(result: *std.ArrayList(u8), seen_hashes: *std.AutoHashMap(u64, vo
     try result.append(allocator, '\n');
 
     // Adjust indent level for opening tags AFTER writing line
-    if (is_opening_tag and !isSelfContained(trimmed)) {
-        indent_level.* += 1;
+    // Inline self-contained check for performance
+    if (is_opening_tag) {
+        var should_indent = true;
+        if (trimmed.len >= 7) { // minimum: <a>x</a>
+            // Quick check for self-contained pattern: <tag>content</tag>
+            var first_gt: ?usize = null;
+            var last_lt: ?usize = null;
+            for (trimmed, 0..) |c, i| {
+                if (c == '>' and first_gt == null) {
+                    first_gt = i;
+                } else if (c == '<' and i > 0) {
+                    last_lt = i;
+                    break; // Found last <, can stop
+                }
+            }
+            if (first_gt != null and last_lt != null and
+                first_gt.? < last_lt.? and last_lt.? + 1 < trimmed.len and
+                trimmed[last_lt.? + 1] == '/')
+            {
+                should_indent = false;
+            }
+        }
+        if (should_indent) {
+            indent_level.* += 1;
+        }
     }
 }
 
