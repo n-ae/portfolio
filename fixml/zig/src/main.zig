@@ -46,17 +46,17 @@ fn parseArgs(allocator: std.mem.Allocator) !Args {
     return parsed;
 }
 
-// Fast string trimming without std.mem.trim overhead
+// Fast string trimming with lookup table
 fn fastTrim(s: []const u8) []const u8 {
     if (s.len == 0) return s;
 
     var start: usize = 0;
     var end: usize = s.len;
 
-    while (start < end and (s[start] == ' ' or s[start] == '\t' or s[start] == '\r' or s[start] == '\n')) {
+    while (start < end and WHITESPACE_CHARS[s[start]]) {
         start += 1;
     }
-    while (end > start and (s[end - 1] == ' ' or s[end - 1] == '\t' or s[end - 1] == '\r' or s[end - 1] == '\n')) {
+    while (end > start and WHITESPACE_CHARS[s[end - 1]]) {
         end -= 1;
     }
 
@@ -98,6 +98,16 @@ const XML_SPECIAL_CHARS = blk: {
     chars['/'] = true;
     chars['!'] = true;
     chars['?'] = true;
+    break :blk chars;
+};
+
+// Lookup table for whitespace characters
+const WHITESPACE_CHARS = blk: {
+    var chars = [_]bool{false} ** 256;
+    chars[' '] = true;
+    chars['\t'] = true;
+    chars['\r'] = true;
+    chars['\n'] = true;
     break :blk chars;
 };
 
@@ -160,7 +170,7 @@ fn simpleContentHash(s: []const u8) u64 {
     return std.hash_map.hashString(s);
 }
 
-// Full hash-based normalization for complex content
+// Simplified hash-based normalization - fewer branches, better performance
 fn hashNormalizedContent(s: []const u8) u64 {
     var hasher = std.hash.Wyhash.init(0);
     var in_quotes = false;
@@ -180,7 +190,7 @@ fn hashNormalizedContent(s: []const u8) u64 {
         } else if (in_quotes) {
             hasher.update(std.mem.asBytes(&c));
             prev_space = false;
-        } else if (c == ' ' or c == '\t' or c == '\n' or c == '\r') {
+        } else if (WHITESPACE_CHARS[c]) {
             if (!prev_space) {
                 const space: u8 = ' ';
                 hasher.update(std.mem.asBytes(&space));
@@ -198,10 +208,16 @@ fn hashNormalizedContent(s: []const u8) u64 {
 // Process a single line for XML formatting and deduplication
 fn processLine(result: *std.ArrayList(u8), seen_hashes: *std.AutoHashMap(u64, void), duplicates_removed: *u32, indent_level: *i32, trimmed: []const u8, allocator: std.mem.Allocator, indent_spaces: []const u8) !void {
 
-    // Fast inline container detection
-    const is_container = trimmed.len > 2 and trimmed[0] == '<' and
-        trimmed[trimmed.len - 1] == '>' and
-        std.mem.indexOf(u8, trimmed, " ") == null;
+    // Fast inline container detection - simplified check
+    const is_container = blk: {
+        if (trimmed.len <= 2 or trimmed[0] != '<' or trimmed[trimmed.len - 1] != '>') 
+            break :blk false;
+        // Simple heuristic: containers are usually simple tags without attributes  
+        for (trimmed[1..trimmed.len-1]) |c| {
+            if (c == ' ') break :blk false;
+        }
+        break :blk true;
+    };
 
     // Fast hash-based deduplication - early return for duplicates
     if (!is_container) {
@@ -218,7 +234,7 @@ fn processLine(result: *std.ArrayList(u8), seen_hashes: *std.AutoHashMap(u64, vo
     const second_char = if (trimmed.len > 1) trimmed[1] else 0;
     const is_closing_tag = first_char == '<' and second_char == '/';
     const is_opening_tag = first_char == '<' and !XML_SPECIAL_CHARS[second_char] and
-        !(trimmed.len >= 2 and trimmed[trimmed.len - 2] == '/' and trimmed[trimmed.len - 1] == '>');
+        !(trimmed.len >= 2 and trimmed[trimmed.len - 2] == '/');
 
     // Adjust indent level for closing tags BEFORE writing line
     if (is_closing_tag) {
@@ -279,7 +295,9 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
     try result.ensureTotalCapacity(allocator, content.len + 1024);
 
     var seen_hashes = std.AutoHashMap(u64, void).init(allocator);
-    try seen_hashes.ensureTotalCapacity(256);
+    // Dynamic capacity based on estimated line count  
+    const estimated_lines = @max(content.len / 50, 256); // ~50 chars per line average
+    try seen_hashes.ensureTotalCapacity(@min(estimated_lines, 4096));
     defer seen_hashes.deinit();
 
     var duplicates_removed: u32 = 0;
