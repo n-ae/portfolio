@@ -275,7 +275,7 @@ let process_file args =
   
   let cleaned_content = clean_content content in
   let has_xml_decl = String.contains cleaned_content '<' && 
-                     Str.string_match (Str.regexp ".*<?xml.*") cleaned_content 0 in
+                     Str.string_match (Str.regexp "^[ \t\r\n]*<\\?xml\\b") cleaned_content 0 in
   
   (* Show warnings *)
   if not has_xml_decl then (

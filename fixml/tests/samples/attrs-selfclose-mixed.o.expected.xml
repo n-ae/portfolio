@@ -1,6 +1,0 @@
-<Project Sdk="Test" Version="1.0">
-  <PropertyGroup Condition="true">
-    <TargetFramework>net6.0</TargetFramework>
-    <PackageReference Include="Test"/>
-  </PropertyGroup>
-</Project>

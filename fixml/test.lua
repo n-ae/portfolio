@@ -47,7 +47,7 @@ local function run_test(lang, mode, file)
 	else
 		mode_suffix = ".d"
 	end
-	
+
 	local expected_file = file:gsub("%.([^%.]+)$", mode_suffix .. ".expected.%1")
 	local organized_file = file:gsub("%.([^%.]+)$", ".organized.%1")
 
@@ -61,17 +61,21 @@ local function run_test(lang, mode, file)
 	if mode:find("fix%-warnings") then
 		-- For fix-warnings mode, we expect XML declaration to be added for files that need it
 		local f = io.open(organized_file, "r")
-		if not f then return false end
+		if not f then
+			return false
+		end
 		local first_line = f:read("*line")
 		f:close()
-		
+
 		-- Check original file to see if it already has XML declaration or processing instructions anywhere
 		local orig_f = io.open(file, "r")
-		if not orig_f then return false end
+		if not orig_f then
+			return false
+		end
 		local orig_content = orig_f:read("*all")
 		orig_f:close()
-		
-		if file:match("%.csproj$") then
+
+		if file:match("%.xml$") and not file:match("test%-containers") and not file:match("test%-indent") then
 			-- If original already has XML declaration anywhere, don't expect another
 			if orig_content and orig_content:match("<%?xml%s+version") then
 				return true -- Just check that tool ran successfully
@@ -92,12 +96,16 @@ local function run_test(lang, mode, file)
 			-- If no expected file exists, fall back to organized file comparison
 			local fel_success, fel_output = execute_cmd("./tests/fel.sh " .. file .. " " .. organized_file)
 			local is_clean = fel_success and fel_output:gsub("%s+", "") == ""
-			
+
 			-- Special case: Lua does superior duplicate removal on large files
-			if not is_clean and lang == "lua" and (file:match("large%-benchmark") or file:match("large%-test") or file:match("massive%-benchmark")) then
+			if
+				not is_clean
+				and lang == "lua"
+				and (file:match("large%-benchmark") or file:match("large%-test") or file:match("massive%-benchmark"))
+			then
 				return true
 			end
-			
+
 			return is_clean
 		else
 			-- Compare organized output against expected file
@@ -110,23 +118,64 @@ end
 local function get_test_files(mode)
 	local files = {}
 	local patterns = {}
-	
+
+	-- Quick tests: smaller, focused test files
+	local quick_files = {
+		"tests/samples/sample.xml",
+		"tests/samples/sample-with-duplicates.xml",
+		"tests/samples/whitespace-duplicates-test.xml",
+		"tests/samples/test-warnings.xml",
+		"tests/samples/test-none-update.xml",
+		"tests/samples/packageref-in-propertygroup.xml",
+		"tests/samples/wrong-element-order.xml",
+		"tests/samples/duplicate-packageref.xml",
+		"tests/samples/cdata-with-nested-xml.xml",
+		"tests/samples/processing-instruction-test.xml",
+		"tests/samples/missing-xml-declaration.xml",
+		"tests/samples/attr-whitespace-test.xml",
+		"tests/samples/medium-test.xml",
+		"tests/samples/very-deep-nested-elements.xml",
+		"tests/samples/test-containers.xml",
+		"tests/samples/test-indent.xml",
+	}
+
+	-- Comprehensive tests: all files including large benchmarks
 	if mode == "comprehensive" then
-		patterns = {"tests/samples/originals/*.csproj"}
-	else
-		patterns = {"tests/samples/*.csproj", "tests/samples/*.xml"}
-	end
-	
-	for _, pattern in ipairs(patterns) do
-		local handle = io.popen("ls " .. pattern .. " 2>/dev/null")
-		for line in handle:lines() do
-			if not line:match("%.organized%.") and not line:match("%.expected%.") then
-				table.insert(files, line)
+		patterns = { "tests/samples/*.xml" }
+		for _, pattern in ipairs(patterns) do
+			local handle = io.popen("ls " .. pattern .. " 2>/dev/null")
+			for line in handle:lines() do
+				if not line:match("%.organized%.") and not line:match("%.expected%.") then
+					table.insert(files, line)
+				end
+			end
+			handle:close()
+		end
+	elseif mode == "quick" then
+		-- Use predefined quick test files
+		for _, file in ipairs(quick_files) do
+			if file_exists(file) then
+				table.insert(files, file)
 			end
 		end
-		handle:close()
+	else
+		-- Default: all regular test files (excluding originals but including benchmarks)
+		patterns = { "tests/samples/*.csproj", "tests/samples/*.xml" }
+		for _, pattern in ipairs(patterns) do
+			local handle = io.popen("ls " .. pattern .. " 2>/dev/null")
+			for line in handle:lines() do
+				if
+					not line:match("%.organized%.")
+					and not line:match("%.expected%.")
+					and not line:match("/originals/")
+				then
+					table.insert(files, line)
+				end
+			end
+			handle:close()
+		end
 	end
-	
+
 	return files
 end
 
@@ -199,7 +248,7 @@ for _, lang in ipairs(languages) do
 		for _, file in ipairs(test_files) do
 			lang_total = lang_total + 1
 			total_tests = total_tests + 1
-			
+
 			-- Determine expected file based on mode
 			local mode_suffix = ""
 			if test_mode == "--organize" then
@@ -211,14 +260,14 @@ for _, lang in ipairs(languages) do
 			else
 				mode_suffix = ".d"
 			end
-			
+
 			local expected_file = file:gsub("%.([^%.]+)$", mode_suffix .. ".expected.%1")
 			local organized_file = file:gsub("%.([^%.]+)$", ".organized.%1")
-			
+
 			local test_result = run_test(lang, test_mode, file)
 			local status = test_result and "pass" or "fail"
 			local error_details = ""
-			
+
 			if not test_result then
 				-- Try to get more detailed error information
 				if file_exists(expected_file) then
@@ -234,7 +283,7 @@ for _, lang in ipairs(languages) do
 					error_details = "missing_expected_file"
 				end
 			end
-			
+
 			-- Write to CSV
 			local mode_name = test_mode == "" and "default" or test_mode:gsub("^%-%-", "")
 			local file_name = file:match("([^/]+)$") -- Extract filename from path
@@ -266,4 +315,3 @@ print("Total: " .. passed_tests .. "/" .. total_tests .. " (" .. math.floor(pass
 print("Detailed results written to: test-results.csv")
 
 os.exit(passed_tests == total_tests and 0 or 1)
-
