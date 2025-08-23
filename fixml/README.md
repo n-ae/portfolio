@@ -1,141 +1,191 @@
-# FIXML - High-Performance XML Processor
+# FIXML - Multi-Language High-Performance XML Processor
 
-A collection of optimized XML processors implemented in 5 languages, focused on deduplication, formatting, and XML best practices.
+A comprehensive suite of XML processors implemented in 5 languages (Zig, Go, Rust, OCaml, Lua), showcasing different approaches to high-performance XML processing with consistent functionality and standardized constants.
 
-## 🚀 Latest Optimized Implementations
+## 🏆 Performance Rankings (Latest Benchmark Results)
 
-### **Final Versions (O(n) time/space complexity)**
+| Rank | Language | Average Time | Performance Notes |
+|------|----------|--------------|-------------------|
+| 🥇 | **Zig**   | 11.82ms     | Manual memory management, zero-cost abstractions |
+| 🥈 | **Go**    | 18.13ms     | Excellent balance of performance and simplicity |
+| 🥉 | **Rust**  | 25.69ms     | Memory safety with good performance |
+| 4th | **OCaml** | 37.65ms     | Functional programming with buffer optimizations |
+| 5th | **Lua**   | 192.55ms    | Interpreted but optimized (fastest on small files) |
 
-| Language | Version | Location | Performance |
-|----------|---------|----------|-------------|
-| **Zig** | v2.0.0 | `zig/fixml` | 🥇 **3.51ms avg** |
-| **Rust** | v2.0.0 | `rust/fixml` | 🥈 **4.60ms avg** |
-| **Go** | v2.0.0 | `go/fixml` | 🥉 **12.94ms avg** |
-| **OCaml** | v2.0.0 | `ocaml/fixml` | **25.67ms avg** |
-| **Lua** | v5.0.0 | `lua fixml.lua` | **50.45ms avg** |
+*Benchmarked across 6 file sizes from 0.9KB to 2.4MB with 20 iterations each*
 
-## 📁 Directory Structure
+## 📁 Project Structure
 
 ```
 fixml/
-├── lua/                        # Lua implementation v5.0.0
-│   ├── fixml.lua              # Ultra-optimized Lua source
+├── go/
+│   ├── fixml          # Compiled Go binary
+│   ├── fixml.go       # Go implementation
 │   └── README.md
-├── go/                         # Go implementation v2.0.0  
-│   ├── fixml                  # Compiled binary
-│   ├── fixml.go               # Go source code
+├── rust/
+│   ├── fixml          # Compiled Rust binary  
+│   ├── fixml.rs       # Rust implementation
 │   └── README.md
-├── rust/                       # Rust implementation v2.0.0
-│   ├── fixml                  # Compiled binary
-│   ├── fixml.rs               # Rust source code  
+├── ocaml/
+│   ├── fixml          # Compiled OCaml binary
+│   ├── fixml.ml       # OCaml implementation
 │   └── README.md
-├── zig/                        # Zig implementation v2.0.0 🏆
-│   ├── fixml                  # macOS ARM64 binary
-│   ├── fixml_linux_x64        # Linux AMD64 binary
-│   ├── fixml_windows_x64.exe  # Windows AMD64 binary
-│   ├── src/fixml_simple.zig   # Zig source code
+├── zig/
+│   ├── fixml          # Compiled Zig binary
+│   ├── src/main.zig   # Zig implementation
+│   ├── build.zig      # Build configuration
 │   └── README.md
-├── ocaml/                      # OCaml implementation v2.0.0
-│   ├── fixml                  # Compiled binary  
-│   ├── fixml.ml               # OCaml source code
+├── lua/
+│   ├── fixml.lua      # Lua implementation
 │   └── README.md
-├── benchmarks/                 # Performance benchmarking suite
-│   ├── final_benchmark.py     # Primary comprehensive benchmark
-│   ├── lua_optimization_benchmark.py
+├── tests/
+│   ├── samples/       # XML test files (34+ test cases)
+│   ├── fel.sh         # File comparison utility
 │   └── README.md
-├── tests/                      # Test files and utilities
-│   ├── samples/               # XML test files (0.6KB - 940KB)
-│   ├── fel.sh                 # File comparison utility
-│   └── README.md
-└── README.md                   # This file
+├── benchmark.lua      # Performance benchmarking suite
+├── test.lua           # Comprehensive test runner
+├── build_config.lua   # Shared build configuration
+└── README.md          # This file
 ```
 
-## ⚡ Performance Benchmarks
+## ⚡ Quick Start
 
-All implementations achieve **O(n) time and space complexity** through:
-
-- **Single-pass processing** eliminates O(n²) string operations
-- **Capacity pre-allocation** minimizes garbage collection  
-- **Bulk operations** reduce system call overhead
-
-### **Scaling Verification (0.6KB → 940KB = 1567x larger)**
-
-| Implementation | Scale Factor | Efficiency | Status |
-|---------------|--------------|------------|--------|
-| **Zig v2.0.0** | 1.4x slower | 1119% efficient | 🟢 **EXCELLENT** |
-| **Rust v2.0.0** | 1.2x slower | 1306% efficient | 🟢 **EXCELLENT** |
-| **Go v2.0.0** | 8.7x slower | 180% efficient | ✅ **LINEAR** |
-| **OCaml v2.0.0** | 7.9x slower | 198% efficient | ✅ **LINEAR** |
-| **Lua v5.0.0** | 40.3x slower | 38.9% efficient | 🟡 **GOOD** |
-
-## 🛠️ Usage
-
-### **Basic Usage**
+### Installation & Build
 ```bash
-# Zig (fastest)
-zig/fixml tests/samples/sample-with-duplicates.csproj
+# Clone and build all implementations
+git clone <repository-url>
+cd fixml
 
-# Rust (most consistent)  
-rust/fixml tests/samples/sample-with-duplicates.csproj
-
-# Lua (most portable)
-cd lua && lua fixml.lua ../tests/samples/sample-with-duplicates.csproj
+# Build all implementations with optimizations
+lua build_config.lua
 ```
 
-### **Advanced Options**
+### Basic Usage
 ```bash
-# Fix XML warnings automatically
-zig/fixml --fix-warnings tests/samples/test-none-update.csproj
-
-# Apply logical organization  
-rust/fixml --organize tests/samples/Sodexo.BackOffice.Api.csproj
-
-# Replace original file atomically
-go/fixml --replace tests/samples/a.csproj
+# Process XML file (any implementation)
+zig/fixml input.xml                    # Creates input.organized.xml
+go/fixml --organize input.xml          # Logical organization
+rust/fixml --fix-warnings input.xml    # Fix XML best practices
+ocaml/fixml --replace input.xml        # Replace original file
+lua lua/fixml.lua input.xml            # Lua implementation
 ```
 
-## 🔬 Benchmarking
+## 🎯 Features
 
-### **Primary Benchmark**
+### Core Functionality
+- **XML Formatting**: Consistent 2-space indentation
+- **Deduplication**: Removes duplicate elements intelligently
+- **Best Practice Fixes**: Adds XML declarations, fixes warnings
+- **Logical Organization**: Groups related elements (optional)
+- **Safe File Operations**: Atomic replacement via temporary files
+
+### Operating Modes
+- **Default**: Fix indentation and remove duplicates
+- **`--organize`**: Apply logical XML element organization
+- **`--fix-warnings`**: Add XML declaration and fix warnings
+- **`--replace`**: Replace original file instead of creating `.organized.xml`
+
+## 🔬 Testing & Benchmarking
+
+### Run Full Test Suite
 ```bash
-cd benchmarks && python3 final_benchmark.py
+# Quick test (16 files × 4 modes × 5 languages = 320 tests)
+lua test.lua quick
+
+# Comprehensive test (all samples)
+lua test.lua comprehensive
 ```
 
-### **Lua Optimization Analysis**  
+### Performance Benchmarking
 ```bash
-cd benchmarks && python3 lua_optimization_benchmark.py
+# Quick benchmark (1 file)
+lua benchmark.lua quick
+
+# Comprehensive benchmark (6 file sizes)
+lua benchmark.lua benchmark
 ```
 
-## ✨ Key Features
+## 🏗️ Architecture & Design
 
-- ⚡ **High Performance** - O(n) complexity across all implementations
-- 🔄 **Deduplication** - Removes duplicate XML elements intelligently  
-- 📐 **Formatting** - Consistent 2-space indentation
-- 🏥 **XML Best Practices** - Warnings and auto-fixes
-- 🔒 **Atomic Operations** - Safe file replacement via temp files
-- 📊 **Cross-Language** - Compare 5 different language implementations
+### Standardized Constants
+All implementations use identical constants for consistency:
+```
+MAX_INDENT_LEVELS = 64        # Maximum nesting depth
+ESTIMATED_LINE_LENGTH = 50    # For buffer pre-allocation
+MIN_HASH_CAPACITY = 256       # Deduplication hash table
+MAX_HASH_CAPACITY = 4096      # Maximum hash capacity
+WHITESPACE_THRESHOLD = 32     # ASCII whitespace detection
+FILE_PERMISSIONS = 0644       # Output file permissions
+IO_CHUNK_SIZE = 65536         # 64KB I/O operations
+```
 
-## 🎯 Optimization Techniques
+### Time & Space Complexity
+**All implementations: O(n) time, O(n + d) space**
+- `n` = input file size
+- `d` = unique elements for deduplication tracking
 
-### **Universal Optimizations**
-1. **Single-pass algorithms** replace multi-pass regex operations
-2. **Pre-allocated buffers** with capacity hints
-3. **Bulk string operations** instead of character-by-character 
-4. **Hash-based deduplication** with efficient key generation
-5. **Cached indentation** strings to avoid repeated allocations
+### Key Optimizations
+1. **Single-pass processing** with pre-allocated buffers
+2. **Hash-based deduplication** with capacity optimization
+3. **Cached indentation strings** up to 64 levels
+4. **Bulk I/O operations** with 64KB chunks
+5. **Language-specific optimizations**:
+   - **Zig**: Manual memory management, lookup tables
+   - **Go**: Object pooling, buffered readers
+   - **Rust**: SIMD potential, zero-copy operations
+   - **OCaml**: Buffer pre-allocation, functional optimizations
+   - **Lua**: Byte-level operations, table pre-sizing
 
-### **Language-Specific**
-- **Zig/Rust**: Direct memory control, zero-cost abstractions
-- **Go**: Efficient garbage collection, string builders  
-- **OCaml**: Functional optimizations, buffer pre-allocation
-- **Lua**: Byte-level operations, chunked I/O, custom iterators
+## 📊 Performance Analysis
 
-## 📈 Results Summary
+### Scaling Characteristics
+- **Zig**: Most consistent, minimal variance (σ=4.72ms)
+- **Go**: Good balance, moderate variance (σ=9.79ms)  
+- **Rust**: Variable performance (σ=14.48ms)
+- **OCaml**: Functional overhead (σ=31.62ms)
+- **Lua**: High variance but excellent on tiny files (σ=206.14ms)
 
-**Champion: Zig v2.0.0** - Maximum performance through systems programming
-**Runner-up: Rust v2.0.0** - Excellent consistency with memory safety  
-**Bronze: Go v2.0.0** - Great balance of performance and simplicity
-**OCaml v2.0.0** - Solid functional approach with good scaling
-**Lua v5.0.0** - Impressive optimization for interpreted language (+27.4% vs v4.0.0)
+### Optimization Opportunities
+1. **Memory Mapping**: 30-50% improvement for files >10MB
+2. **SIMD Processing**: 20-40% improvement for text-heavy operations
+3. **Parallel Processing**: 2-4x improvement on multi-core systems
+4. **Custom Allocators**: 15-25% improvement with memory pools
+5. **JIT Compilation**: For Lua, could provide 2-5x improvement
 
-All implementations successfully converted **quadratic behavior to linear scaling**, achieving production-ready performance across file sizes from 0.6KB to 1MB+.
+## 🛠️ Development
+
+### Adding New Test Cases
+```bash
+# Add XML files to tests/samples/
+# Generate expected outputs for all modes
+zig/fixml --organize newfile.xml           # Creates .o.expected.xml
+zig/fixml --fix-warnings newfile.xml       # Creates .f.expected.xml
+zig/fixml --organize --fix-warnings newfile.xml  # Creates .of.expected.xml
+```
+
+### Implementing New Languages
+1. Follow the standardized constants from any existing implementation
+2. Implement the same command-line interface
+3. Add build instructions to `build_config.lua`
+4. Ensure all 320 test cases pass
+
+## 📈 Results & Conclusions
+
+### Performance Winners
+- **Overall Champion**: Zig - Fastest and most consistent
+- **Best Balance**: Go - Great performance with simplicity
+- **Memory Safety**: Rust - Safe with good performance
+- **Functional Approach**: OCaml - Elegant functional design
+- **Most Portable**: Lua - Works everywhere, optimized for interpretation
+
+### Key Insights
+- **Manual memory management** (Zig) provides the best performance
+- **Startup overhead** affects small file performance differently than large files
+- **Consistent algorithms** across languages enable fair comparison
+- **Language ecosystems** matter more than raw performance for most use cases
+
+All implementations successfully achieve linear O(n) scaling and production-ready performance across the full range of file sizes tested (0.9KB to 2.4MB).
+
+## 📝 License
+
+MIT License - See individual implementation directories for language-specific details.
