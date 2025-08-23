@@ -19,9 +19,7 @@ for i = 0, 255 do
 	char_cache[i] = string.char(i)
 end
 
--- Pre-compile patterns for performance
-local SELF_CONTAINED_PATTERN = "<[^>]+>[^<]*</[^>]+>"
-local SPACE_OR_SLASH_GT_PATTERN = "[ />]"
+-- Lightweight markers
 local SELF_CLOSING_PATTERN = "/>"
 
 -- Parse command line arguments (optimized)
@@ -169,133 +167,20 @@ local function normalize_whitespace_preserving_attributes(s)
 	return fast_trim(table.concat(result, "", 1, result_size))
 end
 
--- Ultra-optimized element key creation - avoid regex completely
-local function create_element_key(element_str)
-	local trimmed = fast_trim(element_str)
-	local len = #trimmed
-	
-	if len == 0 then return "" end
-	
-	-- Fast comment detection without regex
-	if len >= 4 and trimmed:sub(1, 4) == "<!--" then
-		return "comment:" .. os.time() .. math.random(1000)
-	end
-	
-	-- Fast tag extraction without regex
-	if trimmed:byte(1) ~= 60 then return trimmed end -- not '<'
-	
-	local tag_end = trimmed:find(SPACE_OR_SLASH_GT_PATTERN)
-	if not tag_end then return trimmed end
-	
-	local tag = trimmed:sub(2, tag_end - 1)
-	
-	-- Fast attribute extraction (simplified)
-	local attrs = {}
-	local attr_count = 0
-	local attr_start = tag_end
-	
-	-- Simple attribute parsing without heavy regex
-	while attr_start and attr_start < len do
-		local eq_pos = trimmed:find("=", attr_start)
-		if not eq_pos then break end
-		
-		local name_start = attr_start
-		while name_start < eq_pos and trimmed:byte(name_start) <= 32 do
-			name_start = name_start + 1
-		end
-		
-		local name_end = eq_pos - 1
-		while name_end > name_start and trimmed:byte(name_end) <= 32 do
-			name_end = name_end - 1
-		end
-		
-		local quote_start = eq_pos + 1
-		while quote_start <= len and trimmed:byte(quote_start) <= 32 do
-			quote_start = quote_start + 1
-		end
-		
-		if quote_start <= len then
-			local quote_char = trimmed:byte(quote_start)
-			if quote_char == 34 or quote_char == 39 then -- " or '
-				local quote_end = trimmed:find(string.char(quote_char), quote_start + 1)
-				if quote_end then
-					local name = trimmed:sub(name_start, name_end)
-					local value = trimmed:sub(quote_start + 1, quote_end - 1)
-					attr_count = attr_count + 1
-					attrs[attr_count] = name .. "=" .. value
-					attr_start = quote_end + 1
-				else
-					break
-				end
-			else
-				break
-			end
-		else
-			break
-		end
-	end
-	
-	-- Sort attributes for consistent keys
-	if attr_count > 1 then
-		table.sort(attrs, nil, attr_count)
-	end
-	local attr_string = table.concat(attrs, ",", 1, attr_count)
-	
-	-- Extract inner content fast
-	local content_start = trimmed:find(">")
-	local inner = ""
-	if content_start then
-		local content_end = trimmed:find("</" .. tag)
-		if content_end and content_end > content_start then
-			inner = fast_trim(trimmed:sub(content_start + 1, content_end - 1))
-			
-			-- Fast whitespace normalization without regex
-			if inner and #inner > 0 then
-				local normalized = {}
-				local norm_size = 0
-				local prev_space = false
-				local inner_len = #inner
-				
-				for j = 1, inner_len do
-					local b = inner:byte(j)
-					if b <= 32 then -- whitespace
-						if not prev_space then
-							norm_size = norm_size + 1
-							normalized[norm_size] = " "
-							prev_space = true
-						end
-					else
-						norm_size = norm_size + 1
-						normalized[norm_size] = inner:sub(j, j)
-						prev_space = false
-					end
-				end
-				
-				inner = table.concat(normalized, "", 1, norm_size)
-				inner = fast_trim(inner)
-			end
-		end
-	end
-	
-	-- Build key efficiently
-	local key_parts = {tag}
-	local key_size = 1
-	
-	if #attr_string > 0 then
-		key_size = key_size + 1
-		key_parts[key_size] = "|"
-		key_size = key_size + 1
-		key_parts[key_size] = attr_string
-	end
-	
-	if #inner > 0 then
-		key_size = key_size + 1
-		key_parts[key_size] = "|"
-		key_size = key_size + 1
-		key_parts[key_size] = inner
-	end
-	
-	return table.concat(key_parts, "", 1, key_size)
+-- Lightweight self-contained element check without patterns
+local function is_self_contained(s)
+	local len = #s
+	if len < 7 then return false end -- minimum: <a>x</a>
+	if s:byte(1) ~= 60 or s:byte(len) ~= 62 then return false end -- '<' and '>'
+	local first_gt = s:find(">", 2, true)
+	if not first_gt then return false end
+	local last_lt = s:match(".*()<")
+	if not last_lt or last_lt <= first_gt then return false end
+	-- Ensure closing tag starts with </
+	if last_lt + 1 > len or s:byte(last_lt + 1) ~= 47 then return false end -- '/'
+	-- Ensure inner content has no '<'
+	local inner = s:sub(first_gt + 1, last_lt - 1)
+	return not inner:find("<", 1, true)
 end
 
 -- Ultra-fast line processing avoiding gmatch iterator
@@ -351,7 +236,6 @@ local function process_xml_file(organize_mode, replace_mode, fix_warnings, input
 
 	-- Pre-allocate large output buffer
 	local output_size = 0
-	local output_capacity = #cleaned_content + 1000
 	local output = {}
 
 	local function add_output(str)
@@ -415,7 +299,7 @@ local function process_xml_file(organize_mode, replace_mode, fix_warnings, input
 				-- Only increase indent if it's an opening tag that's NOT self-contained
 				if trimmed:byte(1) == 60 and trimmed:byte(2) ~= 47 and 
 				   trimmed:byte(2) ~= 63 and not trimmed:find(SELF_CLOSING_PATTERN) and
-				   not trimmed:find(SELF_CONTAINED_PATTERN) then -- not self-contained
+				   not is_self_contained(trimmed) then -- not self-contained
 					indent_level = indent_level + 1
 				end
 			end

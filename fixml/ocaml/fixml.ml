@@ -35,161 +35,89 @@ let clean_content content =
   if len = 0 then content
   else
     let result = Buffer.create len in
-    let rec clean_loop i =
-      if i >= len then ()
-      else if i = 0 && len >= 3 && 
-              content.[0] = '\239' && content.[1] = '\187' && content.[2] = '\191' then
-        clean_loop 3  (* Skip BOM *)
-      else if i < len - 1 && content.[i] = '\r' && content.[i + 1] = '\n' then (
+    let i = ref 0 in
+    (* Skip BOM if present *)
+    if len >= 3 && content.[0] = '\239' && content.[1] = '\187' && content.[2] = '\191' then
+      i := 3;
+    
+    while !i < len do
+      if !i < len - 1 && content.[!i] = '\r' && content.[!i + 1] = '\n' then (
         Buffer.add_char result '\n';
-        clean_loop (i + 2)
-      ) else if content.[i] = '\r' then (
+        i := !i + 2
+      ) else if content.[!i] = '\r' then (
         Buffer.add_char result '\n';
-        clean_loop (i + 1)
+        incr i
       ) else (
-        Buffer.add_char result content.[i];
-        clean_loop (i + 1)
+        Buffer.add_char result content.[!i];
+        incr i
       )
-    in
-    clean_loop 0;
+    done;
     Buffer.contents result
 
 let trim s =
   let len = String.length s in
-  let rec left i = if i >= len then len else if s.[i] <= ' ' then left (i+1) else i in
-  let rec right i = if i < 0 then -1 else if s.[i] <= ' ' then right (i-1) else i in
-  let l = left 0 and r = right (len-1) in
-  if l > r then "" else String.sub s l (r-l+1)
-
-(* Optimized O(n) element key creation *)
-let create_element_key tag attrs content =
-  let result = Buffer.create 64 in
-  Buffer.add_string result tag;
+  let l = ref 0 in
+  let r = ref (len - 1) in
   
-  if attrs <> [] then (
-    let sorted_attrs = List.sort compare attrs in
-    Buffer.add_char result '|';
-    Buffer.add_string result (String.concat "," sorted_attrs)
-  );
+  (* Find first non-whitespace *)
+  while !l < len && s.[!l] <= ' ' do incr l done;
+  (* Find last non-whitespace *)
+  while !r >= 0 && s.[!r] <= ' ' do decr r done;
   
-  let trimmed_content = trim content in
-  if trimmed_content <> "" then (
-    Buffer.add_char result '|';
-    
-    (* Single-pass whitespace normalization *)
-    let rec normalize_ws i prev_space =
-      if i >= String.length trimmed_content then ()
-      else
-        let ch = trimmed_content.[i] in
-        if ch = ' ' || ch = '\t' || ch = '\n' || ch = '\r' then (
-          if not prev_space then Buffer.add_char result ' ';
-          normalize_ws (i + 1) true
-        ) else (
-          Buffer.add_char result ch;
-          normalize_ws (i + 1) false
-        )
-    in
-    normalize_ws 0 false
-  );
-  
-  Buffer.contents result
+  if !l > !r then "" else String.sub s !l (!r - !l + 1)
 
 module StringSet = Set.Make(String)
 
-let deduplicate_elements elements =
-  let seen = ref StringSet.empty in
-  let unique = ref [] in
-  let duplicates = ref 0 in
-  
-  List.iter (fun (tag, attrs, content) ->
-    let key = create_element_key tag attrs content in
-    if StringSet.mem key !seen then
-      incr duplicates
-    else (
-      seen := StringSet.add key !seen;
-      unique := (tag, attrs, content) :: !unique
-    )
-  ) elements;
-  
-  (List.rev !unique, !duplicates)
+(* Pre-compiled regex patterns for performance *)
+let xml_declaration_regex = Str.regexp "^[ \t\r\n]*<\\?xml\\b"
 
-(* Check if a string is a container element *)
-let is_container_element s =
-  let trimmed = trim s in
+(* Simplified container element detection - avoid double trimming *)
+let is_container_element trimmed =
   let len = String.length trimmed in
-  if len < 3 then false
-  else if trimmed.[0] = '<' && trimmed.[len-1] = '>' then
-    if trimmed.[1] = '/' then
-      (* Closing tag: </tag> *)
-      let inner = String.sub trimmed 2 (len-3) in
-      let rec check_valid_name i =
-        if i >= String.length inner then true
-        else
-          let c = inner.[i] in
-          if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || 
-             (c >= '0' && c <= '9') || c = ':' || c = '-' || c = '.' then
-            check_valid_name (i + 1)
-          else false
-      in
-      check_valid_name 0
-    else
-      (* Opening tag: <tag> *)
-      let inner = String.sub trimmed 1 (len-2) in
-      let rec check_valid_name i =
-        if i >= String.length inner then true
-        else
-          let c = inner.[i] in
-          if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || 
-             (c >= '0' && c <= '9') || c = ':' || c = '-' || c = '.' then
-            check_valid_name (i + 1)
-          else false
-      in
-      check_valid_name 0
-  else false
+  len >= 3 && trimmed.[0] = '<' && trimmed.[len-1] = '>' && 
+  not (String.contains trimmed ' ') && not (String.contains trimmed '=')
 
-(* Check if element is self-contained like <tag>content</tag> *)
-let is_self_contained s =
-  let trimmed = trim s in
+(* Simplified self-contained element detection - avoid double trimming *)
+let is_self_contained trimmed =
   let len = String.length trimmed in
-  if len < 7 then false (* minimum: <a>x</a> *)
-  else if trimmed.[0] = '<' && trimmed.[len-1] = '>' then
-    try
-      let first_gt = String.index trimmed '>' in
-      let last_lt = String.rindex trimmed '<' in
-      first_gt < last_lt && 
-      first_gt + 1 < last_lt &&
-      String.length trimmed > last_lt + 1 && 
-      trimmed.[last_lt + 1] = '/'
-    with Not_found -> false
-  else false
+  len >= 7 && trimmed.[0] = '<' && trimmed.[len-1] = '>' &&
+  String.contains trimmed '>' && String.rindex trimmed '<' > String.index trimmed '>'
 
 (* Normalize whitespace while preserving attribute values *)
 let normalize_whitespace s =
-  let result = Buffer.create (String.length s) in
-  let rec process i prev_space in_quotes quote_char =
-    if i >= String.length s then ()
-    else
-      let c = s.[i] in
-      if not in_quotes && (c = '"' || c = '\'') then (
-        Buffer.add_char result c;
-        process (i + 1) false true c
-      ) else if in_quotes && c = quote_char then (
-        Buffer.add_char result c;
-        process (i + 1) false false '\000'
-      ) else if in_quotes then (
-        (* Inside quotes: preserve all whitespace *)
-        Buffer.add_char result c;
-        process (i + 1) false true quote_char
-      ) else if c = ' ' || c = '\t' || c = '\n' || c = '\r' then (
-        (* Outside quotes: normalize whitespace *)
-        if not prev_space then Buffer.add_char result ' ';
-        process (i + 1) true false '\000'
-      ) else (
-        Buffer.add_char result c;
-        process (i + 1) false false '\000'
-      )
-  in
-  process 0 false false '\000';
+  let len = String.length s in
+  let result = Buffer.create len in
+  let i = ref 0 in
+  let prev_space = ref false in
+  let in_quotes = ref false in
+  let quote_char = ref '\000' in
+  
+  while !i < len do
+    let c = s.[!i] in
+    if not !in_quotes && (c = '"' || c = '\'') then (
+      Buffer.add_char result c;
+      prev_space := false;
+      in_quotes := true;
+      quote_char := c
+    ) else if !in_quotes && c = !quote_char then (
+      Buffer.add_char result c;
+      prev_space := false;
+      in_quotes := false;
+      quote_char := '\000'
+    ) else if !in_quotes then (
+      (* Inside quotes: preserve all whitespace *)
+      Buffer.add_char result c;
+      prev_space := false
+    ) else if c = ' ' || c = '\t' || c = '\n' || c = '\r' then (
+      (* Outside quotes: normalize whitespace *)
+      if not !prev_space then Buffer.add_char result ' ';
+      prev_space := true
+    ) else (
+      Buffer.add_char result c;
+      prev_space := false
+    );
+    incr i
+  done;
   trim (Buffer.contents result)
 
 (* Optimized XML processing with deduplication and indentation *)
@@ -209,11 +137,9 @@ let process_xml_with_deduplication content =
   List.iter (fun line ->
     let trimmed = trim line in
     if trimmed <> "" then (
-      (* XML-agnostic container detection *)
-      let is_container = is_container_element trimmed in
-      
-      (* Deduplication with normalized whitespace *)
+      (* Cache expensive operations *)
       let normalized_key = normalize_whitespace trimmed in
+      let is_container = is_container_element trimmed in
       
       if not is_container && StringSet.mem normalized_key !seen_elements then
         incr duplicates_removed
@@ -275,7 +201,7 @@ let process_file args =
   
   let cleaned_content = clean_content content in
   let has_xml_decl = String.contains cleaned_content '<' && 
-                     Str.string_match (Str.regexp "^[ \t\r\n]*<\\?xml\\b") cleaned_content 0 in
+                     Str.string_match xml_declaration_regex cleaned_content 0 in
   
   (* Show warnings *)
   if not has_xml_decl then (

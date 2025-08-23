@@ -1,7 +1,6 @@
 const std = @import("std");
 const print = std.debug.print;
 const ArrayList = std.ArrayList;
-const HashMap = std.HashMap;
 
 const USAGE = "Usage: fixml [--organize] [--replace] [--fix-warnings] <xml-file>\n" ++
     "  --organize, -o      Apply logical organization\n" ++
@@ -63,34 +62,6 @@ fn fastTrim(s: []const u8) []const u8 {
     return s[start..end];
 }
 
-// Fast container element detection (kept for complex cases)
-fn isContainerElement(s: []const u8) bool {
-    const trimmed = fastTrim(s);
-    if (trimmed.len < 3 or trimmed[0] != '<' or trimmed[trimmed.len - 1] != '>') return false;
-
-    const inner = if (trimmed.len > 2 and trimmed[1] == '/')
-        trimmed[2 .. trimmed.len - 1]
-    else
-        trimmed[1 .. trimmed.len - 1];
-
-    return isValidTagNameFast(inner);
-}
-
-// Fast tag name validation with lookup table
-const VALID_TAG_CHARS = blk: {
-    var chars = [_]bool{false} ** 256;
-    // a-z
-    for ('a'..('z' + 1)) |c| chars[c] = true;
-    // A-Z
-    for ('A'..('Z' + 1)) |c| chars[c] = true;
-    // 0-9
-    for ('0'..('9' + 1)) |c| chars[c] = true;
-    // Special chars
-    chars[':'] = true;
-    chars['-'] = true;
-    chars['.'] = true;
-    break :blk chars;
-};
 
 // Lookup table for XML special characters for faster tag type detection
 const XML_SPECIAL_CHARS = blk: {
@@ -111,13 +82,6 @@ const WHITESPACE_CHARS = blk: {
     break :blk chars;
 };
 
-fn isValidTagNameFast(s: []const u8) bool {
-    if (s.len == 0) return false;
-    for (s) |c| {
-        if (!VALID_TAG_CHARS[c]) return false;
-    }
-    return true;
-}
 
 // Check if element is self-contained like <tag>content</tag>
 // Matches Go regex: ^<[^>]+>[^<]*</[^>]+>$

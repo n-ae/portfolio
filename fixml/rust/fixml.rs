@@ -60,73 +60,35 @@ fn clean_content(content: &str) -> String {
         content
     };
     
-    // Single-pass line ending normalization using chars() for proper UTF-8 handling
-    let mut chars = content_to_process.chars().peekable();
-    while let Some(ch) = chars.next() {
-        if ch == '\r' {
-            if chars.peek() == Some(&'\n') {
-                chars.next(); // consume the \n
+    // Fast line ending normalization using byte operations
+    let bytes = content_to_process.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'\r' {
+            // Convert \r\n or \r to \n
+            if i + 1 < bytes.len() && bytes[i + 1] == b'\n' {
+                i += 1; // skip \n after \r
             }
             result.push('\n');
+        } else if bytes[i] < 128 {
+            // Fast path for ASCII characters
+            result.push(bytes[i] as char);
         } else {
-            result.push(ch);
-        }
-    }
-    
-    result
-}
-
-// Optimized O(n) element key creation
-fn create_element_key(tag: &str, attrs: &[String], content: &str) -> String {
-    let mut result = String::with_capacity(64);
-    result.push_str(tag);
-    
-    if !attrs.is_empty() {
-        let mut sorted_attrs = attrs.to_vec();
-        sorted_attrs.sort_unstable();
-        result.push('|');
-        result.push_str(&sorted_attrs.join(","));
-    }
-    
-    let trimmed_content = content.trim();
-    if !trimmed_content.is_empty() {
-        result.push('|');
-        
-        // Single-pass whitespace normalization
-        let mut prev_space = false;
-        for ch in trimmed_content.chars() {
-            if ch.is_whitespace() {
-                if !prev_space {
-                    result.push(' ');
-                    prev_space = true;
+            // Slower path for non-ASCII (should be rare in XML files)
+            let remaining = &content_to_process.as_bytes()[i..];
+            if let Ok(s) = std::str::from_utf8(remaining) {
+                if let Some(ch) = s.chars().next() {
+                    result.push(ch);
+                    i += ch.len_utf8() - 1; // -1 because loop will increment
                 }
-            } else {
-                result.push(ch);
-                prev_space = false;
             }
         }
+        i += 1;
     }
     
     result
 }
 
-fn deduplicate_elements(elements: Vec<(String, Vec<String>, String)>) -> (Vec<(String, Vec<String>, String)>, usize) {
-    let mut seen = HashSet::with_capacity(elements.len());
-    let mut unique = Vec::with_capacity(elements.len());
-    let mut duplicates = 0;
-    
-    for elem in elements {
-        let key = create_element_key(&elem.0, &elem.1, &elem.2);
-        if seen.contains(&key) {
-            duplicates += 1;
-        } else {
-            seen.insert(key);
-            unique.push(elem);
-        }
-    }
-    
-    (unique, duplicates)
-}
 
 // Check if a string is a container element (opening/closing tag without attributes or content)
 fn is_container_element(s: &str) -> bool {
@@ -170,49 +132,104 @@ fn is_self_contained(s: &str) -> bool {
 
 // Normalize whitespace by replacing multiple spaces with single space, preserving attribute values
 fn normalize_whitespace(s: &str) -> String {
-    let mut result = String::with_capacity(s.len());
-    let mut in_quotes = false;
-    let mut quote_char = '\0';
-    let mut prev_was_space = false;
+    // Quick check - if no whitespace or quotes, return as-is
+    if !s.contains(' ') && !s.contains('\t') && !s.contains('\n') && 
+       !s.contains('\r') && !s.contains('"') && !s.contains('\'') {
+        return s.to_string();
+    }
     
-    for ch in s.chars() {
-        if !in_quotes && (ch == '"' || ch == '\'') {
+    let mut result = String::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let mut in_quotes = false;
+    let mut quote_char = 0u8;
+    let mut prev_was_space = false;
+    let mut i = 0;
+    
+    // Skip leading whitespace
+    while i < bytes.len() && (bytes[i] == b' ' || bytes[i] == b'\t' || bytes[i] == b'\n' || bytes[i] == b'\r') {
+        i += 1;
+    }
+    
+    while i < bytes.len() {
+        let b = bytes[i];
+        
+        if !in_quotes && (b == b'"' || b == b'\'') {
             in_quotes = true;
-            quote_char = ch;
-            result.push(ch);
+            quote_char = b;
+            result.push(b as char);
             prev_was_space = false;
-        } else if in_quotes && ch == quote_char {
+        } else if in_quotes && b == quote_char {
             in_quotes = false;
-            result.push(ch);
+            result.push(b as char);
             prev_was_space = false;
         } else if in_quotes {
-            // Inside quotes: preserve all whitespace
-            result.push(ch);
+            // Inside quotes: preserve all characters
+            if b < 128 {
+                result.push(b as char);
+            } else {
+                // Handle non-ASCII inside quotes (rare)
+                if let Ok(s_slice) = std::str::from_utf8(&bytes[i..]) {
+                    if let Some(ch) = s_slice.chars().next() {
+                        result.push(ch);
+                        i += ch.len_utf8() - 1;
+                    }
+                }
+            }
             prev_was_space = false;
-        } else if ch.is_whitespace() {
+        } else if b == b' ' || b == b'\t' || b == b'\n' || b == b'\r' {
             // Outside quotes: normalize whitespace
             if !prev_was_space {
                 result.push(' ');
                 prev_was_space = true;
             }
         } else {
-            result.push(ch);
+            if b < 128 {
+                result.push(b as char);
+            } else {
+                // Handle non-ASCII (rare in XML attributes)
+                if let Ok(s_slice) = std::str::from_utf8(&bytes[i..]) {
+                    if let Some(ch) = s_slice.chars().next() {
+                        result.push(ch);
+                        i += ch.len_utf8() - 1;
+                    }
+                }
+            }
             prev_was_space = false;
         }
+        i += 1;
     }
     
-    result.trim().to_string()
+    // Remove trailing whitespace
+    while result.ends_with(' ') {
+        result.pop();
+    }
+    
+    result
 }
+
+// Pre-computed indentation strings for common levels (up to 50 levels deep)
+static INDENT_STRINGS: [&str; 51] = [
+    "",                                                                                             // 0
+    "  ", "    ", "      ", "        ", "          ",                                              // 1-5
+    "            ", "              ", "                ", "                  ", "                    ", // 6-10
+    "                      ", "                        ", "                          ", "                            ", "                              ", // 11-15
+    "                                ", "                                  ", "                                    ", "                                      ", "                                        ", // 16-20
+    "                                          ", "                                            ", "                                              ", "                                                ", "                                                  ", // 21-25
+    "                                                    ", "                                                      ", "                                                        ", "                                                          ", "                                                            ", // 26-30
+    "                                                              ", "                                                                ", "                                                                  ", "                                                                    ", "                                                                      ", // 31-35
+    "                                                                        ", "                                                                          ", "                                                                            ", "                                                                              ", "                                                                                ", // 36-40
+    "                                                                                  ", "                                                                                    ", "                                                                                      ", "                                                                                        ", "                                                                                          ", // 41-45
+    "                                                                                            ", "                                                                                              ", "                                                                                                ", "                                                                                                  ", "                                                                                                    " // 46-50
+];
 
 // Optimized O(n) XML processing with deduplication and indentation
 fn process_xml_with_deduplication(content: &str) -> (String, usize) {
-    let lines: Vec<&str> = content.lines().collect();
     let mut result = String::with_capacity(content.len() + content.len() / 4);
     let mut indent_level = 0i32;
     let mut seen_elements = HashSet::new();
     let mut duplicates_removed = 0;
     
-    for line in lines {
+    for line in content.lines() {
         let trimmed = line.trim();
         if trimmed.is_empty() {
             continue;
@@ -220,16 +237,14 @@ fn process_xml_with_deduplication(content: &str) -> (String, usize) {
         
         // XML-agnostic container detection - never deduplicate structural elements
         let is_container = is_container_element(trimmed);
-        
-        // Deduplication with normalized whitespace
-        let normalized_key = normalize_whitespace(trimmed);
-        
-        if !is_container && seen_elements.contains(&normalized_key) {
-            duplicates_removed += 1;
-            continue; // Skip duplicate
-        }
-        
+
+        // Deduplication only for non-container lines
         if !is_container {
+            let normalized_key = normalize_whitespace(trimmed);
+            if seen_elements.contains(&normalized_key) {
+                duplicates_removed += 1;
+                continue; // Skip duplicate
+            }
             seen_elements.insert(normalized_key);
         }
         
@@ -238,25 +253,36 @@ fn process_xml_with_deduplication(content: &str) -> (String, usize) {
             indent_level = (indent_level - 1).max(0);
         }
         
-        // Apply consistent 2-space indentation
-        let spaces_needed = (indent_level * 2) as usize;
-        if spaces_needed > 0 {
-            result.reserve(spaces_needed + trimmed.len() + 1);
-            for _ in 0..spaces_needed {
-                result.push(' ');
+        // Apply consistent 2-space indentation using pre-computed strings
+        let level = indent_level as usize;
+        if level > 0 {
+            if level < INDENT_STRINGS.len() {
+                result.reserve(INDENT_STRINGS[level].len() + trimmed.len() + 1);
+                result.push_str(INDENT_STRINGS[level]);
+            } else {
+                // For very deep nesting, fall back to dynamic generation
+                let deep_indent = " ".repeat(level * 2);
+                result.reserve(deep_indent.len() + trimmed.len() + 1);
+                result.push_str(&deep_indent);
             }
         }
         
         result.push_str(trimmed);
         result.push('\n');
         
-        // Adjust indent for opening tags AFTER applying indentation
+        // Adjust indent for opening tags AFTER applying indentation  
         // Must not be self-contained (like <tag>content</tag> or <tag/>)
-        let mut is_opening_tag = trimmed.starts_with('<') && 
-                                !trimmed.starts_with("</") && 
-                                !trimmed.starts_with("<!--") &&
-                                !trimmed.starts_with("<?") && 
+        let mut is_opening_tag = false;
+        if let Some(first_char) = trimmed.chars().next() {
+            if first_char == '<' {
+                let bytes = trimmed.as_bytes();
+                is_opening_tag = bytes.len() > 1 && 
+                                bytes[1] != b'/' &&  // not "</
+                                bytes[1] != b'!' &&  // not "<!--"
+                                bytes[1] != b'?' &&  // not "<?"
                                 !trimmed.ends_with("/>");
+            }
+        }
         
         // Check if it's self-contained with content like <tag>content</tag>
         if is_opening_tag && is_self_contained(trimmed) {

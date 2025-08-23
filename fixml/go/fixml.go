@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -17,6 +20,13 @@ const USAGE = `Usage: fixml [--organize] [--replace] [--fix-warnings] <xml-file>
 `
 
 const XML_DECLARATION = `<?xml version="1.0" encoding="utf-8"?>` + "\n"
+
+// Builder pool for reusing strings.Builder instances
+var builderPool = sync.Pool{
+	New: func() interface{} {
+		return &strings.Builder{}
+	},
+}
 
 type Args struct {
 	organize    bool
@@ -112,7 +122,7 @@ func processFile(args Args) error {
 }
 
 func processAsText(args Args, content string, hasXMLDecl bool) error {
-	var output strings.Builder
+	var output bytes.Buffer
 	output.Grow(len(content) + 100)
 	
 	if args.fixWarnings && !hasXMLDecl {
@@ -122,73 +132,98 @@ func processAsText(args Args, content string, hasXMLDecl bool) error {
 		fmt.Println()
 	}
 	
-	lines := strings.Split(content, "\n")
 	indentLevel := 0
-	seenElements := make(map[string]bool)
+	// Pre-allocate map with estimated size to avoid rehashing
+	estimatedElements := len(content) / 50 // Rough estimate based on content length
+	if estimatedElements < 16 {
+		estimatedElements = 16
+	}
+	seenElements := make(map[string]bool, estimatedElements)
 	duplicatesRemoved := 0
 	
-	// Compile regex patterns for container detection
-	openingContainerPattern := regexp.MustCompile(`^\s*<\s*[\w:.\-]+\s*>\s*$`)
-	closingContainerPattern := regexp.MustCompile(`^\s*</\s*[\w:.\-]+\s*>\s*$`)
+	// Pre-cache common indentation strings
+	indentCache := make([]string, 32) // Support up to 31 levels
+	for i := 0; i < len(indentCache); i++ {
+		indentCache[i] = strings.Repeat("  ", i)
+	}
 	
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "" {
-			continue
-		}
-		
-		// XML-agnostic container detection - never deduplicate structural elements
-		isContainer := openingContainerPattern.MatchString(trimmed) || 
-		              closingContainerPattern.MatchString(trimmed)
-		
-		// Deduplication with normalized whitespace (preserve attribute values)
-		normalizedKey := normalizeWhitespacePreservingAttributes(trimmed)
-		
-		if !isContainer && seenElements[normalizedKey] {
-			duplicatesRemoved++
-			continue // Skip duplicate
-		}
-		
-		if !isContainer {
-			seenElements[normalizedKey] = true
-		}
-		
-		// Determine if this is a closing tag
-		isClosingTag := strings.HasPrefix(trimmed, "</")
-		
-		// Determine if this is an opening tag that needs indentation increase
-		// Must not be self-contained (like <tag>content</tag> or <tag/>)
-		isOpeningTag := strings.HasPrefix(trimmed, "<") &&
-			!strings.HasPrefix(trimmed, "</") &&
-			!strings.HasPrefix(trimmed, "<!--") &&
-			!strings.HasPrefix(trimmed, "<?") &&
-			!strings.HasSuffix(trimmed, "/>")
-		
-		// Check if it's self-contained with content like <tag>content</tag>
-		if isOpeningTag {
-			selfContainedPattern := regexp.MustCompile(`^<[^>]+>[^<]*</[^>]+>$`)
-			if selfContainedPattern.MatchString(trimmed) {
-				isOpeningTag = false
+	// Process lines with a buffered reader to avoid Scanner token limits
+	reader := bufio.NewReader(strings.NewReader(content))
+	for {
+		line, err := reader.ReadString('\n')
+		if len(line) > 0 {
+			// Trim only the trailing newline added by ReadString
+			if line[len(line)-1] == '\n' {
+				line = line[:len(line)-1]
+			}
+			trimmed := fastTrimSpace(line)
+			if trimmed != "" {
+				// Fast container detection - simple tags without spaces (no attributes)
+				isContainer := false
+				if len(trimmed) > 2 && trimmed[0] == '<' && trimmed[len(trimmed)-1] == '>' {
+					hasSpace := false
+					for i := 1; i < len(trimmed)-1; i++ {
+						if trimmed[i] == ' ' || trimmed[i] == '\t' {
+							hasSpace = true
+							break
+						}
+					}
+					isContainer = !hasSpace
+				}
+				// Deduplication only for non-container lines
+				if !isContainer {
+					normalizedKey := normalizeWhitespacePreservingAttributes(trimmed)
+					if seenElements[normalizedKey] {
+						duplicatesRemoved++
+						goto nextLine
+					}
+					seenElements[normalizedKey] = true
+				}
+				// Determine if this is a closing tag using byte comparison
+				isClosingTag := len(trimmed) >= 2 && trimmed[0] == '<' && trimmed[1] == '/'
+				// Determine if this is an opening tag that needs indentation increase
+				// Must not be self-contained (like <tag>content</tag> or <tag/>)
+				isOpeningTag := len(trimmed) > 0 && trimmed[0] == '<' &&
+					!(len(trimmed) >= 2 && trimmed[1] == '/') &&                    // not closing tag
+					!(len(trimmed) >= 4 && trimmed[1] == '!' && trimmed[2] == '-' && trimmed[3] == '-') && // not comment
+					!(len(trimmed) >= 2 && trimmed[1] == '?') &&                    // not processing instruction
+					!strings.HasSuffix(trimmed, "/>")
+				// Check if it's self-contained with content like <tag>content</tag>
+				if isOpeningTag && isSelfContained(trimmed) {
+					isOpeningTag = false
+				}
+				// Adjust indent level for closing tags BEFORE writing the line
+				if isClosingTag {
+					indentLevel = max(0, indentLevel-1)
+				}
+				// Apply consistent 2-space indentation using cached strings with optimized writes
+				if indentLevel < len(indentCache) {
+					output.WriteString(indentCache[indentLevel])
+				} else {
+					output.WriteString(strings.Repeat("  ", indentLevel)) // Fallback for deep nesting
+				}
+				output.WriteString(trimmed)
+				output.WriteByte('\n')
+				// Adjust indent level for opening tags AFTER writing the line
+				if isOpeningTag {
+					indentLevel++
+				}
 			}
 		}
-		
-		// Adjust indent level for closing tags BEFORE writing the line
-		if isClosingTag {
-			indentLevel = max(0, indentLevel-1)
+		if err == io.EOF {
+			break
 		}
-		
-		// Apply consistent 2-space indentation
-		indent := strings.Repeat("  ", indentLevel)
-		output.WriteString(indent + trimmed + "\n")
-		
-		// Adjust indent level for opening tags AFTER writing the line
-		if isOpeningTag {
-			indentLevel++
+		if err != nil {
+			return fmt.Errorf("error reading content: %v", err)
 		}
+		continue
+		nextLine:
+		// Label target for duplicate-skipped lines
+		_ = 0
 	}
 	
 	outputFilename := getOutputFilename(args.file, args.replace)
-	err := os.WriteFile(outputFilename, []byte(output.String()), 0644)
+	err := os.WriteFile(outputFilename, output.Bytes(), 0644)
 	if err != nil {
 		return fmt.Errorf("could not write output file: %v", err)
 	}
@@ -238,9 +273,78 @@ func max(a, b int) int {
 	return b
 }
 
-// normalizeWhitespacePreservingAttributes normalizes structural whitespace while preserving attribute values
+// fastTrimSpace is an optimized version of strings.TrimSpace for common XML cases
+func fastTrimSpace(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	
+	// Quick check for common case: no leading/trailing whitespace
+	if s[0] > 32 && s[len(s)-1] > 32 {
+		return s
+	}
+	
+	// Find first non-whitespace
+	start := 0
+	for start < len(s) && s[start] <= 32 {
+		start++
+	}
+	
+	if start == len(s) {
+		return ""
+	}
+	
+	// Find last non-whitespace
+	end := len(s) - 1
+	for end >= start && s[end] <= 32 {
+		end--
+	}
+	
+	if start == 0 && end == len(s)-1 {
+		return s
+	}
+	
+	return s[start : end+1]
+}
+
+// isSelfContained checks if a line is self-contained like <tag>content</tag>
+func isSelfContained(s string) bool {
+	if len(s) < 7 { // Minimum: <a>b</a>
+		return false
+	}
+	
+	// Find first '>' 
+	firstGT := strings.Index(s, ">")
+	if firstGT == -1 || firstGT == len(s)-1 {
+		return false
+	}
+	
+	// Find last '<'
+	lastLT := strings.LastIndex(s, "<")
+	if lastLT == -1 || lastLT <= firstGT {
+		return false
+	}
+	
+	// Check if it ends with closing tag
+	return len(s) > lastLT+2 && s[lastLT+1] == '/' && s[len(s)-1] == '>'
+}
+
+// normalizeWhitespacePreservingAttributes normalizes structural whitespace while preserving attribute values - optimized
 func normalizeWhitespacePreservingAttributes(s string) string {
-	result := strings.Builder{}
+	if len(s) == 0 {
+		return s
+	}
+	
+	// Quick check: if no quotes, use simpler normalization
+	if !containsQuotes(s) {
+		return normalizeSimpleWhitespace(s)
+	}
+	
+	result := builderPool.Get().(*strings.Builder)
+	defer func() {
+		result.Reset()
+		builderPool.Put(result)
+	}()
 	result.Grow(len(s))
 	
 	inQuotes := false
@@ -263,8 +367,39 @@ func normalizeWhitespacePreservingAttributes(s string) string {
 			// Inside quotes: preserve all whitespace
 			result.WriteByte(c)
 			prevSpace = false
-		} else if c == ' ' || c == '\t' || c == '\n' || c == '\r' {
+		} else if c <= 32 { // optimized whitespace check
 			// Outside quotes: normalize whitespace
+			if !prevSpace {
+				result.WriteByte(' ')
+				prevSpace = true
+			}
+		} else {
+			result.WriteByte(c)
+			prevSpace = false
+		}
+	}
+	
+	return strings.TrimSpace(result.String())
+}
+
+// Helper function to check if string contains quotes - optimized
+func containsQuotes(s string) bool {
+	return strings.ContainsAny(s, "\"'")
+}
+
+// Simpler whitespace normalization for strings without quotes
+func normalizeSimpleWhitespace(s string) string {
+	result := builderPool.Get().(*strings.Builder)
+	defer func() {
+		result.Reset()
+		builderPool.Put(result)
+	}()
+	result.Grow(len(s))
+	prevSpace := false
+	
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c <= 32 { // whitespace
 			if !prevSpace {
 				result.WriteByte(' ')
 				prevSpace = true
