@@ -3,13 +3,21 @@ use std::env;
 use std::fs;
 use std::process;
 
-const USAGE: &str = "Usage: fixml_optimized [--organize] [--replace] [--fix-warnings] <xml-file>
+// Standard constants - consistent across all implementations
+const USAGE: &str = "Usage: fixml [--organize] [--replace] [--fix-warnings] <xml-file>
   --organize, -o      Apply logical organization
-  --replace, -r       Replace original file  
+  --replace, -r       Replace original file
   --fix-warnings, -f  Fix XML warnings
   Default: preserve original structure, fix indentation/deduplication only";
 
 const XML_DECLARATION: &str = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
+const MAX_INDENT_LEVELS: usize = 64;        // Maximum nesting depth supported
+const ESTIMATED_LINE_LENGTH: usize = 50;    // Average characters per line estimate
+const MIN_HASH_CAPACITY: usize = 256;       // Minimum deduplication hash capacity
+const MAX_HASH_CAPACITY: usize = 4096;      // Maximum deduplication hash capacity
+const WHITESPACE_THRESHOLD: u8 = 32;        // ASCII values <= this are whitespace
+const FILE_PERMISSIONS: u32 = 0o644;        // Standard file permissions
+const IO_CHUNK_SIZE: usize = 65536;         // 64KB chunks for I/O operations
 
 #[derive(Default)]
 struct Args {
@@ -207,8 +215,8 @@ fn normalize_whitespace(s: &str) -> String {
     result
 }
 
-// Pre-computed indentation strings for common levels (up to 50 levels deep)
-static INDENT_STRINGS: [&str; 51] = [
+// Pre-computed indentation strings (standardized across all implementations)
+static INDENT_STRINGS: [&str; 65] = [
     "",                                                                                             // 0
     "  ", "    ", "      ", "        ", "          ",                                              // 1-5
     "            ", "              ", "                ", "                  ", "                    ", // 6-10
@@ -219,14 +227,20 @@ static INDENT_STRINGS: [&str; 51] = [
     "                                                              ", "                                                                ", "                                                                  ", "                                                                    ", "                                                                      ", // 31-35
     "                                                                        ", "                                                                          ", "                                                                            ", "                                                                              ", "                                                                                ", // 36-40
     "                                                                                  ", "                                                                                    ", "                                                                                      ", "                                                                                        ", "                                                                                          ", // 41-45
-    "                                                                                            ", "                                                                                              ", "                                                                                                ", "                                                                                                  ", "                                                                                                    " // 46-50
+    "                                                                                            ", "                                                                                              ", "                                                                                                ", "                                                                                                  ", "                                                                                                    ", // 46-50
+    "                                                                                                      ", "                                                                                                        ", "                                                                                                          ", "                                                                                                            ", "                                                                                                              ", // 51-55
+    "                                                                                                                ", "                                                                                                                  ", "                                                                                                                    ", "                                                                                                                      ", "                                                                                                                        ", // 56-60
+    "                                                                                                                          ", "                                                                                                                            ", "                                                                                                                              ", "                                                                                                                                " // 61-64
 ];
 
 // Optimized O(n) XML processing with deduplication and indentation
 fn process_xml_with_deduplication(content: &str) -> (String, usize) {
     let mut result = String::with_capacity(content.len() + content.len() / 4);
     let mut indent_level = 0i32;
-    let mut seen_elements = HashSet::new();
+    let mut seen_elements = HashSet::with_capacity(std::cmp::min(
+        std::cmp::max(content.len() / ESTIMATED_LINE_LENGTH, MIN_HASH_CAPACITY),
+        MAX_HASH_CAPACITY
+    ));
     let mut duplicates_removed = 0;
     
     for line in content.lines() {

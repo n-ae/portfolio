@@ -3,15 +3,23 @@
 -- Ultra-optimized XML organizer v5.0.0 - Maximum performance Lua
 -- Target: Match compiled language performance through aggressive optimization
 
+-- Standard constants - consistent across all implementations
 local USAGE = [[
-Usage: lua fixml_ultra_optimized.lua [--organize] [--replace] [--fix-warnings] <xml-file>
+Usage: lua fixml.lua [--organize] [--replace] [--fix-warnings] <xml-file>
   --organize, -o      Apply logical organization
-  --replace, -r       Replace original file (atomic using temp file)
-  --fix-warnings, -f  Automatically fix XML best practice warnings
+  --replace, -r       Replace original file
+  --fix-warnings, -f  Fix XML warnings
   Default: preserve original structure, fix indentation/deduplication only
 ]]
 
 local XML_DECLARATION = '<?xml version="1.0" encoding="utf-8"?>\n'
+local MAX_INDENT_LEVELS = 64           -- Maximum nesting depth supported
+local ESTIMATED_LINE_LENGTH = 50       -- Average characters per line estimate
+local MIN_HASH_CAPACITY = 256          -- Minimum deduplication hash capacity
+local MAX_HASH_CAPACITY = 4096         -- Maximum deduplication hash capacity
+local WHITESPACE_THRESHOLD = 32        -- ASCII values <= this are whitespace
+local FILE_PERMISSIONS = 644           -- Standard file permissions (octal in other langs)
+local IO_CHUNK_SIZE = 65536            -- 64KB chunks for I/O operations
 
 -- Pre-cache common ASCII characters for performance
 local char_cache = {}
@@ -98,7 +106,7 @@ local function fast_trim(s)
 	local start = 1
 	while start <= len do
 		local b = s:byte(start)
-		if b > 32 then break end
+		if b > WHITESPACE_THRESHOLD then break end
 		start = start + 1
 	end
 	
@@ -108,7 +116,7 @@ local function fast_trim(s)
 	local finish = len
 	while finish >= start do
 		local b = s:byte(finish)
-		if b > 32 then break end
+		if b > WHITESPACE_THRESHOLD then break end
 		finish = finish - 1
 	end
 	
@@ -150,7 +158,7 @@ local function normalize_whitespace_preserving_attributes(s)
 			result_size = result_size + 1
 			result[result_size] = c
 			prev_space = false
-		elseif b <= 32 then -- whitespace
+		elseif b <= WHITESPACE_THRESHOLD then -- standardized whitespace
 			-- Outside quotes: normalize whitespace
 			if not prev_space then
 				result_size = result_size + 1
@@ -258,7 +266,7 @@ local function process_xml_file(organize_mode, replace_mode, fix_warnings, input
 	
 	-- Pre-allocate indentation strings
 	local indent_cache = {""}
-	for i = 1, 64 do
+	for i = 1, MAX_INDENT_LEVELS do
 		indent_cache[i + 1] = string.rep("  ", i)
 	end
 
@@ -325,7 +333,7 @@ local function process_xml_file(organize_mode, replace_mode, fix_warnings, input
 	end
 	
 	-- Ultra-fast bulk write with larger chunks
-	local chunk_size = 65536  -- 64KB chunks for better I/O performance
+	local chunk_size = IO_CHUNK_SIZE  -- Standardized I/O chunk size
 	local current_chunk = {}
 	local chunk_len = 0
 	

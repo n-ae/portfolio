@@ -1,8 +1,18 @@
-let usage = "Usage: fixml_optimized [--organize] [--replace] [--fix-warnings] <xml-file>
-  --organize, -o      Apply logical organization  
+(* Standard constants - consistent across all implementations *)
+let usage = "Usage: fixml [--organize] [--replace] [--fix-warnings] <xml-file>
+  --organize, -o      Apply logical organization
   --replace, -r       Replace original file
   --fix-warnings, -f  Fix XML warnings
   Default: preserve original structure, fix indentation/deduplication only"
+
+let xml_declaration = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+let max_indent_levels = 64        (* Maximum nesting depth supported *)
+let estimated_line_length = 50    (* Average characters per line estimate *)
+let min_hash_capacity = 256       (* Minimum deduplication hash capacity *)
+let max_hash_capacity = 4096      (* Maximum deduplication hash capacity *)
+let whitespace_threshold = 32     (* ASCII values <= this are whitespace *)
+let file_permissions = 0o644      (* Standard file permissions *)
+let io_chunk_size = 65536        (* 64KB chunks for I/O operations *)
 
 type args = {
   organize: bool;
@@ -130,7 +140,7 @@ let process_xml_with_deduplication content =
   let duplicates_removed = ref 0 in
   
   (* Pre-allocate indentation buffer *)
-  let max_indent = 64 in
+  let max_indent = max_indent_levels in
   let indent_buffer = Bytes.create (max_indent * 2) in
   Bytes.fill indent_buffer 0 (max_indent * 2) ' ';
   
@@ -221,7 +231,7 @@ let process_file args =
   
   (* Add XML declaration if needed *)
   if args.fix_warnings && not has_xml_decl then (
-    Buffer.add_string final_content "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
+    Buffer.add_string final_content xml_declaration;
     Printf.printf "🔧 Applied fixes:\n";
     Printf.printf "  ✓ Added XML declaration\n";
     Printf.printf "\n"

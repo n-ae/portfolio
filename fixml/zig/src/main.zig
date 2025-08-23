@@ -2,6 +2,7 @@ const std = @import("std");
 const print = std.debug.print;
 const ArrayList = std.ArrayList;
 
+// Standard constants - consistent across all implementations
 const USAGE = "Usage: fixml [--organize] [--replace] [--fix-warnings] <xml-file>\n" ++
     "  --organize, -o      Apply logical organization\n" ++
     "  --replace, -r       Replace original file\n" ++
@@ -9,6 +10,13 @@ const USAGE = "Usage: fixml [--organize] [--replace] [--fix-warnings] <xml-file>
     "  Default: preserve original structure, fix indentation/deduplication only\n";
 
 const XML_DECLARATION = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
+const MAX_INDENT_LEVELS = 64;           // Maximum nesting depth supported
+const ESTIMATED_LINE_LENGTH = 50;       // Average characters per line estimate
+const MIN_HASH_CAPACITY = 256;          // Minimum deduplication hash capacity
+const MAX_HASH_CAPACITY = 4096;         // Maximum deduplication hash capacity
+const WHITESPACE_THRESHOLD = 32;        // ASCII values <= this are whitespace
+const FILE_PERMISSIONS = 0o644;         // Standard file permissions
+const IO_CHUNK_SIZE = 65536;            // 64KB chunks for I/O operations
 
 const Args = struct {
     organize: bool = false,
@@ -52,10 +60,10 @@ fn fastTrim(s: []const u8) []const u8 {
     var start: usize = 0;
     var end: usize = s.len;
 
-    while (start < end and WHITESPACE_CHARS[s[start]]) {
+    while (start < end and s[start] <= WHITESPACE_THRESHOLD) {
         start += 1;
     }
-    while (end > start and WHITESPACE_CHARS[s[end - 1]]) {
+    while (end > start and s[end - 1] <= WHITESPACE_THRESHOLD) {
         end -= 1;
     }
 
@@ -154,7 +162,7 @@ fn hashNormalizedContent(s: []const u8) u64 {
         } else if (in_quotes) {
             hasher.update(std.mem.asBytes(&c));
             prev_space = false;
-        } else if (WHITESPACE_CHARS[c]) {
+        } else if (c <= WHITESPACE_THRESHOLD) {
             if (!prev_space) {
                 const space: u8 = ' ';
                 hasher.update(std.mem.asBytes(&space));
@@ -260,14 +268,14 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
 
     var seen_hashes = std.AutoHashMap(u64, void).init(allocator);
     // Dynamic capacity based on estimated line count  
-    const estimated_lines = @max(content.len / 50, 256); // ~50 chars per line average
-    try seen_hashes.ensureTotalCapacity(@min(estimated_lines, 4096));
+    const estimated_lines = @max(content.len / ESTIMATED_LINE_LENGTH, MIN_HASH_CAPACITY); // Standard line length estimate
+    try seen_hashes.ensureTotalCapacity(@min(estimated_lines, MAX_HASH_CAPACITY));
     defer seen_hashes.deinit();
 
     var duplicates_removed: u32 = 0;
     var indent_level: i32 = 0;
     var line_start: usize = 0;
-    const indent_spaces = "                                        "; // 40 spaces max
+    const indent_spaces = "                                                                                                                                "; // MAX_INDENT_LEVELS * 2 spaces
 
     while (line_start < content.len) {
         const line_end = std.mem.indexOfScalarPos(u8, content, line_start, '\n') orelse content.len;

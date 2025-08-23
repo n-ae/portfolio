@@ -156,14 +156,14 @@ local mode = args[1] or "quick"
 local languages = {}
 for i = 2, #args do
 	if args[i] == "all" then
-		languages = { "go", "rust", "lua", "ocaml", "zig" }
+		languages = { "zig", "go", "rust", "ocaml", "lua" } -- Performance order: fastest to slowest
 		break
 	else
 		table.insert(languages, args[i])
 	end
 end
 if #languages == 0 then
-	languages = { "go", "rust", "lua", "ocaml", "zig" }
+	languages = { "zig", "go", "rust", "ocaml", "lua" } -- Performance order: fastest to slowest
 end
 
 local test_modes = { "", "--organize", "--fix-warnings", "--organize --fix-warnings" }

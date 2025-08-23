@@ -27,7 +27,7 @@ local function build_all_optimized()
     
     -- Build Zig in ReleaseFast mode
     print("  Building Zig (ReleaseFast)...")
-    local zig_result = os.execute("cd zig && zig build -Doptimize=ReleaseFast 2>/dev/null")
+    local zig_result = os.execute("cd zig && zig build -Doptimize=ReleaseFast 2>/dev/null && cp zig-out/bin/fixml fixml 2>/dev/null")
     if zig_result ~= 0 and zig_result ~= true then
         print("    Warning: Zig build failed")
     end
@@ -36,14 +36,14 @@ local function build_all_optimized()
     print()
 end
 
--- Implementation configurations with optimized paths
+-- Implementation configurations with optimized paths (performance order: fastest to slowest)
 local function get_implementations()
     return {
+        {"Zig", "zig/fixml"},
         {"Go", "go/fixml"},
         {"Rust", "rust/fixml"},
-        {"Lua", "lua lua/fixml.lua"},  -- Lua interpreter handles optimization
         {"OCaml", "ocaml/fixml"},
-        {"Zig", "zig/zig-out/bin/fixml"}
+        {"Lua", "lua lua/fixml.lua"}  -- Lua interpreter handles optimization
     }
 end
 

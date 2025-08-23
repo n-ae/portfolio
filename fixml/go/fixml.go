@@ -19,7 +19,15 @@ const USAGE = `Usage: fixml [--organize] [--replace] [--fix-warnings] <xml-file>
   Default: preserve original structure, fix indentation/deduplication only
 `
 
+// Standard constants - consistent across all implementations
 const XML_DECLARATION = `<?xml version="1.0" encoding="utf-8"?>` + "\n"
+const MAX_INDENT_LEVELS = 64           // Maximum nesting depth supported
+const ESTIMATED_LINE_LENGTH = 50       // Average characters per line estimate
+const MIN_HASH_CAPACITY = 256          // Minimum deduplication hash capacity
+const MAX_HASH_CAPACITY = 4096         // Maximum deduplication hash capacity
+const WHITESPACE_THRESHOLD = 32        // ASCII values <= this are whitespace
+const FILE_PERMISSIONS = 0644          // Standard file permissions
+const IO_CHUNK_SIZE = 65536           // 64KB chunks for I/O operations
 
 // Builder pool for reusing strings.Builder instances
 var builderPool = sync.Pool{
@@ -134,15 +142,18 @@ func processAsText(args Args, content string, hasXMLDecl bool) error {
 	
 	indentLevel := 0
 	// Pre-allocate map with estimated size to avoid rehashing
-	estimatedElements := len(content) / 50 // Rough estimate based on content length
-	if estimatedElements < 16 {
-		estimatedElements = 16
+	estimatedElements := len(content) / ESTIMATED_LINE_LENGTH // Estimate based on standard line length
+	if estimatedElements < MIN_HASH_CAPACITY {
+		estimatedElements = MIN_HASH_CAPACITY
+	}
+	if estimatedElements > MAX_HASH_CAPACITY {
+		estimatedElements = MAX_HASH_CAPACITY
 	}
 	seenElements := make(map[string]bool, estimatedElements)
 	duplicatesRemoved := 0
 	
-	// Pre-cache common indentation strings
-	indentCache := make([]string, 32) // Support up to 31 levels
+	// Pre-cache common indentation strings (standardized across all implementations)
+	indentCache := make([]string, MAX_INDENT_LEVELS+1) // Support up to MAX_INDENT_LEVELS
 	for i := 0; i < len(indentCache); i++ {
 		indentCache[i] = strings.Repeat("  ", i)
 	}
@@ -223,7 +234,7 @@ func processAsText(args Args, content string, hasXMLDecl bool) error {
 	}
 	
 	outputFilename := getOutputFilename(args.file, args.replace)
-	err := os.WriteFile(outputFilename, output.Bytes(), 0644)
+	err := os.WriteFile(outputFilename, output.Bytes(), FILE_PERMISSIONS)
 	if err != nil {
 		return fmt.Errorf("could not write output file: %v", err)
 	}
@@ -280,13 +291,13 @@ func fastTrimSpace(s string) string {
 	}
 	
 	// Quick check for common case: no leading/trailing whitespace
-	if s[0] > 32 && s[len(s)-1] > 32 {
+	if s[0] > WHITESPACE_THRESHOLD && s[len(s)-1] > WHITESPACE_THRESHOLD {
 		return s
 	}
 	
 	// Find first non-whitespace
 	start := 0
-	for start < len(s) && s[start] <= 32 {
+	for start < len(s) && s[start] <= WHITESPACE_THRESHOLD {
 		start++
 	}
 	
@@ -296,7 +307,7 @@ func fastTrimSpace(s string) string {
 	
 	// Find last non-whitespace
 	end := len(s) - 1
-	for end >= start && s[end] <= 32 {
+	for end >= start && s[end] <= WHITESPACE_THRESHOLD {
 		end--
 	}
 	
@@ -367,7 +378,7 @@ func normalizeWhitespacePreservingAttributes(s string) string {
 			// Inside quotes: preserve all whitespace
 			result.WriteByte(c)
 			prevSpace = false
-		} else if c <= 32 { // optimized whitespace check
+		} else if c <= WHITESPACE_THRESHOLD { // standardized whitespace check
 			// Outside quotes: normalize whitespace
 			if !prevSpace {
 				result.WriteByte(' ')
@@ -399,7 +410,7 @@ func normalizeSimpleWhitespace(s string) string {
 	
 	for i := 0; i < len(s); i++ {
 		c := s[i]
-		if c <= 32 { // whitespace
+		if c <= WHITESPACE_THRESHOLD { // standardized whitespace
 			if !prevSpace {
 				result.WriteByte(' ')
 				prevSpace = true
