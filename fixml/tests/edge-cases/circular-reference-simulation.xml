@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>CircularTest</RootNamespace>
+  </PropertyGroup>
+  <!-- Simulate circular-like patterns that could cause infinite loops -->
+  <ItemGroup>
+    <ProjectReference Include="..\ProjectA\ProjectA.csproj" />
+    <ProjectReference Include="..\ProjectA\ProjectA.csproj" />
+    <ProjectReference Include="..\ProjectA\ProjectA.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ProjectB\ProjectB.csproj" />
+    <ProjectReference Include="..\ProjectB\ProjectB.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ProjectA\ProjectA.csproj" />
+    <ProjectReference Include="..\ProjectB\ProjectB.csproj" />
+    <ProjectReference Include="..\ProjectC\ProjectC.csproj" />
+    <ProjectReference Include="..\ProjectC\ProjectC.csproj" />
+    <ProjectReference Include="..\ProjectC\ProjectC.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+  </ItemGroup>
+</Project>
