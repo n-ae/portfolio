@@ -110,11 +110,114 @@ local function calculate_stats(times)
     return {avg = mean, files = #times, consistency = consistency}
 end
 
+local function setup_git_comparison(base_ref, implementations)
+    print("Setting up Git comparison with base reference '" .. base_ref .. "'...")
+    
+    -- Check if base reference exists (branch, commit, or tag)
+    local ref_check = os.execute("git rev-parse --verify " .. base_ref .. " >/dev/null 2>&1")
+    if ref_check ~= 0 and ref_check ~= true then
+        print("Error: Base reference '" .. base_ref .. "' not found")
+        return nil
+    end
+    
+    -- Get current branch
+    local current_branch_handle = io.popen("git branch --show-current")
+    local current_branch = current_branch_handle:read("*l")
+    current_branch_handle:close()
+    
+    -- Create temporary directory for base branch builds
+    local temp_dir = "/tmp/fixml_base_" .. os.time()
+    
+    -- Use git worktree to create a separate working directory
+    local worktree_result = os.execute("git worktree add " .. temp_dir .. " " .. base_ref .. " 2>/dev/null")
+    if worktree_result ~= 0 and worktree_result ~= true then
+        print("Error: Failed to create git worktree for base reference")
+        return nil
+    end
+    
+    -- Build implementations in temp directory
+    print("Building base branch implementations...")
+    
+    -- Detect if FIXML is in subdirectory (older commits) or root (current)
+    local fixml_root = temp_dir
+    if os.execute("test -d " .. temp_dir .. "/fixml") == 0 or os.execute("test -d " .. temp_dir .. "/fixml") == true then
+        fixml_root = temp_dir .. "/fixml"
+        print("  Detected FIXML in subdirectory (older commit structure)")
+    end
+    
+    -- Check if build_config.lua exists in base version
+    local build_config_exists = os.execute("test -f " .. fixml_root .. "/build_config.lua")
+    
+    -- Always build manually for more reliable results
+    print("  Building base implementations manually...")
+    
+    -- Build each implementation and check results
+    local build_commands = {
+        {"Go", "go", "go build -o fixml fixml.go"},
+        {"Rust", "rust", "rustc -O -o fixml fixml.rs"},
+        {"OCaml", "ocaml", "ocamlopt -I +unix -I +str unix.cmxa str.cmxa -o fixml fixml.ml"},
+        {"Zig", "zig", "zig build -Doptimize=ReleaseFast && cp zig-out/bin/fixml fixml"}
+    }
+    
+    for _, build_info in ipairs(build_commands) do
+        local lang, dir, cmd = build_info[1], build_info[2], build_info[3]
+        if os.execute("test -d " .. fixml_root .. "/" .. dir) == 0 or os.execute("test -d " .. fixml_root .. "/" .. dir) == true then
+            print("    Building " .. lang .. "...")
+            os.execute("bash -c 'cd " .. fixml_root .. "/" .. dir .. " && " .. cmd .. " 2>/dev/null'")
+        end
+    end
+    
+    -- Debug: Check what was actually built
+    print("Checking built binaries...")
+    os.execute("ls -la " .. fixml_root .. "/*/fixml 2>/dev/null || echo '  No binaries found'")
+    
+    -- Store the detected root for later use
+    temp_dir = fixml_root
+    
+    -- Create base implementation commands
+    local base_implementations = {}
+    for _, impl in ipairs(implementations) do
+        local name, current_command = impl[1], impl[2]
+        local base_command = current_command:gsub("([^/]+)/([^%s]+)", temp_dir .. "/%1/%2")
+        
+        -- Verify base binary exists
+        local binary_path = base_command:match("([^%s]+)")
+        local check_handle = io.popen("test -f '" .. binary_path .. "' && echo 'exists'")
+        local exists = check_handle:read("*l")
+        check_handle:close()
+        
+        if exists == "exists" then
+            table.insert(base_implementations, {name .. "_base", base_command})
+        else
+            print("Warning: Base binary not found for " .. name .. ": " .. binary_path)
+        end
+    end
+    
+    return {
+        temp_dir = temp_dir,
+        current_branch = current_branch,
+        base_implementations = base_implementations
+    }
+end
+
+local function cleanup_git_comparison(git_data)
+    if git_data and git_data.temp_dir then
+        -- Remove git worktree
+        os.execute("git worktree remove " .. git_data.temp_dir .. " --force 2>/dev/null")
+    end
+end
+
 local function main()
     local mode = arg and arg[1] or "quick"
+    local compare_base = arg and arg[2]
     
     if not (mode == "quick" or mode == "comprehensive" or mode == "benchmark") then
-        print("Usage: lua benchmark.lua [quick|comprehensive|benchmark]")
+        print("Usage: lua benchmark.lua [quick|comprehensive|benchmark] [base_ref]")
+        print("  base_ref: Optional Git reference (branch/commit/tag) to compare against")
+        print("Examples:")
+        print("  lua benchmark.lua quick")
+        print("  lua benchmark.lua benchmark f456830")
+        print("  lua benchmark.lua comprehensive HEAD~3")
         return 1
     end
     
@@ -129,6 +232,21 @@ local function main()
         return 1
     end
     
+    -- Setup Git comparison if base branch specified
+    local git_data = nil
+    if compare_base then
+        git_data = setup_git_comparison(compare_base, implementations)
+        if git_data then
+            print("Git comparison setup complete: " .. #git_data.base_implementations .. " base implementations available\n")
+            -- Add base implementations to test list
+            for _, base_impl in ipairs(git_data.base_implementations) do
+                table.insert(implementations, base_impl)
+            end
+        else
+            print("Warning: Git comparison setup failed, proceeding with current branch only\n")
+        end
+    end
+    
     local test_files = get_test_files(mode)
     local iterations = mode == "quick" and 5 or (mode == "comprehensive" and 10 or 20)
     
@@ -136,6 +254,9 @@ local function main()
     print(string.rep("=", 50))
     print(string.format("Mode: %s | Iterations: %d | Implementations: %d", 
                        mode, iterations, #implementations))
+    if git_data then
+        print(string.format("Git Comparison: Current (%s) vs Base (%s)", git_data.current_branch, compare_base))
+    end
     print(string.format("Test files: %d | O(n) time & space complexity", #test_files))
     print()
     
@@ -233,7 +354,52 @@ local function main()
         end
     end
     
-    print(string.format("\nBenchmark complete! Tested %d implementations successfully.", 
+    -- Git comparison analysis
+    if git_data and #git_data.base_implementations > 0 then
+        print("\nGIT COMPARISON ANALYSIS")
+        print(string.rep("=", 50))
+        
+        for _, impl in ipairs(build_config.verify_implementations()) do
+            local current_name = impl[1]
+            local base_name = current_name .. "_base"
+            
+            local current_stats = calculate_stats(overall_results[current_name] or {})
+            local base_stats = calculate_stats(overall_results[base_name] or {})
+            
+            if current_stats and base_stats then
+                local improvement = ((base_stats.avg - current_stats.avg) / base_stats.avg) * 100
+                local consistency_change = base_stats.consistency - current_stats.consistency
+                
+                print(string.format("%s:", current_name))
+                print(string.format("  Current (%s):  %6.2fms avg (σ=%.2fms)", git_data.current_branch, current_stats.avg, current_stats.consistency))
+                print(string.format("  Base (%s):     %6.2fms avg (σ=%.2fms)", compare_base:sub(1,8), base_stats.avg, base_stats.consistency))
+                
+                if improvement > 0 then
+                    print(string.format("  Performance:   🟢 %+.1f%% improvement", improvement))
+                elseif improvement < -5 then
+                    print(string.format("  Performance:   🔴 %.1f%% regression", -improvement))
+                else
+                    print(string.format("  Performance:   🟡 %+.1f%% change", improvement))
+                end
+                
+                if math.abs(consistency_change) > 1 then
+                    if consistency_change < 0 then
+                        print(string.format("  Consistency:   🟢 %.2fms less variance", -consistency_change))
+                    else
+                        print(string.format("  Consistency:   🟡 %.2fms more variance", consistency_change))
+                    end
+                end
+                print()
+            end
+        end
+    end
+    
+    -- Cleanup temporary files
+    if git_data then
+        cleanup_git_comparison(git_data)
+    end
+    
+    print(string.format("Benchmark complete! Tested %d implementations successfully.", 
                        #implementations))
     return 0
 end

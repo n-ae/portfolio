@@ -68,18 +68,17 @@ let trim s =
   let len = String.length s in
   let l = ref 0 in
   let r = ref (len - 1) in
-  
+
   (* Find first non-whitespace *)
   while !l < len && s.[!l] <= ' ' do incr l done;
   (* Find last non-whitespace *)
   while !r >= 0 && s.[!r] <= ' ' do decr r done;
-  
+
   if !l > !r then "" else String.sub s !l (!r - !l + 1)
 
 module StringSet = Set.Make(String)
 
-(* Pre-compiled regex patterns for performance *)
-let xml_declaration_regex = Str.regexp "^[ \t\r\n]*<\\?xml\\b"
+(* Simple string-based XML declaration detection - no regex needed *)
 
 (* Simplified container element detection - avoid double trimming *)
 let is_container_element trimmed =
@@ -210,8 +209,10 @@ let process_file args =
     content in
   
   let cleaned_content = clean_content content in
-  let has_xml_decl = String.contains cleaned_content '<' && 
-                     Str.string_match xml_declaration_regex cleaned_content 0 in
+  let has_xml_decl = 
+    try
+      let _ = Str.search_forward (Str.regexp_string "<?xml") cleaned_content 0 in true
+    with Not_found -> false in
   
   (* Show warnings *)
   if not has_xml_decl then (

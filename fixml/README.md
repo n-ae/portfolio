@@ -6,13 +6,13 @@ A comprehensive suite of XML processors implemented in 5 languages (Zig, Go, Rus
 
 | Rank | Language | Average Time | Performance Notes |
 |------|----------|--------------|-------------------|
-| 🥇 | **Zig**   | 11.82ms     | Manual memory management, zero-cost abstractions |
-| 🥈 | **Go**    | 18.13ms     | Excellent balance of performance and simplicity |
-| 🥉 | **Rust**  | 25.69ms     | Memory safety with good performance |
-| 4th | **OCaml** | 37.65ms     | Functional programming with buffer optimizations |
-| 5th | **Lua**   | 192.55ms    | Interpreted but optimized (fastest on small files) |
+| 🥇 | **Rust**  | 8.0ms       | Zero-cost abstractions with memory safety |
+| 🥈 | **Lua**   | 8.5ms       | Optimized interpreted performance |
+| 🥉 | **Go**    | 8.6ms       | Excellent balance of performance and simplicity |
+| 4th | **Zig**   | 13.4ms      | Manual memory management, consistent performance |
+| 5th | **OCaml** | 64.9ms      | Functional programming with GC overhead |
 
-*Benchmarked across 6 file sizes from 0.9KB to 2.4MB with 20 iterations each*
+*Current optimized results on 0.9KB sample file with 5 iterations each*
 
 ## 📁 Project Structure
 
@@ -103,6 +103,29 @@ lua benchmark.lua quick
 
 # Comprehensive benchmark (6 file sizes)
 lua benchmark.lua benchmark
+
+# Git comparison benchmarking
+lua benchmark.lua quick HEAD~1          # Compare against previous commit
+lua benchmark.lua benchmark main        # Compare against main branch
+lua benchmark.lua comprehensive f456830 # Compare against specific commit
+```
+
+#### Git Comparison Features
+The benchmark tool supports comparing current implementations against any Git reference (branch, commit hash, or tag). This enables:
+
+- **Performance regression detection** during development
+- **Impact analysis** of optimization changes  
+- **Historical performance tracking** across commits
+- **Multi-implementation comparison** showing which languages benefit most from changes
+
+Example output:
+```
+GIT COMPARISON ANALYSIS
+==================================================
+Go:
+  Current (fixml):    8.69ms avg (σ=0.00ms)
+  Base (HEAD~1):      82.02ms avg (σ=0.00ms)
+  Performance:   🟢 +89.4% improvement
 ```
 
 ## 🏗️ Architecture & Design

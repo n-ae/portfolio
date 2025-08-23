@@ -21,11 +21,7 @@ local WHITESPACE_THRESHOLD = 32        -- ASCII values <= this are whitespace
 local FILE_PERMISSIONS = 644           -- Standard file permissions (octal in other langs)
 local IO_CHUNK_SIZE = 65536            -- 64KB chunks for I/O operations
 
--- Pre-cache common ASCII characters for performance
-local char_cache = {}
-for i = 0, 255 do
-	char_cache[i] = string.char(i)
-end
+-- Simplified: Use string.char() directly (caching overhead not worth it)
 
 -- Lightweight markers
 local SELF_CLOSING_PATTERN = "/>"
@@ -88,7 +84,7 @@ local function clean_content(content)
 			end
 		else
 			result_size = result_size + 1
-			result[result_size] = char_cache[b]
+			result[result_size] = string.char(b)
 			i = i + 1
 		end
 	end
@@ -140,7 +136,7 @@ local function normalize_whitespace_preserving_attributes(s)
 	
 	for i = 1, len do
 		local b = s:byte(i)
-		local c = char_cache[b]
+		local c = string.char(b)
 		
 		if not in_quotes and (c == '"' or c == "'") then
 			in_quotes = true
