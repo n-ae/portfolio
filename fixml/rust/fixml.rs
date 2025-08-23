@@ -68,31 +68,9 @@ fn clean_content(content: &str) -> String {
         content
     };
     
-    // Fast line ending normalization using byte operations
-    let bytes = content_to_process.as_bytes();
-    let mut i = 0;
-    while i < bytes.len() {
-        if bytes[i] == b'\r' {
-            // Convert \r\n or \r to \n
-            if i + 1 < bytes.len() && bytes[i + 1] == b'\n' {
-                i += 1; // skip \n after \r
-            }
-            result.push('\n');
-        } else if bytes[i] < 128 {
-            // Fast path for ASCII characters
-            result.push(bytes[i] as char);
-        } else {
-            // Slower path for non-ASCII (should be rare in XML files)
-            let remaining = &content_to_process.as_bytes()[i..];
-            if let Ok(s) = std::str::from_utf8(remaining) {
-                if let Some(ch) = s.chars().next() {
-                    result.push(ch);
-                    i += ch.len_utf8() - 1; // -1 because loop will increment
-                }
-            }
-        }
-        i += 1;
-    }
+    // Simplified line ending normalization - use Rust's built-in methods
+    // This is much faster and simpler than manual byte operations
+    result.push_str(&content_to_process.replace("\r\n", "\n").replace('\r', "\n"));
     
     result
 }
@@ -138,81 +116,52 @@ fn is_self_contained(s: &str) -> bool {
     false
 }
 
-// Normalize whitespace by replacing multiple spaces with single space, preserving attribute values
+// Simplified whitespace normalization leveraging Rust's optimized string methods
 fn normalize_whitespace(s: &str) -> String {
-    // Quick check - if no whitespace or quotes, return as-is
-    if !s.contains(' ') && !s.contains('\t') && !s.contains('\n') && 
-       !s.contains('\r') && !s.contains('"') && !s.contains('\'') {
-        return s.to_string();
+    // Quick check - if no quotes, use simple normalization
+    if !s.contains('"') && !s.contains('\'') {
+        // Optimized: avoid intermediate vector allocation
+        return s.split_whitespace().fold(String::new(), |mut acc, word| {
+            if !acc.is_empty() { acc.push(' '); }
+            acc.push_str(word);
+            acc
+        });
     }
     
+    // For quoted content, use simplified character iteration
     let mut result = String::with_capacity(s.len());
-    let bytes = s.as_bytes();
+    let mut chars = s.chars();
     let mut in_quotes = false;
-    let mut quote_char = 0u8;
+    let mut quote_char = '\0';
     let mut prev_was_space = false;
-    let mut i = 0;
     
-    // Skip leading whitespace
-    while i < bytes.len() && (bytes[i] == b' ' || bytes[i] == b'\t' || bytes[i] == b'\n' || bytes[i] == b'\r') {
-        i += 1;
-    }
-    
-    while i < bytes.len() {
-        let b = bytes[i];
-        
-        if !in_quotes && (b == b'"' || b == b'\'') {
+    while let Some(c) = chars.next() {
+        if !in_quotes && (c == '"' || c == '\'') {
             in_quotes = true;
-            quote_char = b;
-            result.push(b as char);
+            quote_char = c;
+            result.push(c);
             prev_was_space = false;
-        } else if in_quotes && b == quote_char {
+        } else if in_quotes && c == quote_char {
             in_quotes = false;
-            result.push(b as char);
+            result.push(c);
             prev_was_space = false;
         } else if in_quotes {
             // Inside quotes: preserve all characters
-            if b < 128 {
-                result.push(b as char);
-            } else {
-                // Handle non-ASCII inside quotes (rare)
-                if let Ok(s_slice) = std::str::from_utf8(&bytes[i..]) {
-                    if let Some(ch) = s_slice.chars().next() {
-                        result.push(ch);
-                        i += ch.len_utf8() - 1;
-                    }
-                }
-            }
+            result.push(c);
             prev_was_space = false;
-        } else if b == b' ' || b == b'\t' || b == b'\n' || b == b'\r' {
+        } else if c.is_whitespace() {
             // Outside quotes: normalize whitespace
             if !prev_was_space {
                 result.push(' ');
                 prev_was_space = true;
             }
         } else {
-            if b < 128 {
-                result.push(b as char);
-            } else {
-                // Handle non-ASCII (rare in XML attributes)
-                if let Ok(s_slice) = std::str::from_utf8(&bytes[i..]) {
-                    if let Some(ch) = s_slice.chars().next() {
-                        result.push(ch);
-                        i += ch.len_utf8() - 1;
-                    }
-                }
-            }
+            result.push(c);
             prev_was_space = false;
         }
-        i += 1;
     }
     
-    // Remove trailing whitespace
-    while result.ends_with(' ') {
-        result.pop();
-    }
-    
-    result
+    result.trim().to_string()
 }
 
 // Pre-computed indentation strings (standardized across all implementations)
@@ -284,24 +233,20 @@ fn process_xml_with_deduplication(content: &str) -> (String, usize) {
         result.push_str(trimmed);
         result.push('\n');
         
-        // Adjust indent for opening tags AFTER applying indentation  
-        // Must not be self-contained (like <tag>content</tag> or <tag/>)
-        let mut is_opening_tag = false;
-        if let Some(first_char) = trimmed.chars().next() {
-            if first_char == '<' {
-                let bytes = trimmed.as_bytes();
-                is_opening_tag = bytes.len() > 1 && 
-                                bytes[1] != b'/' &&  // not "</
-                                bytes[1] != b'!' &&  // not "<!--"
-                                bytes[1] != b'?' &&  // not "<?"
-                                !trimmed.ends_with("/>");
+        // Fast opening tag detection - avoid expensive self-contained check when possible
+        let bytes = trimmed.as_bytes();
+        let is_opening_tag = if !bytes.is_empty() && bytes[0] == b'<' && bytes.len() > 1 {
+            if bytes[1] == b'/' || bytes[1] == b'!' || bytes[1] == b'?' {
+                false // Definitely not opening tag
+            } else if trimmed.ends_with("/>") {
+                false // Self-closing tag
+            } else {
+                // Only call expensive is_self_contained for potential opening tags
+                !is_self_contained(trimmed)
             }
-        }
-        
-        // Check if it's self-contained with content like <tag>content</tag>
-        if is_opening_tag && is_self_contained(trimmed) {
-            is_opening_tag = false;
-        }
+        } else {
+            false
+        };
         
         if is_opening_tag {
             indent_level += 1;

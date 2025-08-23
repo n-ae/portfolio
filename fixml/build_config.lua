@@ -43,7 +43,8 @@ local function get_implementations()
         {"Go", "go/fixml"},
         {"Rust", "rust/fixml"},
         {"OCaml", "ocaml/fixml"},
-        {"Lua", "lua lua/fixml.lua"}  -- Lua interpreter handles optimization
+        {"Lua", "lua lua/fixml.lua"},  -- Lua interpreter handles optimization
+        {"Python", "python3 python/fixml.py"}  -- Python interpreter
     }
 end
 
@@ -55,9 +56,17 @@ local function verify_implementations()
     for _, impl in ipairs(implementations) do
         local name, command = impl[1], impl[2]
         
-        -- For Lua, check if the script exists
+        -- For Lua and Python, check if the script exists
         if name == "Lua" then
             local file = io.open("lua/fixml.lua", "r")
+            if file then
+                file:close()
+                table.insert(available, impl)
+            else
+                print("Warning: " .. name .. " implementation not available")
+            end
+        elseif name == "Python" then
+            local file = io.open("python/fixml.py", "r")
             if file then
                 file:close()
                 table.insert(available, impl)

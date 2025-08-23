@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <chinese>中文测试内容</chinese>
+  <japanese>日本語テスト</japanese>
+  <arabic>اختبار العربية</arabic>
+  <russian>Русский тест</russian>
+  <emoji>🚀 🌟 💡 🎯 ⚡ 🔥 🎨 🌈</emoji>
+  <symbols>© ® ™ € £ ¥ § ¶ † ‡ • … ‰ ′ ″ ‹ › " " ' ' – — ¡ ¿</symbols>
+  <math>∑ ∏ ∫ √ ∞ ≈ ≠ ≤ ≥ ± × ÷ π ∆ Ω α β γ δ ε θ λ μ σ φ ψ</math>
+  <mixed attr="混合属性 with 🌟">Content with émojis 🎯 and àccénts</mixed>
+  <quotes attr1="single'quote" attr2='double"quote' attr3="both'and&quot;quotes">Complex quotes</quotes>
+  <whitespace>   	Multiple    spaces   and	tabs   </whitespace>
+  <newlines>Line1
+Line2
+Line3</newlines>
+  <cdata><![CDATA[Raw content with <tags> & special chars "quotes" 'apostrophes' & entities]]></cdata>
+  <entities>&amp; &lt; &gt; &quot; &apos; &#8364; &#x20AC;</entities>
+  <zero-width>​‌‍‎‏</zero-width>
+  <bom>﻿BOM at start</bom>
+</root>

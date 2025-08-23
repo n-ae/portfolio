@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <empty-lines>
+    Content with empty lines
+  </empty-lines>
+  <mixed-whitespace>			Content with tabs and spaces			</mixed-whitespace>
+  <trailing-whitespace>Content with trailing spaces    </trailing-whitespace>
+  <leading-whitespace>    Content with leading spaces</leading-whitespace>
+  <all-whitespace>                    </all-whitespace>
+  <cr-lf>Line1&#13;&#10;Line2</cr-lf>
+  <just-cr>Line1&#13;Line2</just-cr>
+  <just-lf>Line1&#10;Line2</just-lf>
+  <mixed-line-endings>Line1
+    Line2&#13;&#10;Line3&#13;Line4&#10;Line5</mixed-line-endings>
+    <zero-width-chars>​‌‍‎‏Content with zero-width chars</zero-width-chars>
+    <unicode-whitespace> ᠎           　Content with Unicode whitespace</unicode-whitespace>
+  </root>

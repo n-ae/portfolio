@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <different>Unique content 1</different>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <different>Unique content 2</different>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <duplicate>Same content</duplicate>
+  <different>Unique content 3</different>
+  <whitespace-variant>  Same content  </whitespace-variant>
+  <whitespace-variant>Same content</whitespace-variant>
+  <whitespace-variant>	Same content	</whitespace-variant>
+  <whitespace-variant> Same  content </whitespace-variant>
+  <attribute-variant key="value">Same content</attribute-variant>
+  <attribute-variant key="value">Same content</attribute-variant>
+  <attribute-variant key="different">Same content</attribute-variant>
+  <attribute-variant key = "value">Same content</attribute-variant>
+  <self-closing-duplicate/>
+  <self-closing-duplicate/>
+  <self-closing-duplicate/>
+  <self-closing-duplicate attr="test"/>
+  <self-closing-duplicate attr="test"/>
+  <container-duplicate>
+    <inner>nested</inner>
+  </container-duplicate>
+  <container-duplicate>
+    <inner>nested</inner>
+  </container-duplicate>
+  <container-duplicate>
+    <inner>different</inner>
+  </container-duplicate>
+</root>

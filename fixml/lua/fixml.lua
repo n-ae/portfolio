@@ -134,25 +134,25 @@ local function normalize_whitespace_preserving_attributes(s)
 	local quote_char = nil
 	local prev_space = false
 	
+	-- Optimized loop avoiding string.char conversions
 	for i = 1, len do
 		local b = s:byte(i)
-		local c = string.char(b)
 		
-		if not in_quotes and (c == '"' or c == "'") then
+		if not in_quotes and (b == 34 or b == 39) then -- '"' or "'"
 			in_quotes = true
-			quote_char = c
+			quote_char = b
 			result_size = result_size + 1
-			result[result_size] = c
+			result[result_size] = string.char(b)
 			prev_space = false
-		elseif in_quotes and c == quote_char then
+		elseif in_quotes and b == quote_char then
 			in_quotes = false
 			result_size = result_size + 1
-			result[result_size] = c
+			result[result_size] = string.char(b)
 			prev_space = false
 		elseif in_quotes then
 			-- Inside quotes: preserve all whitespace
 			result_size = result_size + 1
-			result[result_size] = c
+			result[result_size] = string.char(b)
 			prev_space = false
 		elseif b <= WHITESPACE_THRESHOLD then -- standardized whitespace
 			-- Outside quotes: normalize whitespace
@@ -163,7 +163,7 @@ local function normalize_whitespace_preserving_attributes(s)
 			end
 		else
 			result_size = result_size + 1
-			result[result_size] = c
+			result[result_size] = string.char(b)
 			prev_space = false
 		end
 	end
@@ -270,16 +270,13 @@ local function process_xml_file(organize_mode, replace_mode, fix_warnings, input
 	process_lines(cleaned_content, function(line, line_num)
 		local trimmed = fast_trim(line)
 		if #trimmed > 0 then
-			-- Simplified deduplication: use trimmed line directly for better performance
-			local key = trimmed
-			
 			-- Fast container detection: simple tags without spaces (no attributes)
-			local is_container = false
-			local len = #trimmed
-			if len > 2 and trimmed:byte(1) == 60 and trimmed:byte(len) == 62 then -- '<' and '>'
-				-- Check if contains space (indicates attributes)
-				is_container = not trimmed:find(" ", 2, true) -- plain text search from position 2
-			end
+			local is_container = (#trimmed > 2 and 
+			                     trimmed:byte(1) == 60 and trimmed:byte(#trimmed) == 62 and 
+			                     not trimmed:find(" ", 2, true))
+			
+			-- Use normalized key for non-container elements (better deduplication)
+			local key = is_container and trimmed or normalize_whitespace_preserving_attributes(trimmed)
 			
 			if not is_container and seen_elements[key] then
 				duplicates_removed = duplicates_removed + 1
@@ -299,12 +296,23 @@ local function process_xml_file(organize_mode, replace_mode, fix_warnings, input
 				add_output(trimmed)
 				add_output("\n")
 				
-				-- Adjust indent for opening tags AFTER applying indentation
-				-- Only increase indent if it's an opening tag that's NOT self-contained
-				if trimmed:byte(1) == 60 and trimmed:byte(2) ~= 47 and 
-				   trimmed:byte(2) ~= 63 and not trimmed:find(SELF_CLOSING_PATTERN) and
-				   not is_self_contained(trimmed) then -- not self-contained
+				-- Fast opening tag detection - avoid expensive is_self_contained check when possible
+				local is_opening_tag = false
+				if trimmed:byte(1) == 60 and trimmed:byte(2) then
+					local b2 = trimmed:byte(2)
+					if b2 ~= 47 and b2 ~= 63 and b2 ~= 33 and not trimmed:find(SELF_CLOSING_PATTERN) then
+						-- Only call expensive is_self_contained for potential opening tags
+						is_opening_tag = not is_self_contained(trimmed)
+					end
+				end
+				
+				if is_opening_tag then
 					indent_level = indent_level + 1
+					-- Warn about exceeding maximum indent levels but continue processing
+					if indent_level > MAX_INDENT_LEVELS then
+						io.stderr:write("⚠️  Warning: XML nesting exceeds maximum supported depth of " .. MAX_INDENT_LEVELS .. " levels. Indentation may be incorrect.\n")
+						io.stderr:flush()
+					end
 				end
 			end
 		end
@@ -328,25 +336,8 @@ local function process_xml_file(organize_mode, replace_mode, fix_warnings, input
 		error("Could not create output file: " .. output_filename)
 	end
 	
-	-- Ultra-fast bulk write with larger chunks
-	local chunk_size = IO_CHUNK_SIZE  -- Standardized I/O chunk size
-	local current_chunk = {}
-	local chunk_len = 0
-	
-	for i = 1, output_size do
-		chunk_len = chunk_len + 1
-		current_chunk[chunk_len] = output[i]
-		
-		if chunk_len >= chunk_size then
-			out_file:write(table.concat(current_chunk, "", 1, chunk_len))
-			chunk_len = 0
-		end
-	end
-	
-	-- Write remaining chunk
-	if chunk_len > 0 then
-		out_file:write(table.concat(current_chunk, "", 1, chunk_len))
-	end
+	-- Simplified: single write operation is more efficient for most cases
+	out_file:write(table.concat(output, "", 1, output_size))
 	
 	out_file:close()
 

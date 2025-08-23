@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <huge-line attr="This is an extremely long line designed to test buffer handling and memory allocation patterns when processing very long individual lines that might exceed normal buffer sizes and cause reallocations or other memory management issues in different implementations, especially those with fixed buffer sizes or those that pre-allocate based on estimates that might be wrong for edge cases like this one where a single XML element contains an enormous amount of text content that goes on and on and on without any natural breaking points or reasonable length limits">Very long content that continues the theme of being extremely verbose and unnecessarily lengthy to test how different implementations handle memory allocation when dealing with individual XML elements that are much larger than typical use cases would suggest, potentially causing issues with string builders, buffers, or other memory management strategies employed by the various language implementations</huge-line>
+  <huge-attribute really-long-attribute-name-that-keeps-going-and-going-and-going-to-test-attribute-parsing="and-an-equally-long-attribute-value-that-tests-the-same-thing-but-for-attribute-values-instead-of-element-content">Normal content</huge-attribute>
+  <many-attributes 
+    attr1="value1" 
+    attr2="value2" 
+    attr3="value3" 
+    attr4="value4" 
+    attr5="value5" 
+    attr6="value6" 
+    attr7="value7" 
+    attr8="value8" 
+    attr9="value9" 
+    attr10="value10"
+    attr11="value11" 
+    attr12="value12" 
+    attr13="value13" 
+    attr14="value14" 
+    attr15="value15"
+    attr16="value16" 
+    attr17="value17" 
+    attr18="value18" 
+    attr19="value19" 
+    attr20="value20">Content with many attributes</many-attributes>
+  <massive-cdata><![CDATA[
+This CDATA section contains a huge amount of raw text content that includes all sorts of special characters, symbols, and formatting that would normally need to be escaped in XML but doesn't need to be escaped here because it's in a CDATA section. This includes things like <tags>, & entities, "quotes", 'apostrophes', and other content that might confuse parsers if they're not handling CDATA properly. The goal is to create a very large CDATA section that tests memory handling for raw content sections.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+This continues with more Lorem ipsum text to make the CDATA section quite large and test how different implementations handle large blocks of raw text content within XML structures.
+  ]]></massive-cdata>
+  <binary-like-content>&#0;&#1;&#2;&#3;&#4;&#5;&#6;&#7;&#8;&#9;&#10;&#11;&#12;&#13;&#14;&#15;</binary-like-content>
+  <high-unicode>🚀🌟💡🎯⚡🔥🎨🌈🦄🎭🎪🎨🎯🌟💡⚡🔥🌈🚀</high-unicode>
+</root>

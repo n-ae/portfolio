@@ -203,22 +203,20 @@ func processAsText(args Args, content string, hasXMLDecl bool) error {
 					normalizedKey := normalizeWhitespacePreservingAttributes(trimmed)
 					if seenElements[normalizedKey] {
 						duplicatesRemoved++
-						goto nextLine
+						continue // Skip duplicate line - much cleaner than goto
 					}
 					seenElements[normalizedKey] = true
 				}
-				// Determine if this is a closing tag using byte comparison
+				// Simplified tag detection
 				isClosingTag := len(trimmed) >= 2 && trimmed[0] == '<' && trimmed[1] == '/'
-				// Determine if this is an opening tag that needs indentation increase
-				// Must not be self-contained (like <tag>content</tag> or <tag/>)
-				isOpeningTag := len(trimmed) > 0 && trimmed[0] == '<' &&
-					!(len(trimmed) >= 2 && trimmed[1] == '/') &&                    // not closing tag
-					!(len(trimmed) >= 4 && trimmed[1] == '!' && trimmed[2] == '-' && trimmed[3] == '-') && // not comment
-					!(len(trimmed) >= 2 && trimmed[1] == '?') &&                    // not processing instruction
-					!strings.HasSuffix(trimmed, "/>")
-				// Check if it's self-contained with content like <tag>content</tag>
-				if isOpeningTag && isSelfContained(trimmed) {
-					isOpeningTag = false
+				isOpeningTag := false
+				
+				// Simple opening tag detection - avoid expensive checks when possible
+				if len(trimmed) > 0 && trimmed[0] == '<' && 
+				   !(len(trimmed) >= 2 && (trimmed[1] == '/' || trimmed[1] == '!' || trimmed[1] == '?')) &&
+				   !strings.HasSuffix(trimmed, "/>") {
+					// Only call isSelfContained for potential opening tags
+					isOpeningTag = !isSelfContained(trimmed)
 				}
 				// Adjust indent level for closing tags BEFORE writing the line
 				if isClosingTag {
@@ -244,10 +242,15 @@ func processAsText(args Args, content string, hasXMLDecl bool) error {
 		if err != nil {
 			return fmt.Errorf("error reading content: %v", err)
 		}
-		continue
-		nextLine:
-		// Label target for duplicate-skipped lines
-		_ = 0
+		// Continue to next line if there are more to process
+	}
+	
+	// Ensure final newline for consistency with other implementations  
+	if output.Len() > 0 {
+		bytes := output.Bytes()
+		if bytes[len(bytes)-1] != '\n' {
+			output.WriteByte('\n')
+		}
 	}
 	
 	outputFilename := getOutputFilename(args.file, args.replace)
@@ -423,30 +426,10 @@ func containsQuotes(s string) bool {
 	return strings.ContainsAny(s, "\"'")
 }
 
-// Simpler whitespace normalization for strings without quotes
+// Simplified whitespace normalization for strings without quotes
 func normalizeSimpleWhitespace(s string) string {
-	result := builderPool.Get().(*strings.Builder)
-	defer func() {
-		result.Reset()
-		builderPool.Put(result)
-	}()
-	result.Grow(len(s))
-	prevSpace := false
-	
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		if c <= WHITESPACE_THRESHOLD { // standardized whitespace
-			if !prevSpace {
-				result.WriteByte(' ')
-				prevSpace = true
-			}
-		} else {
-			result.WriteByte(c)
-			prevSpace = false
-		}
-	}
-	
-	return strings.TrimSpace(result.String())
+	// Use Go's optimized Fields and Join for simple cases - cleaner and often faster
+	return strings.Join(strings.Fields(s), " ")
 }
 
 func main() {

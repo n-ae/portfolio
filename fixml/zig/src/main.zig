@@ -126,16 +126,24 @@ fn isSelfContained(s: []const u8) bool {
     // Must start with < and end with >
     if (trimmed[0] != '<' or trimmed[trimmed.len - 1] != '>') return false;
 
-    // Find first > and last <
+    // Find first > and last < in a single optimized pass
     var first_gt: ?usize = null;
     var last_lt: ?usize = null;
 
-    for (trimmed, 0..) |c, i| {
+    // Forward scan for first >
+    for (trimmed[1..], 1..) |c, i| {
         if (c == '>' and first_gt == null) {
             first_gt = i;
+            break;
         }
-        if (c == '<' and i > 0) { // Skip the initial <
+    }
+    
+    // Backward scan for last < 
+    var i = trimmed.len - 1;
+    while (i > 0) : (i -= 1) {
+        if (trimmed[i] == '<') {
             last_lt = i;
+            break;
         }
     }
 
@@ -161,13 +169,19 @@ fn isSelfContained(s: []const u8) bool {
 fn simpleContentHash(s: []const u8) u64 {
     if (s.len == 0) return 0;
 
-    // For simple cases without quotes, use fast string hash
-    for (s) |c| {
-        if (c == '"' or c == '\'') {
-            return hashNormalizedContent(s);
-        }
+    // Fast vectorized quote detection when possible  
+    const has_quotes = std.mem.indexOfAny(u8, s, "\"'") != null;
+    if (has_quotes) {
+        return hashNormalizedContent(s);
     }
-    return std.hash_map.hashString(s);
+    
+    // Optimized FNV-1a hash - often faster than generic hash functions
+    var hash: u64 = 0xcbf29ce484222325;
+    for (s) |byte| {
+        hash ^= byte;
+        hash *%= 0x100000001b3;
+    }
+    return hash;
 }
 
 /// Advanced hash generation with whitespace normalization for complex XML
@@ -295,7 +309,9 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
 
     var result = std.ArrayList(u8){};
     defer result.deinit(allocator);
-    try result.ensureTotalCapacity(allocator, content.len + 1024);
+    // Better capacity estimation: content size + 25% for indentation + 1KB safety margin
+    const estimated_capacity = content.len + (content.len >> 2) + 1024;
+    try result.ensureTotalCapacity(allocator, estimated_capacity);
 
     var seen_hashes = std.AutoHashMap(u64, void).init(allocator);
     // Dynamic capacity based on estimated line count  
@@ -309,27 +325,20 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
     const indent_spaces = "                                                                                                                                "; // MAX_INDENT_LEVELS * 2 spaces
 
     while (line_start < content.len) {
+        // Optimized line finding - skip newline character efficiently
         const line_end = std.mem.indexOfScalarPos(u8, content, line_start, '\n') orelse content.len;
+        
+        // Combine empty line check with trimming for better cache usage
+        if (line_start < line_end) {
+            const line = content[line_start..line_end];
+            const trimmed = fastTrim(line);
 
-        // Early continue for empty lines
-        if (line_end <= line_start) {
-            line_start = line_end + 1;
-            continue;
+            if (trimmed.len > 0) {
+                try processLine(&result, &seen_hashes, &duplicates_removed, &indent_level, trimmed, allocator, indent_spaces);
+            }
         }
 
-        const line = content[line_start..line_end];
-        const trimmed = fastTrim(line);
-
-        // Early continue for whitespace-only lines
-        if (trimmed.len == 0) {
-            line_start = line_end + 1;
-            continue;
-        }
-
-        // Process the line
-        try processLine(&result, &seen_hashes, &duplicates_removed, &indent_level, trimmed, allocator, indent_spaces);
-
-        line_start = line_end + 1;
+        line_start = if (line_end < content.len) line_end + 1 else content.len;
     }
 
     return .{ .content = try result.toOwnedSlice(allocator), .duplicates = duplicates_removed };
@@ -363,8 +372,13 @@ fn processFile(allocator: std.mem.Allocator, args: Args) !void {
     };
     defer allocator.free(content);
 
+    // Remove BOM if present for consistency across implementations
+    const cleaned_content = if (content.len >= 3 and 
+        content[0] == 0xEF and content[1] == 0xBB and content[2] == 0xBF)
+        content[3..] else content;
+
     // Early XML declaration detection
-    const has_xml_decl = hasXmlDeclaration(content);
+    const has_xml_decl = hasXmlDeclaration(cleaned_content);
 
     if (!has_xml_decl) {
         print("⚠️  XML Best Practice Warnings:\n", .{});
@@ -379,7 +393,7 @@ fn processFile(allocator: std.mem.Allocator, args: Args) !void {
     }
 
     // Process content with deduplication and proper XML formatting
-    const process_result = try processXmlWithDeduplication(allocator, content);
+    const process_result = try processXmlWithDeduplication(allocator, cleaned_content);
     defer allocator.free(process_result.content);
 
     // Build final content with minimal allocations

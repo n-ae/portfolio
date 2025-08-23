@@ -64,17 +64,19 @@ let clean_content content =
     done;
     Buffer.contents result
 
+(* Simplified trim using functional approach *)
 let trim s =
+  let is_space c = c <= ' ' in
   let len = String.length s in
-  let l = ref 0 in
-  let r = ref (len - 1) in
-
-  (* Find first non-whitespace *)
-  while !l < len && s.[!l] <= ' ' do incr l done;
-  (* Find last non-whitespace *)
-  while !r >= 0 && s.[!r] <= ' ' do decr r done;
-
-  if !l > !r then "" else String.sub s !l (!r - !l + 1)
+  let rec find_start i =
+    if i >= len || not (is_space s.[i]) then i else find_start (i + 1)
+  in
+  let rec find_end i =
+    if i < 0 || not (is_space s.[i]) then i else find_end (i - 1)
+  in
+  let start = find_start 0 in
+  let finish = find_end (len - 1) in
+  if start > finish then "" else String.sub s start (finish - start + 1)
 
 module StringSet = Set.Make(String)
 
@@ -92,47 +94,48 @@ let is_self_contained trimmed =
   len >= 7 && trimmed.[0] = '<' && trimmed.[len-1] = '>' &&
   String.contains trimmed '>' && String.rindex trimmed '<' > String.index trimmed '>'
 
-(* Normalize whitespace while preserving attribute values *)
+(* Optimized hybrid functional/imperative approach *)
 let normalize_whitespace s =
   let len = String.length s in
-  let result = Buffer.create len in
-  let i = ref 0 in
-  let prev_space = ref false in
-  let in_quotes = ref false in
-  let quote_char = ref '\000' in
-  
-  while !i < len do
-    let c = s.[!i] in
-    if not !in_quotes && (c = '"' || c = '\'') then (
-      Buffer.add_char result c;
-      prev_space := false;
-      in_quotes := true;
-      quote_char := c
-    ) else if !in_quotes && c = !quote_char then (
-      Buffer.add_char result c;
-      prev_space := false;
-      in_quotes := false;
-      quote_char := '\000'
-    ) else if !in_quotes then (
-      (* Inside quotes: preserve all whitespace *)
-      Buffer.add_char result c;
-      prev_space := false
-    ) else if c = ' ' || c = '\t' || c = '\n' || c = '\r' then (
-      (* Outside quotes: normalize whitespace *)
-      if not !prev_space then Buffer.add_char result ' ';
-      prev_space := true
-    ) else (
-      Buffer.add_char result c;
-      prev_space := false
-    );
-    incr i
-  done;
-  trim (Buffer.contents result)
+  if len = 0 then s
+  else
+    (* Quick path for simple cases - use functional style *)
+    if not (String.contains s '"' || String.contains s '\'') then
+      s |> Str.split (Str.regexp "[ \t\n\r]+") |> String.concat " " |> trim
+    else
+      (* For quoted content - use imperative approach for better performance *)
+      let result = Buffer.create len in
+      let in_quotes = ref false in
+      let quote_char = ref '\000' in
+      let prev_space = ref false in
+      for i = 0 to len - 1 do
+        let c = s.[i] in
+        if not !in_quotes && (c = '"' || c = '\'') then (
+          Buffer.add_char result c;
+          in_quotes := true;
+          quote_char := c;
+          prev_space := false
+        ) else if !in_quotes && c = !quote_char then (
+          Buffer.add_char result c;
+          in_quotes := false;
+          prev_space := false
+        ) else if !in_quotes then (
+          Buffer.add_char result c;
+          prev_space := false
+        ) else if c = ' ' || c = '\t' || c = '\n' || c = '\r' then (
+          if not !prev_space then Buffer.add_char result ' ';
+          prev_space := true
+        ) else (
+          Buffer.add_char result c;
+          prev_space := false
+        )
+      done;
+      Buffer.contents result |> trim
 
 (* Optimized XML processing with deduplication and indentation *)
 let process_xml_with_deduplication content =
   let lines = String.split_on_char '\n' content in
-  let estimated_size = String.length content + String.length content / 4 in
+  let estimated_size = String.length content + (String.length content lsr 2) + 1024 in
   let result = Buffer.create estimated_size in
   let indent_level = ref 0 in
   let seen_elements = ref StringSet.empty in
@@ -169,18 +172,25 @@ let process_xml_with_deduplication content =
         Buffer.add_string result trimmed;
         Buffer.add_char result '\n';
         
-        (* Adjust indent for opening tags AFTER applying indentation *)
-        let is_opening_tag = String.length trimmed > 0 && trimmed.[0] = '<' && 
-                            not (String.length trimmed > 1 && trimmed.[1] = '/') &&
-                            not (String.length trimmed > 1 && trimmed.[1] = '?') &&
-                            not (String.length trimmed >= 2 && 
-                                 String.sub trimmed (String.length trimmed - 2) 2 = "/>") in
+        (* Determine if this is an opening tag using functional approach *)
+        let check_opening_tag s =
+          let len = String.length s in
+          len > 0 && s.[0] = '<' &&
+          not (len > 1 && s.[1] = '/') &&
+          not (len > 1 && s.[1] = '?') &&
+          not (len >= 2 && String.sub s (len - 2) 2 = "/>") &&
+          not (is_self_contained s)
+        in
+        let is_opening_tag = check_opening_tag trimmed in
         
-        (* Check if self-contained *)
-        let is_opening_tag = is_opening_tag && not (is_self_contained trimmed) in
-        
-        if is_opening_tag then
-          incr indent_level
+        if is_opening_tag then (
+          incr indent_level;
+          (* Warn about exceeding maximum indent levels but continue processing *)
+          if !indent_level > max_indent_levels then (
+            Printf.eprintf "⚠️  Warning: XML nesting exceeds maximum supported depth of %d levels. Indentation may be incorrect.\n" max_indent_levels;
+            flush_all ()
+          )
+        )
       )
     )
   ) lines;

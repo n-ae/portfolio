@@ -1,9 +1,9 @@
 #!/usr/bin/env lua
 
--- FIXML Unified Test Script - Simplified
+-- FIXML Unified Test Script - Enhanced
 -- Usage: lua test.lua [mode] [languages...]
--- Modes: quick (default), comprehensive
--- Languages: go, rust, lua, ocaml, zig, all (default)
+-- Modes: quick (default), comprehensive, edge-cases, all
+-- Languages: go, rust, lua, ocaml, zig, python, all (default)
 
 -- Import shared build configuration
 local build_config = require("build_config")
@@ -97,8 +97,30 @@ local function run_test(lang, mode, file)
 end
 
 local function get_test_files(mode)
-	if mode ~= "quick" then
-		-- Comprehensive: all XML files except organized/expected
+	if mode == "edge-cases" then
+		-- Edge cases: specialized tests for boundary conditions
+		local files = {}
+		local handle = io.popen("ls tests/edge-cases/*.xml 2>/dev/null")
+		for line in handle:lines() do
+			if not line:match("%.organized%.") and not line:match("%.expected%.") then
+				table.insert(files, line)
+			end
+		end
+		handle:close()
+		return files
+	elseif mode == "comprehensive" or mode == "all" then
+		-- Comprehensive: all XML files from samples and edge-cases
+		local files = {}
+		local handle = io.popen("ls tests/samples/*.xml tests/edge-cases/*.xml 2>/dev/null")
+		for line in handle:lines() do
+			if not line:match("%.organized%.") and not line:match("%.expected%.") then
+				table.insert(files, line)
+			end
+		end
+		handle:close()
+		return files
+	elseif mode ~= "quick" then
+		-- Standard comprehensive: just samples directory
 		local files = {}
 		local handle = io.popen("ls tests/samples/*.xml 2>/dev/null")
 		for line in handle:lines() do

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <unclosed>This tag is never closed
+  <selfclosing/>
+  <nested><inner>content</inner></nested>
+  <mismatched>content</wrong>
+  <empty1></empty1>
+  <empty2/>
+  <attributes key="value" single='value' mixed="single'inside" complex='double"inside'/>
+  <spaces attr = "spaced" attr2= "more spaces" />
+  <></>
+  <123invalid>numeric start</123invalid>
+  <-invalid>hyphen start</-invalid>
+  <valid-hyphen>valid</valid-hyphen>
+  <under_score>valid</under_score>
+  <dot.name>valid</dot.name>
+  <namespace:name>valid</namespace:name>
+  <!-- Unclosed comment
+  <comment-inside><!-- nested comment --></comment-inside>
+  <cdata-unclosed><![CDATA[This CDATA is not closed properly</cdata-unclosed>
+  <processing><?xml-stylesheet href="test.xsl"?></processing>
+  <script><script>alert('xss')</script></script>
+</root>

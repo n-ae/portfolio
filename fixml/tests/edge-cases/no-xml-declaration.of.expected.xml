@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <test>File without XML declaration</test>
+  <duplicate>Same content</duplicate>
+  <whitespace>   Spaces   and   tabs   </whitespace>
+</root>
