@@ -1,0 +1,5 @@
+<root>
+  <test>Content with BOM at start</test>
+  <unicode>Unicode test: 测试内容 🚀 العربية Русский</unicode>
+  <symbols>Special symbols: © ® ™ € £ ¥</symbols>
+</root>

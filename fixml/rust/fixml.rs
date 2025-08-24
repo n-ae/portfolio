@@ -100,17 +100,38 @@ fn is_container_element(s: &str) -> bool {
 // Check if a string is self-contained like <tag>content</tag>
 fn is_self_contained(s: &str) -> bool {
     let trimmed = s.trim();
+    if trimmed.len() < 7 { // Minimum: <a>b</a>
+        return false;
+    }
     if !trimmed.starts_with('<') || !trimmed.ends_with('>') {
         return false;
     }
     
-    // Find first > and last <
-    if let Some(first_gt) = trimmed.find('>') {
-        if let Some(last_lt) = trimmed.rfind('<') {
-            // Must have content between > and <, and last part must start with </
-            return first_gt < last_lt && 
-                   first_gt + 1 < last_lt && 
-                   trimmed[last_lt..].starts_with("</");
+    // Extract opening tag name
+    let tag_name_start = 1; // Skip '<'
+    let mut tag_name_end = None;
+    
+    for (i, c) in trimmed[tag_name_start..].char_indices() {
+        if c == ' ' || c == '>' || c == '\t' {
+            tag_name_end = Some(tag_name_start + i);
+            break;
+        }
+    }
+    
+    if let Some(end) = tag_name_end {
+        let tag_name = &trimmed[tag_name_start..end];
+        
+        // Check if line ends with </tagname>
+        if trimmed.len() >= tag_name.len() + 3 &&
+           trimmed.chars().nth_back(0) == Some('>') &&
+           trimmed.len() >= tag_name.len() + 3 {
+            
+            let potential_close_start = trimmed.len() - tag_name.len() - 3;
+            if potential_close_start < trimmed.len() &&
+               trimmed[potential_close_start..].starts_with("</") {
+                let closing_tag_name = &trimmed[potential_close_start + 2..trimmed.len() - 1];
+                return closing_tag_name == tag_name;
+            }
         }
     }
     false
@@ -183,7 +204,7 @@ static INDENT_STRINGS: [&str; 65] = [
 ];
 
 // Optimized O(n) XML processing with deduplication and indentation
-fn process_xml_with_deduplication(content: &str) -> (String, usize) {
+fn process_xml_with_deduplication(content: &str, strip_xml_declaration: bool) -> (String, usize) {
     let mut result = String::with_capacity(content.len() + content.len() / 4);
     let mut indent_level = 0i32;
     let mut seen_elements = HashSet::with_capacity(std::cmp::min(
@@ -195,6 +216,12 @@ fn process_xml_with_deduplication(content: &str) -> (String, usize) {
     for line in content.lines() {
         let trimmed = line.trim();
         if trimmed.is_empty() {
+            continue;
+        }
+        
+        // Skip XML declaration lines only when strip_xml_declaration is true
+        let is_xml_declaration = trimmed.len() >= 5 && trimmed.starts_with("<?xml");
+        if strip_xml_declaration && is_xml_declaration {
             continue;
         }
         
@@ -302,7 +329,9 @@ fn process_file(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
         println!();
     }
     
-    let (processed_content, duplicates_removed) = process_xml_with_deduplication(&cleaned_content);
+    // Never strip XML declarations - always preserve them
+    let should_strip_xml_declaration = false;
+    let (processed_content, duplicates_removed) = process_xml_with_deduplication(&cleaned_content, should_strip_xml_declaration);
     final_content.push_str(&processed_content);
     
     let output_filename = get_output_filename(&args.file, args.replace);

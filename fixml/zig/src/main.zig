@@ -273,26 +273,35 @@ fn processLine(result: *std.ArrayList(u8), seen_hashes: *std.AutoHashMap(u64, vo
     try result.append(allocator, '\n');
 
     // Adjust indent level for opening tags AFTER writing line
-    // Inline self-contained check for performance
+    // Improved self-contained tag detection
     if (is_opening_tag) {
         var should_indent = true;
         if (trimmed.len >= 7) { // minimum: <a>x</a>
-            // Quick check for self-contained pattern: <tag>content</tag>
-            var first_gt: ?usize = null;
-            var last_lt: ?usize = null;
-            for (trimmed, 0..) |c, i| {
-                if (c == '>' and first_gt == null) {
-                    first_gt = i;
-                } else if (c == '<' and i > 0) {
-                    last_lt = i;
-                    break; // Found last <, can stop
+            // Extract opening tag name
+            const tag_name_start: usize = 1; // Skip '<'
+            var tag_name_end: ?usize = null;
+            
+            for (trimmed[tag_name_start..], tag_name_start..) |c, i| {
+                if (c == ' ' or c == '>' or c == '\t') {
+                    tag_name_end = i;
+                    break;
                 }
             }
-            if (first_gt != null and last_lt != null and
-                first_gt.? < last_lt.? and last_lt.? + 1 < trimmed.len and
-                trimmed[last_lt.? + 1] == '/')
-            {
-                should_indent = false;
+            
+            if (tag_name_end) |end| {
+                const tag_name = trimmed[tag_name_start..end];
+                
+                // Check if line ends with </tagname>
+                if (trimmed.len >= tag_name.len + 3 and 
+                    trimmed[trimmed.len - 1] == '>' and
+                    trimmed[trimmed.len - tag_name.len - 2] == '/' and
+                    trimmed[trimmed.len - tag_name.len - 3] == '<')
+                {
+                    const closing_tag_name = trimmed[trimmed.len - tag_name.len - 2..trimmed.len - 1];
+                    if (std.mem.eql(u8, tag_name, closing_tag_name[1..])) { // Skip '/' in closing tag
+                        should_indent = false;
+                    }
+                }
             }
         }
         if (should_indent) {
@@ -302,7 +311,7 @@ fn processLine(result: *std.ArrayList(u8), seen_hashes: *std.AutoHashMap(u64, vo
 }
 
 // XML processing with deduplication and indentation
-fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8) !struct { content: []u8, duplicates: u32 } {
+fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8, strip_xml_declaration: bool) !struct { content: []u8, duplicates: u32 } {
     if (content.len == 0) {
         return .{ .content = try allocator.dupe(u8, content), .duplicates = 0 };
     }
@@ -334,7 +343,11 @@ fn processXmlWithDeduplication(allocator: std.mem.Allocator, content: []const u8
             const trimmed = fastTrim(line);
 
             if (trimmed.len > 0) {
-                try processLine(&result, &seen_hashes, &duplicates_removed, &indent_level, trimmed, allocator, indent_spaces);
+                // Skip XML declaration lines (<?xml...) only when strip_xml_declaration is true
+                const is_xml_declaration = trimmed.len >= 5 and std.mem.startsWith(u8, trimmed, "<?xml");
+                if (!(strip_xml_declaration and is_xml_declaration)) {
+                    try processLine(&result, &seen_hashes, &duplicates_removed, &indent_level, trimmed, allocator, indent_spaces);
+                }
             }
         }
 
@@ -393,7 +406,9 @@ fn processFile(allocator: std.mem.Allocator, args: Args) !void {
     }
 
     // Process content with deduplication and proper XML formatting
-    const process_result = try processXmlWithDeduplication(allocator, cleaned_content);
+    // Strip XML declaration in organize-only mode, preserve it in default/fix-warnings modes
+    const should_strip_xml_declaration = false; // Never strip XML declarations
+    const process_result = try processXmlWithDeduplication(allocator, cleaned_content, should_strip_xml_declaration);
     defer allocator.free(process_result.content);
 
     // Build final content with minimal allocations
@@ -404,6 +419,7 @@ fn processFile(allocator: std.mem.Allocator, args: Args) !void {
     try final_content.ensureTotalCapacity(allocator, final_capacity);
 
     if (args.fix_warnings and !has_xml_decl) {
+        // Add XML declaration only if it was originally missing
         try final_content.appendSlice(allocator, XML_DECLARATION);
         print("🔧 Applied fixes:\n", .{});
         print("  ✓ Added XML declaration\n", .{});

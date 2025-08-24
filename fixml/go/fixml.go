@@ -150,11 +150,14 @@ func processAsText(args Args, content string, hasXMLDecl bool) error {
 	var output bytes.Buffer
 	output.Grow(len(content) + 100)
 	
-	if args.fixWarnings && !hasXMLDecl {
+	shouldStripXMLDeclaration := args.organize && !args.fixWarnings
+	if args.fixWarnings && (shouldStripXMLDeclaration || !hasXMLDecl) {
 		output.WriteString(XML_DECLARATION)
-		fmt.Println("🔧 Applied fixes:")
-		fmt.Println("  ✓ Added XML declaration")
-		fmt.Println()
+		if !hasXMLDecl {
+			fmt.Println("🔧 Applied fixes:")
+			fmt.Println("  ✓ Added XML declaration")
+			fmt.Println()
+		}
 	}
 	
 	indentLevel := 0
@@ -186,6 +189,7 @@ func processAsText(args Args, content string, hasXMLDecl bool) error {
 			}
 			trimmed := fastTrimSpace(line)
 			if trimmed != "" {
+				// Never strip XML declaration lines - always preserve them
 				// Fast container detection - simple tags without spaces (no attributes)
 				isContainer := false
 				if len(trimmed) > 2 && trimmed[0] == '<' && trimmed[len(trimmed)-1] == '>' {
@@ -352,20 +356,35 @@ func isSelfContained(s string) bool {
 		return false
 	}
 	
-	// Find first '>' 
-	firstGT := strings.Index(s, ">")
-	if firstGT == -1 || firstGT == len(s)-1 {
+	// Extract opening tag name
+	tagNameStart := 1 // Skip '<'
+	tagNameEnd := -1
+	
+	for i := tagNameStart; i < len(s); i++ {
+		if s[i] == ' ' || s[i] == '>' || s[i] == '\t' {
+			tagNameEnd = i
+			break
+		}
+	}
+	
+	if tagNameEnd == -1 {
 		return false
 	}
 	
-	// Find last '<'
-	lastLT := strings.LastIndex(s, "<")
-	if lastLT == -1 || lastLT <= firstGT {
-		return false
+	tagName := s[tagNameStart:tagNameEnd]
+	
+	// Check if line ends with </tagname>
+	if len(s) >= len(tagName)+3 &&
+		s[len(s)-1] == '>' &&
+		len(s) >= len(tagName)+3 &&
+		s[len(s)-len(tagName)-2] == '/' &&
+		s[len(s)-len(tagName)-3] == '<' {
+		
+		closingTagName := s[len(s)-len(tagName)-2:len(s)-1]
+		return len(closingTagName) > 1 && closingTagName[1:] == tagName
 	}
 	
-	// Check if it ends with closing tag
-	return len(s) > lastLT+2 && s[lastLT+1] == '/' && s[len(s)-1] == '>'
+	return false
 }
 
 // normalizeWhitespacePreservingAttributes normalizes structural whitespace while preserving attribute values - optimized
@@ -428,8 +447,9 @@ func containsQuotes(s string) bool {
 
 // Simplified whitespace normalization for strings without quotes
 func normalizeSimpleWhitespace(s string) string {
-	// Use Go's optimized Fields and Join for simple cases - cleaner and often faster
-	return strings.Join(strings.Fields(s), " ")
+	// Preserve original whitespace patterns like Zig - only normalize line endings
+	// This maintains distinct whitespace variants (tabs vs spaces vs multiple spaces)
+	return strings.ReplaceAll(strings.ReplaceAll(s, "\r\n", " "), "\r", " ")
 }
 
 func main() {

@@ -1,0 +1,45 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+  <!-- Mix different XML patterns that could confuse parser state -->
+  <ItemGroup>
+    <!-- Mix self-closing and regular closing -->
+    <PackageReference Include="Package1" Version="1.0.0"/>
+    <PackageReference Include="Package1" Version="1.0.0"></PackageReference>
+    <PackageReference Include="Package2" Version="1.0.0" />
+    <PackageReference Include="Package2" Version="1.0.0"><!-- comment --></PackageReference>
+    <!-- Empty content vs self-closing -->
+    <Content Include="file1.txt" />
+    <Content Include="file1.txt"></Content>
+    <Compile Include="class1.cs"/>
+    <Compile Include="class1.cs">
+    </Compile>
+    <!-- Whitespace variations -->
+    <PackageReference Include="Package3" Version="1.0.0" />
+    <PackageReference
+      Include="Package3"
+      Version="1.0.0"
+      />
+      Include="Package4"
+      <PackageReference Include="Package4" Version="1.0.0" />
+      <!-- Mixed with comments and CDATA -->
+      <PackageReference Include="Package5" Version="1.0.0" /><!-- comment -->
+        <PackageReference Include="Package5" Version="1.0.0" />
+        <Content Include="data.xml"><![CDATA[<xml>content</xml>]]></Content>
+        <Content Include="data.xml"></Content>
+        <!-- Processing instructions mixed in -->
+        <?custom-instruction data?>
+        <PackageReference Include="Package6" Version="1.0.0" />
+        <?another-instruction?>
+        <!-- Namespace confusion -->
+        <PackageReference xmlns="http://example.com" Include="Package7" Version="1.0.0" />
+        <PackageReference Include="Package7" Version="1.0.0" />
+      </ItemGroup>
+      <!-- Empty groups with different styles -->
+      <ItemGroup />
+      <ItemGroup></ItemGroup>
+      <ItemGroup>
+      </ItemGroup>
+      <ItemGroup><!-- comment --></ItemGroup>
+    </Project>

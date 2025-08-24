@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"    >
+  <!-- Test various malformed but still parseable structures -->
+  <PropertyGroup   >
+    <TargetFramework   >net6.0</TargetFramework   >
+      <Nullable>enable</Nullable>
+    </PropertyGroup>
+    <ItemGroup>
+      <!-- Self-closing vs explicit closing inconsistencies -->
+      <PackageReference Include="System.Text.Json" Version="6.0.0"/>
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.1"></PackageReference>
+      <Content Include="file1.txt"/>
+      <Content Include="file2.txt"><!-- Extra content --></Content>
+      <Compile Include="Program.cs"   />
+    </ItemGroup>
+    <!-- Empty groups that might confuse deduplication -->
+    <ItemGroup>
+    </ItemGroup>
+    <ItemGroup></ItemGroup>
+    <PropertyGroup>
+    </PropertyGroup>
+    <PropertyGroup></PropertyGroup>
+  </Project>

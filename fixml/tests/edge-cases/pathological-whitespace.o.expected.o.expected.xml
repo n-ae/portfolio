@@ -1,0 +1,18 @@
+<Project>
+  <!-- Mix of tabs and spaces that could confuse parsers -->
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="System.Text.Json" Version="6.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="file1.txt" />
+    <Content Include="file2.txt" />
+    <Content Include="file3.txt" />
+  </ItemGroup>
+</Project>

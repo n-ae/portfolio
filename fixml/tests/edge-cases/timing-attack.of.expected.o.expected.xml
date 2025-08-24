@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Same.Package.Name" Version="1.0.0" />
+    <PackageReference Include="Almost.Same.Package.Name" Version="1.0.0" />
+    <PackageReference Include="Almost.Same.Package.Name" Version="1.0.1" />
+    <PackageReference Include="Almost.Same.Package.Name" Version="1.0.2" />
+    <PackageReference Include="Almost.Same.Package.Name" Version="1.0.3" />
+    <PackageReference Include="Almost.Same.Package.Name" Version="1.0.4" />
+    <PackageReference Include="AaAa" Version="1.0.0" />
+    <PackageReference Include="BBBB" Version="1.0.0" />
+    <PackageReference Include="A" Version="1.0.0" />
+    <PackageReference Include="AB" Version="1.0.0" />
+    <PackageReference Include="ABC" Version="1.0.0" />
+    <PackageReference Include="ABCD" Version="1.0.0" />
+    <PackageReference Include="ABCDE" Version="1.0.0" />
+    <PackageReference Include="ABCDEF" Version="1.0.0" />
+    <PackageReference Include="ABCDEFG" Version="1.0.0" />
+    <PackageReference Include="ABCDEFGH" Version="1.0.0" />
+    <PackageReference Include="ABCDEFGHI" Version="1.0.0" />
+    <PackageReference Include="ABCDEFGHIJ" Version="1.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="1.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="1.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="1.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="1.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.HttpsPolicy" Version="1.0.0" />
+    <PackageReference Include="ZZZ.Last.Package.Alphabetically" Version="1.0.0" />
+    <PackageReference Include="ZZY.Second.Last.Package" Version="1.0.0" />
+    <PackageReference Include="ZZX.Third.Last.Package" Version="1.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="file1.txt" />
+    <Compile Include="Class1.cs" />
+    <None Include="readme.md" />
+  </ItemGroup>
+</Project>
