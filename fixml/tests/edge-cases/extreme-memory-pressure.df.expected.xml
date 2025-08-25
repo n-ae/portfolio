@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <!-- Extreme memory pressure: massive duplicate content with subtle variations -->
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="6.0.0" />
+    <PackageReference Include="System.Text.Json" Version="6.0.1" /><!-- Subtle version difference -->
+    <PackageReference Include="System.Text.Json " Version="6.0.0" /><!-- Trailing space -->
+    <PackageReference Include="System.Text.Json" Version=" 6.0.0" /><!-- Leading space -->
+    <PackageReference Include="System.Text.Json" Version="6.0.0 " /><!-- Trailing space in version -->
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="wwwroot/css/bootstrap.css" />
+    <Content Include="wwwroot\\css\\bootstrap.css" /><!-- Backslash vs forward slash -->
+    <Content Include="wwwroot/css/bootstrap.css " /><!-- Trailing space -->
+    <Content Include=" wwwroot/css/bootstrap.css" /><!-- Leading space -->
+  </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework> net6.0</TargetFramework><!-- Leading space -->
+    <TargetFramework>net6.0 </TargetFramework><!-- Trailing space -->
+    <TargetFramework>NET6.0</TargetFramework><!-- Case difference -->
+  </PropertyGroup>
+</Project>

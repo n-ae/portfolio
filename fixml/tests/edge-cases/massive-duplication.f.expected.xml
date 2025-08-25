@@ -6,8 +6,6 @@
   <different>Unique content 3</different>
   <whitespace-variant>  Same content  </whitespace-variant>
   <whitespace-variant>Same content</whitespace-variant>
-  <whitespace-variant>	Same content	</whitespace-variant>
-  <whitespace-variant> Same  content </whitespace-variant>
   <attribute-variant key="value">Same content</attribute-variant>
   <attribute-variant key="different">Same content</attribute-variant>
   <attribute-variant key = "value">Same content</attribute-variant>

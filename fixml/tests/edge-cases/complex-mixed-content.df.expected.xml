@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ComplexData>
+      Text before
+      <InnerElement attr="value">Inner content</InnerElement>
+      Text between
+      <AnotherInner />
+      Text after
+    </ComplexData>
+    <CDATAWithWhitespace><![CDATA[
+      Indented CDATA content
+        With various whitespace
+      	Tabs and spaces
+    ]]></CDATAWithWhitespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Mixed content with self-contained tags -->
+    <Container>
+      Leading text
+      <SelfContained />
+      Middle text
+      <SelfContained attr="test" />
+      Trailing text
+    </Container>
+    <!-- Preserve vs normalize scenarios -->
+    <Whitespace>
+      Multiple
+      Line
+      Breaks
+    </Whitespace>
+    <Compile Include="normal.cs" />
+  </ItemGroup>
+</Project>

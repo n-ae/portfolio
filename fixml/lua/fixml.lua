@@ -5,8 +5,7 @@
 
 -- Standard constants - consistent across all implementations
 local USAGE = [[
-Usage: lua fixml.lua [--organize] [--replace] [--fix-warnings] <xml-file>
-  --organize, -o      Apply logical organization
+Usage: lua fixml.lua [--replace] [--fix-warnings] <xml-file>
   --replace, -r       Replace original file
   --fix-warnings, -f  Fix XML warnings
   Default: preserve original structure, fix indentation/deduplication only
@@ -28,14 +27,12 @@ local SELF_CLOSING_PATTERN = "/>"
 
 -- Parse command line arguments (optimized)
 local function parse_args()
-	local organize, replace, fix_warnings, file = false, false, false, nil
+	local replace, fix_warnings, file = false, false, nil
 	local args = arg or {}
 	
 	for i = 1, #args do
 		local a = args[i]
-		if a == "--organize" or a == "-o" then
-			organize = true
-		elseif a == "--replace" or a == "-r" then
+		if a == "--replace" or a == "-r" then
 			replace = true
 		elseif a == "--fix-warnings" or a == "-f" then
 			fix_warnings = true
@@ -48,7 +45,7 @@ local function parse_args()
 		print(USAGE)
 		os.exit(1)
 	end
-	return organize, replace, fix_warnings, file
+	return replace, fix_warnings, file
 end
 
 -- Ultra-optimized O(n) single-pass content cleaning
@@ -125,50 +122,72 @@ end
 
 -- Normalize whitespace while preserving attribute values
 local function normalize_whitespace_preserving_attributes(s)
-	local len = #s
-	if len == 0 then return s end
-	
-	local result = {}
-	local result_size = 0
-	local in_quotes = false
-	local quote_char = nil
-	local prev_space = false
-	
-	-- Optimized loop avoiding string.char conversions
-	for i = 1, len do
-		local b = s:byte(i)
-		
-		if not in_quotes and (b == 34 or b == 39) then -- '"' or "'"
-			in_quotes = true
-			quote_char = b
-			result_size = result_size + 1
-			result[result_size] = string.char(b)
-			prev_space = false
-		elseif in_quotes and b == quote_char then
-			in_quotes = false
-			result_size = result_size + 1
-			result[result_size] = string.char(b)
-			prev_space = false
-		elseif in_quotes then
-			-- Inside quotes: preserve all whitespace
-			result_size = result_size + 1
-			result[result_size] = string.char(b)
-			prev_space = false
-		elseif b <= WHITESPACE_THRESHOLD then -- standardized whitespace
-			-- Outside quotes: normalize whitespace
-			if not prev_space then
-				result_size = result_size + 1
-				result[result_size] = " "
-				prev_space = true
-			end
-		else
-			result_size = result_size + 1
-			result[result_size] = string.char(b)
-			prev_space = false
-		end
-	end
-	
-	return fast_trim(table.concat(result, "", 1, result_size))
+  if #s == 0 then
+    return s
+  end
+  
+  local result = {}
+  local in_quotes = false
+  local quote_char = nil
+  local prev_space = false
+  local expecting_attr_value = false
+  local i = 1
+  
+  while i <= #s do
+    local c = s:sub(i, i)
+    
+    if not in_quotes and (c == '"' or c == "'") then
+      in_quotes = true
+      quote_char = c
+      expecting_attr_value = false
+      -- Normalize all quotes to double quotes for consistent deduplication
+      table.insert(result, '"')
+      prev_space = false
+    elseif in_quotes and c == quote_char then
+      in_quotes = false
+      -- Normalize all quotes to double quotes for consistent deduplication
+      table.insert(result, '"')
+      prev_space = false
+    elseif in_quotes then
+      -- Inside quotes: preserve all whitespace
+      table.insert(result, c)
+      prev_space = false
+    elseif c == '=' and not in_quotes then
+      -- Found attribute assignment, next non-space content might be unquoted value
+      table.insert(result, c)
+      expecting_attr_value = true
+      prev_space = false
+    elseif expecting_attr_value and c:byte() > 32 and c ~= '>' and c ~= '/' and c ~= '"' and c ~= "'" then
+      -- Found unquoted attribute value, add quotes around it
+      table.insert(result, '"')
+      
+      -- Find the end of the unquoted value (until space, >, or /)
+      local j = i
+      while j <= #s and s:sub(j, j):byte() > 32 and s:sub(j, j) ~= '>' and s:sub(j, j) ~= '/' do
+        table.insert(result, s:sub(j, j))
+        j = j + 1
+      end
+      table.insert(result, '"')
+      i = j - 1 -- -1 because the loop will increment
+      expecting_attr_value = false
+      prev_space = false
+    elseif c:byte() <= 32 then
+      expecting_attr_value = false
+      -- Outside quotes: normalize whitespace
+      if not prev_space then
+        table.insert(result, ' ')
+        prev_space = true
+      end
+    else
+      expecting_attr_value = false
+      table.insert(result, c)
+      prev_space = false
+    end
+    
+    i = i + 1
+  end
+  
+  return fast_trim(table.concat(result))
 end
 
 -- Lightweight self-contained element check without patterns
@@ -213,7 +232,7 @@ local function process_lines(content, processor)
 end
 
 -- Ultra-optimized XML processing
-local function process_xml_file(organize_mode, replace_mode, fix_warnings, input_file)
+local function process_xml_file(replace_mode, fix_warnings, input_file)
 	-- Read file
 	local file = io.open(input_file, "r")
 	if not file then
@@ -353,15 +372,15 @@ local function process_xml_file(organize_mode, replace_mode, fix_warnings, input
 		io.write(" (removed " .. duplicates_removed .. " duplicates)")
 	end
 
-	local mode_text = organize_mode and " (with logical organization)" or " (preserving original structure)"
+	local mode_text = " (preserving original structure)"
 	print(mode_text)
 end
 
 -- Main execution with error handling
 local function main()
 	local ok, err = pcall(function()
-		local organize, replace, fix_warnings, file = parse_args()
-		process_xml_file(organize, replace, fix_warnings, file)
+		local replace, fix_warnings, file = parse_args()
+		process_xml_file(replace, fix_warnings, file)
 	end)
 	
 	if not ok then

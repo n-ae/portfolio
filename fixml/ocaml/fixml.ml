@@ -1,6 +1,5 @@
 (* Standard constants - consistent across all implementations *)
-let usage = "Usage: fixml [--organize] [--replace] [--fix-warnings] <xml-file>
-  --organize, -o      Apply logical organization
+let usage = "Usage: fixml [--replace] [--fix-warnings] <xml-file>
   --replace, -r       Replace original file
   --fix-warnings, -f  Fix XML warnings
   Default: preserve original structure, fix indentation/deduplication only"
@@ -15,18 +14,15 @@ let file_permissions = 0o644      (* Standard file permissions *)
 let io_chunk_size = 65536        (* 64KB chunks for I/O operations *)
 
 type args = {
-  organize: bool;
   replace: bool; 
   fix_warnings: bool;
   file: string;
 }
 
 let parse_args () =
-  let args = ref { organize = false; replace = false; fix_warnings = false; file = "" } in
+  let args = ref { replace = false; fix_warnings = false; file = "" } in
   let set_file f = args := { !args with file = f } in
   let spec = [
-    ("--organize", Arg.Unit (fun () -> args := { !args with organize = true }), "Apply logical organization");
-    ("-o", Arg.Unit (fun () -> args := { !args with organize = true }), "Apply logical organization");
     ("--replace", Arg.Unit (fun () -> args := { !args with replace = true }), "Replace original file");
     ("-r", Arg.Unit (fun () -> args := { !args with replace = true }), "Replace original file");
     ("--fix-warnings", Arg.Unit (fun () -> args := { !args with fix_warnings = true }), "Fix XML warnings");
@@ -96,41 +92,71 @@ let is_self_contained trimmed =
 
 (* Optimized hybrid functional/imperative approach *)
 let normalize_whitespace s =
-  let len = String.length s in
-  if len = 0 then s
+  if String.length s = 0 then s
   else
-    (* Quick path for simple cases - use functional style *)
-    if not (String.contains s '"' || String.contains s '\'') then
-      s |> Str.split (Str.regexp "[ \t\n\r]+") |> String.concat " " |> trim
-    else
-      (* For quoted content - use imperative approach for better performance *)
-      let result = Buffer.create len in
-      let in_quotes = ref false in
-      let quote_char = ref '\000' in
-      let prev_space = ref false in
-      for i = 0 to len - 1 do
-        let c = s.[i] in
-        if not !in_quotes && (c = '"' || c = '\'') then (
-          Buffer.add_char result c;
-          in_quotes := true;
-          quote_char := c;
-          prev_space := false
-        ) else if !in_quotes && c = !quote_char then (
-          Buffer.add_char result c;
-          in_quotes := false;
-          prev_space := false
-        ) else if !in_quotes then (
-          Buffer.add_char result c;
-          prev_space := false
-        ) else if c = ' ' || c = '\t' || c = '\n' || c = '\r' then (
-          if not !prev_space then Buffer.add_char result ' ';
+    let result = Buffer.create (String.length s) in
+    let in_quotes = ref false in
+    let quote_char = ref '\000' in
+    let prev_space = ref false in
+    let expecting_attr_value = ref false in
+    let i = ref 0 in
+    let len = String.length s in
+    
+    while !i < len do
+      let c = s.[!i] in
+      
+      if not !in_quotes && (c = '"' || c = '\'') then (
+        in_quotes := true;
+        quote_char := c;
+        expecting_attr_value := false;
+        (* Normalize all quotes to double quotes for consistent deduplication *)
+        Buffer.add_char result '"';
+        prev_space := false
+      ) else if !in_quotes && c = !quote_char then (
+        in_quotes := false;
+        (* Normalize all quotes to double quotes for consistent deduplication *)
+        Buffer.add_char result '"';
+        prev_space := false
+      ) else if !in_quotes then (
+        (* Inside quotes: preserve all whitespace *)
+        Buffer.add_char result c;
+        prev_space := false
+      ) else if c = '=' && not !in_quotes then (
+        (* Found attribute assignment, next non-space content might be unquoted value *)
+        Buffer.add_char result c;
+        expecting_attr_value := true;
+        prev_space := false
+      ) else if !expecting_attr_value && c > ' ' && c <> '>' && c <> '/' && c <> '"' && c <> '\'' then (
+        (* Found unquoted attribute value, add quotes around it *)
+        Buffer.add_char result '"';
+        
+        (* Find the end of the unquoted value (until space, >, or /) *)
+        let j = ref !i in
+        while !j < len && s.[!j] > ' ' && s.[!j] <> '>' && s.[!j] <> '/' do
+          Buffer.add_char result s.[!j];
+          incr j
+        done;
+        Buffer.add_char result '"';
+        i := !j - 1; (* -1 because the loop will increment *)
+        expecting_attr_value := false;
+        prev_space := false
+      ) else if c <= ' ' then (
+        expecting_attr_value := false;
+        (* Outside quotes: normalize whitespace *)
+        if not !prev_space then (
+          Buffer.add_char result ' ';
           prev_space := true
-        ) else (
-          Buffer.add_char result c;
-          prev_space := false
         )
-      done;
-      Buffer.contents result |> trim
+      ) else (
+        expecting_attr_value := false;
+        Buffer.add_char result c;
+        prev_space := false
+      );
+      
+      incr i
+    done;
+    
+    trim (Buffer.contents result)
 
 (* Optimized XML processing with deduplication and indentation *)
 let process_xml_with_deduplication content =
@@ -269,7 +295,7 @@ let process_file args =
   if duplicates_removed > 0 then
     Printf.printf " (removed %d duplicates)" duplicates_removed;
   
-  let mode_text = if args.organize then " (with logical organization)" else " (preserving original structure)" in
+  let mode_text = " (preserving original structure)" in
   Printf.printf "%s\n" mode_text
 
 let () =

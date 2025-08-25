@@ -26,11 +26,24 @@ end
 
 local function get_mode_suffix(mode)
 	local suffixes = {
-		["--organize"] = ".o",
 		["--fix-warnings"] = ".f",
-		["--organize --fix-warnings"] = ".of",
 	}
 	return suffixes[mode] or ".d"
+end
+
+local function get_expected_file(file, mode)
+	local suffix = get_mode_suffix(mode)
+	local base_expected_file = file:gsub("%.([^%.]+)$", suffix .. ".expected.%1")
+	
+	-- For default and fix-warnings modes, check if df.expected exists
+	if mode == "" or mode == "--fix-warnings" then
+		local df_expected_file = file:gsub("%.([^%.]+)$", ".df.expected.%1")
+		if file_exists(df_expected_file) then
+			return df_expected_file
+		end
+	end
+	
+	return base_expected_file
 end
 
 local function run_test(lang, mode, file)
@@ -47,8 +60,7 @@ local function run_test(lang, mode, file)
 		return false
 	end
 
-	local suffix = get_mode_suffix(mode)
-	local expected_file = file:gsub("%.([^%.]+)$", suffix .. ".expected.%1")
+	local expected_file = get_expected_file(file, mode)
 	local organized_file = file:gsub("%.([^%.]+)$", ".organized.%1")
 
 	-- Run tool
@@ -188,7 +200,7 @@ if #languages == 0 then
 	languages = { "zig", "go", "rust", "ocaml", "lua" } -- Performance order: fastest to slowest
 end
 
-local test_modes = { "", "--organize", "--fix-warnings", "--organize --fix-warnings" }
+local test_modes = { "", "--fix-warnings" }
 local test_files = get_test_files(mode)
 
 -- Execute tests

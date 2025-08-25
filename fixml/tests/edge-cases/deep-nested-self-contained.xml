@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Container>
+      <Level1>
+        <Level2 attr="value">
+          <Level3>
+            <SelfContained />
+            <Level4>
+              <SelfContained />
+              <Level5>
+                <SelfContained attr="test" />
+                <Level6>
+                  <SelfContained />
+                  <Content>Deep nested content</Content>
+                  <SelfContained />
+                </Level6>
+                <SelfContained attr="test" />
+              </Level5>
+              <SelfContained />
+            </Level4>
+          </Level3>
+        </Level2>
+      </Level1>
+    </Container>
+    <PackageReference Include="Test.Package" Version="1.0.0" />
+  </ItemGroup>
+</Project>

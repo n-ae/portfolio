@@ -16,8 +16,7 @@ const print = std.debug.print;
 const ArrayList = std.ArrayList;
 
 // Standard constants - consistent across all implementations
-const USAGE = "Usage: fixml [--organize] [--replace] [--fix-warnings] <xml-file>\n" ++
-    "  --organize, -o      Apply logical organization\n" ++
+const USAGE = "Usage: fixml [--replace] [--fix-warnings] <xml-file>\n" ++
     "  --replace, -r       Replace original file\n" ++
     "  --fix-warnings, -f  Fix XML warnings\n" ++
     "  Default: preserve original structure, fix indentation/deduplication only\n";
@@ -28,13 +27,31 @@ const ESTIMATED_LINE_LENGTH = 50;       // Average characters per line estimate
 const MIN_HASH_CAPACITY = 256;          // Minimum deduplication hash capacity
 const MAX_HASH_CAPACITY = 4096;         // Maximum deduplication hash capacity
 const WHITESPACE_THRESHOLD = 32;        // ASCII values <= this are whitespace
+
+/// Comptime-generated whitespace lookup table for O(1) whitespace detection
+/// Significantly faster than threshold comparisons in tight loops
+const WHITESPACE_TABLE = blk: {
+    var table = [_]bool{false} ** 256;
+    // Standard ASCII whitespace characters
+    table[' '] = true;   // Space (32)
+    table['\t'] = true;  // Tab (9)
+    table['\n'] = true;  // Newline (10)
+    table['\r'] = true;  // Carriage return (13)
+    table[11] = true;    // Vertical tab (11)
+    table[12] = true;    // Form feed (12)
+    // All other ASCII control characters (0-31)
+    var i = 0;
+    while (i <= 31) : (i += 1) {
+        table[i] = true;
+    }
+    break :blk table;
+};
 const FILE_PERMISSIONS = 0o644;         // Standard file permissions
 const IO_CHUNK_SIZE = 65536;            // 64KB chunks for I/O operations
 
 /// Command-line argument structure
 /// Mirrors interface across all language implementations for consistency
 const Args = struct {
-    organize: bool = false,     // Apply logical XML element organization
     replace: bool = false,      // Replace original file instead of creating .organized
     fix_warnings: bool = false, // Add XML declaration and fix best practices
     file: []const u8 = "",      // Input XML file path
@@ -50,9 +67,7 @@ fn parseArgs(allocator: std.mem.Allocator) !Args {
     var file_set = false;
 
     for (args_slice[1..]) |arg| {
-        if (std.mem.eql(u8, arg, "--organize") or std.mem.eql(u8, arg, "-o")) {
-            parsed.organize = true;
-        } else if (std.mem.eql(u8, arg, "--replace") or std.mem.eql(u8, arg, "-r")) {
+        if (std.mem.eql(u8, arg, "--replace") or std.mem.eql(u8, arg, "-r")) {
             parsed.replace = true;
         } else if (std.mem.eql(u8, arg, "--fix-warnings") or std.mem.eql(u8, arg, "-f")) {
             parsed.fix_warnings = true;
@@ -70,20 +85,68 @@ fn parseArgs(allocator: std.mem.Allocator) !Args {
     return parsed;
 }
 
-// Fast string trimming with lookup table
-/// High-performance whitespace trimming using direct byte comparisons
-/// Avoids string allocation overhead by operating on slices
+/// Comptime function to check if a character is whitespace using lookup table
+/// Provides O(1) whitespace detection vs O(1) threshold comparison, but with better branch prediction
+inline fn isWhitespace(c: u8) bool {
+    return WHITESPACE_TABLE[c];
+}
+
+/// Comptime function to check if a character is valid for XML tag names/attributes
+/// Excludes whitespace and XML special characters for better parsing performance
+inline fn isXmlNameChar(c: u8) bool {
+    return !isWhitespace(c) and c != '>' and c != '/' and c != '=' and c != '"' and c != '\'';
+}
+
+/// Fast comptime-optimized container detection
+/// A container is a simple tag without attributes (no spaces inside)
+inline fn isSimpleContainer(trimmed: []const u8) bool {
+    if (trimmed.len <= 2 or trimmed[0] != '<' or trimmed[trimmed.len - 1] != '>') return false;
+    
+    // Check for spaces in the tag content (indicates attributes)
+    for (trimmed[1..trimmed.len-1]) |c| {
+        if (isWhitespace(c)) return false;
+    }
+    return true;
+}
+
+/// Comptime-optimized XML tag type classification
+/// Uses lookup tables for maximum performance
+inline fn getTagType(trimmed: []const u8) enum { opening, closing, self_closing, comment, other } {
+    if (trimmed.len < 2 or trimmed[0] != '<') return .other;
+    
+    if (trimmed.len >= 2) {
+        // Check for closing tag
+        if (trimmed[1] == '/') return .closing;
+        // Check for special characters (comments, processing instructions)
+        if (XML_SPECIAL_CHARS[trimmed[1]]) return .comment;
+    }
+    
+    // Check for self-closing tag
+    if (trimmed.len >= 2 and trimmed[trimmed.len - 2] == '/' and trimmed[trimmed.len - 1] == '>') {
+        return .self_closing;
+    }
+    
+    // Must be opening tag
+    return .opening;
+}
+
+// Fast string trimming with comptime lookup table
+/// High-performance whitespace trimming using comptime-generated lookup table
+/// Avoids string allocation overhead by operating on slices  
 /// Performance: O(n) worst case, typically O(1) for pre-trimmed strings
 fn fastTrim(s: []const u8) []const u8 {
     if (s.len == 0) return s;
 
+    // Find first non-whitespace (optimized with early return)
     var start: usize = 0;
-    var end: usize = s.len;
-
-    while (start < end and s[start] <= WHITESPACE_THRESHOLD) {
+    while (start < s.len and isWhitespace(s[start])) {
         start += 1;
     }
-    while (end > start and s[end - 1] <= WHITESPACE_THRESHOLD) {
+    if (start == s.len) return s[0..0]; // All whitespace
+
+    // Find last non-whitespace (optimized backwards scan)
+    var end: usize = s.len;
+    while (end > start and isWhitespace(s[end - 1])) {
         end -= 1;
     }
 
@@ -100,6 +163,18 @@ const XML_SPECIAL_CHARS = blk: {
     chars['!'] = true;  // Comments: <!--, CDATA: <![CDATA[
     chars['?'] = true;  // Processing instructions: <?xml
     break :blk chars;
+};
+
+/// Comptime lookup table for XML attribute delimiters
+/// Optimizes attribute parsing with single table lookup
+const XML_ATTR_DELIMITERS = blk: {
+    var delims = [_]bool{false} ** 256;
+    delims['='] = true;   // Attribute assignment
+    delims['"'] = true;   // Quoted values
+    delims['\''] = true;  // Single quoted values
+    delims['>'] = true;   // Tag end
+    delims['/'] = true;   // Self-closing tag
+    break :blk delims;
 };
 
 /// Compile-time lookup table for whitespace characters
@@ -121,102 +196,218 @@ const WHITESPACE_CHARS = blk: {
 /// Performance: O(n) single pass, much faster than regex
 fn isSelfContained(s: []const u8) bool {
     const trimmed = fastTrim(s);
-    if (trimmed.len < 7) return false; // minimum: <a>x</a>
+    if (trimmed.len < 7 or trimmed[0] != '<' or trimmed[trimmed.len - 1] != '>') return false;
 
-    // Must start with < and end with >
-    if (trimmed[0] != '<' or trimmed[trimmed.len - 1] != '>') return false;
+    // Find first > and last < using standard library (highly optimized)
+    const first_gt = std.mem.indexOfScalar(u8, trimmed[1..], '>') orelse return false;
+    const last_lt = std.mem.lastIndexOfScalar(u8, trimmed, '<') orelse return false;
 
-    // Find first > and last < in a single optimized pass
-    var first_gt: ?usize = null;
-    var last_lt: ?usize = null;
+    // Validate structure: first_gt < last_lt and closing tag starts with </
+    if (first_gt + 1 >= last_lt or last_lt + 1 >= trimmed.len or trimmed[last_lt + 1] != '/') return false;
 
-    // Forward scan for first >
-    for (trimmed[1..], 1..) |c, i| {
-        if (c == '>' and first_gt == null) {
-            first_gt = i;
-            break;
-        }
-    }
-    
-    // Backward scan for last < 
-    var i = trimmed.len - 1;
-    while (i > 0) : (i -= 1) {
-        if (trimmed[i] == '<') {
-            last_lt = i;
-            break;
-        }
-    }
-
-    if (first_gt == null or last_lt == null) return false;
-    if (first_gt.? >= last_lt.?) return false;
-
-    // Check that closing tag starts with </
-    if (last_lt.? + 1 >= trimmed.len or trimmed[last_lt.? + 1] != '/') return false;
-
-    // Check that content between tags contains no <
-    const content = trimmed[first_gt.? + 1 .. last_lt.?];
-    for (content) |c| {
-        if (c == '<') return false;
-    }
-
-    return true;
+    // Check content between tags contains no <
+    const content = trimmed[first_gt + 2 .. last_lt]; // +2 to account for offset from trimmed[1..]
+    return std.mem.indexOfScalar(u8, content, '<') == null;
 }
 
-/// Fast hash generation for deduplication without normalization overhead
-/// Uses string hash for simple cases, falls back to normalized hash for quoted content
-/// Optimization: avoids normalization unless quotes are detected
-/// Performance: O(n) scan + O(1) hash for simple cases
-fn simpleContentHash(s: []const u8) u64 {
-    if (s.len == 0) return 0;
+/// Fast lightweight normalization for simple elements (no complex attributes)
+/// Performance: O(n) single pass, very fast
 
-    // Fast vectorized quote detection when possible  
-    const has_quotes = std.mem.indexOfAny(u8, s, "\"'") != null;
-    if (has_quotes) {
-        return hashNormalizedContent(s);
+const Attribute = struct {
+    name: []const u8,
+    value: []const u8,
+};
+
+/// Parse attributes from an XML tag and return them in sorted order for consistent hashing
+fn parseAndSortAttributes(allocator: std.mem.Allocator, tag_content: []const u8) ![]Attribute {
+    var attributes = std.ArrayList(Attribute){};
+    defer attributes.deinit(allocator);
+    
+    var i: usize = 0;
+    
+    // Skip tag name to find first space
+    while (i < tag_content.len and !isWhitespace(tag_content[i]) and tag_content[i] != '>' and tag_content[i] != '/') {
+        i += 1;
     }
     
-    // Optimized FNV-1a hash - often faster than generic hash functions
-    var hash: u64 = 0xcbf29ce484222325;
-    for (s) |byte| {
-        hash ^= byte;
-        hash *%= 0x100000001b3;
+    while (i < tag_content.len) {
+        // Skip whitespace
+        while (i < tag_content.len and isWhitespace(tag_content[i])) {
+            i += 1;
+        }
+        
+        if (i >= tag_content.len or tag_content[i] == '>' or tag_content[i] == '/') break;
+        
+        // Parse attribute name
+        const name_start = i;
+        while (i < tag_content.len and tag_content[i] != '=' and !isWhitespace(tag_content[i])) {
+            i += 1;
+        }
+        const name = fastTrim(tag_content[name_start..i]);
+        
+        // Skip '=' and optional whitespace
+        while (i < tag_content.len and (isWhitespace(tag_content[i]) or tag_content[i] == '=')) {
+            i += 1;
+        }
+        
+        if (i >= tag_content.len) break;
+        
+        // Parse attribute value
+        var value_start = i;
+        var value_end = i;
+        
+        if (tag_content[i] == '"' or tag_content[i] == '\'') {
+            const quote = tag_content[i];
+            i += 1; // Skip opening quote
+            value_start = i;
+            while (i < tag_content.len and tag_content[i] != quote) {
+                i += 1;
+            }
+            value_end = i;
+            if (i < tag_content.len) i += 1; // Skip closing quote
+        } else {
+            // Unquoted value
+            while (i < tag_content.len and !isWhitespace(tag_content[i]) and tag_content[i] != '>' and tag_content[i] != '/') {
+                i += 1;
+            }
+            value_end = i;
+        }
+        
+        const value = tag_content[value_start..value_end];
+        try attributes.append(allocator, Attribute{ .name = name, .value = value });
     }
-    return hash;
+    
+    const result = try allocator.dupe(Attribute, attributes.items);
+    
+    // Sort attributes by name for consistent ordering
+    std.sort.heap(Attribute, result, {}, struct {
+        fn lessThan(_: void, a: Attribute, b: Attribute) bool {
+            return std.mem.lessThan(u8, a.name, b.name);
+        }
+    }.lessThan);
+    
+    return result;
 }
 
-/// Advanced hash generation with whitespace normalization for complex XML
-/// Handles quoted strings correctly while normalizing whitespace outside quotes
-/// Used for elements with attributes where whitespace differences should be ignored
-/// Performance: O(n) with minimal branching for better CPU pipeline efficiency
+/// Advanced hash generation with aggressive normalization for XML deduplication
+/// Normalizes whitespace, quote styles, attribute order, and formatting for semantic equivalence
+/// Performance: O(n) for most cases, O(n log n) for complex attributes due to sorting
 fn hashNormalizedContent(s: []const u8) u64 {
+    // Use stack allocation for small temporary buffers to avoid heap allocation overhead
+    var stack_buffer: [1024]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&stack_buffer);
+    const allocator = fba.allocator();
+    
+    const trimmed = fastTrim(s);
+    if (trimmed.len == 0) return 0;
+    
+    // Check if this is a self-closing tag with attributes
+    if (trimmed[0] == '<' and std.mem.endsWith(u8, trimmed, "/>")) {
+        // Parse and normalize attributes for consistent hashing
+        var tag_content_end = trimmed.len - 2; // Start from before />
+        
+        // Check if there's whitespace before />
+        var has_space_before_close = false;
+        if (tag_content_end > 0 and isWhitespace(trimmed[tag_content_end - 1])) {
+            has_space_before_close = true;
+            // Find the actual end of content (before whitespace)
+            while (tag_content_end > 1 and isWhitespace(trimmed[tag_content_end - 1])) {
+                tag_content_end -= 1;
+            }
+        }
+        
+        const tag_content = trimmed[1..tag_content_end]; // Remove < and content before />
+        
+        if (parseAndSortAttributes(allocator, tag_content)) |attributes| {
+            defer allocator.free(attributes);
+            
+            var hasher = std.hash.Wyhash.init(0);
+            
+            // Hash tag name (everything before first space or attribute)
+            var tag_name_end: usize = 0;
+            while (tag_name_end < tag_content.len and !isWhitespace(tag_content[tag_name_end])) {
+                tag_name_end += 1;
+            }
+            const tag_name = tag_content[0..tag_name_end];
+            hasher.update(tag_name);
+            
+            // Hash sorted attributes with normalized quotes
+            for (attributes) |attr| {
+                hasher.update(" ");
+                hasher.update(attr.name);
+                hasher.update("=\"");
+                hasher.update(attr.value);
+                hasher.update("\"");
+            }
+            
+            // Include closing syntax in hash to differentiate <Tag/> vs <Tag />
+            if (has_space_before_close) {
+                hasher.update(" />");
+            } else {
+                hasher.update("/>");
+            }
+            
+            return hasher.final();
+        } else |_| {
+            // Fallback to original normalization if parsing fails
+        }
+    }
+    
+    // Fallback to original character-by-character normalization
     var hasher = std.hash.Wyhash.init(0);
     var in_quotes = false;
-    var quote_char: u8 = 0;
     var prev_space = false;
-
-    for (s) |c| {
+    var expecting_attr_value = false;
+    
+    var i: usize = 0;
+    while (i < trimmed.len) {
+        const c = trimmed[i];
+        
         if (!in_quotes and (c == '"' or c == '\'')) {
             in_quotes = true;
-            quote_char = c;
-            hasher.update(std.mem.asBytes(&c));
+            expecting_attr_value = false;
+            const normalized_quote: u8 = '"';
+            hasher.update(std.mem.asBytes(&normalized_quote));
             prev_space = false;
-        } else if (in_quotes and c == quote_char) {
+        } else if (in_quotes and (c == '"' or c == '\'')) {
             in_quotes = false;
-            hasher.update(std.mem.asBytes(&c));
+            const normalized_quote: u8 = '"';
+            hasher.update(std.mem.asBytes(&normalized_quote));
             prev_space = false;
         } else if (in_quotes) {
             hasher.update(std.mem.asBytes(&c));
             prev_space = false;
-        } else if (c <= WHITESPACE_THRESHOLD) {
+        } else if (c == '=' and !in_quotes) {
+            hasher.update(std.mem.asBytes(&c));
+            expecting_attr_value = true;
+            prev_space = false;
+        } else if (expecting_attr_value and !isWhitespace(c) and c != '>' and c != '/' and c != '"' and c != '\'') {
+            const normalized_quote: u8 = '"';
+            hasher.update(std.mem.asBytes(&normalized_quote));
+            
+            var j = i;
+            while (j < trimmed.len and !isWhitespace(trimmed[j]) and trimmed[j] != '>' and trimmed[j] != '/') {
+                hasher.update(std.mem.asBytes(&trimmed[j]));
+                j += 1;
+            }
+            hasher.update(std.mem.asBytes(&normalized_quote));
+            i = j - 1;
+            expecting_attr_value = false;
+            prev_space = false;
+        } else if (isWhitespace(c)) {
+            expecting_attr_value = false;
             if (!prev_space) {
                 const space: u8 = ' ';
                 hasher.update(std.mem.asBytes(&space));
                 prev_space = true;
             }
         } else {
+            expecting_attr_value = false;
             hasher.update(std.mem.asBytes(&c));
             prev_space = false;
         }
+        
+        i += 1;
     }
 
     return hasher.final();
@@ -225,52 +416,47 @@ fn hashNormalizedContent(s: []const u8) u64 {
 // Process a single line for XML formatting and deduplication
 fn processLine(result: *std.ArrayList(u8), seen_hashes: *std.AutoHashMap(u64, void), duplicates_removed: *u32, indent_level: *i32, trimmed: []const u8, allocator: std.mem.Allocator, indent_spaces: []const u8) !void {
 
-    // Fast inline container detection - simplified check
-    const is_container = blk: {
-        if (trimmed.len <= 2 or trimmed[0] != '<' or trimmed[trimmed.len - 1] != '>') 
-            break :blk false;
-        // Simple heuristic: containers are usually simple tags without attributes  
-        for (trimmed[1..trimmed.len-1]) |c| {
-            if (c == ' ') break :blk false;
-        }
-        break :blk true;
-    };
+    // Fast comptime-optimized container detection - simple tags without attributes
+    const is_container = isSimpleContainer(trimmed);
 
-    // Fast hash-based deduplication - early return for duplicates
-    if (!is_container) {
-        const content_hash = simpleContentHash(trimmed);
-        if (seen_hashes.contains(content_hash)) {
-            duplicates_removed.* += 1;
-            return; // Early return - skip duplicate
-        }
-        try seen_hashes.put(content_hash, {});
-    }
-
-    // Fast tag type detection
-    const first_char = trimmed[0];
-    const second_char = if (trimmed.len > 1) trimmed[1] else 0;
-    const is_closing_tag = first_char == '<' and second_char == '/';
-    const is_opening_tag = first_char == '<' and !XML_SPECIAL_CHARS[second_char] and
-        !(trimmed.len >= 2 and trimmed[trimmed.len - 2] == '/');
+    // Fast comptime-optimized tag type detection
+    const tag_type = getTagType(trimmed);
+    const is_closing_tag = tag_type == .closing;
+    const is_opening_tag = tag_type == .opening;
 
     // Adjust indent level for closing tags BEFORE writing line
     if (is_closing_tag) {
         indent_level.* = @max(0, indent_level.* - 1);
     }
 
-    // Apply indentation using bulk operations
-    const spaces_needed = @as(usize, @intCast(indent_level.* * 2));
-    if (spaces_needed <= indent_spaces.len) {
-        try result.appendSlice(allocator, indent_spaces[0..spaces_needed]);
-    } else {
-        // Fallback for very deep nesting
-        for (0..spaces_needed) |_| {
-            try result.append(allocator, ' ');
+    // Fast hash-based deduplication - check AFTER indentation adjustment
+    var is_duplicate = false;
+    if (!is_container) {
+        const content_hash = hashNormalizedContent(trimmed);
+        if (seen_hashes.contains(content_hash)) {
+            duplicates_removed.* += 1;
+            is_duplicate = true;
+        } else {
+            try seen_hashes.put(content_hash, {});
         }
     }
 
-    try result.appendSlice(allocator, trimmed);
-    try result.append(allocator, '\n');
+    // Only write line if not duplicate
+    if (!is_duplicate) {
+        // Apply indentation using bulk operations
+        const spaces_needed = @as(usize, @intCast(indent_level.* * 2));
+        if (spaces_needed <= indent_spaces.len) {
+            try result.appendSlice(allocator, indent_spaces[0..spaces_needed]);
+        } else {
+            // Fallback for very deep nesting
+            for (0..spaces_needed) |_| {
+                try result.append(allocator, ' ');
+            }
+        }
+
+        try result.appendSlice(allocator, trimmed);
+        try result.append(allocator, '\n');
+    }
 
     // Adjust indent level for opening tags AFTER writing line
     // Improved self-contained tag detection
@@ -451,10 +637,7 @@ fn processFile(allocator: std.mem.Allocator, args: Args) !void {
         print(" (removed {} duplicates)", .{process_result.duplicates});
     }
 
-    const mode_text = if (args.organize)
-        " (with logical organization)"
-    else
-        " (preserving original structure)";
+    const mode_text = " (preserving original structure)";
 
     print("{s}\n", .{mode_text});
 }

@@ -25,8 +25,7 @@ import (
 	"time"
 )
 
-const USAGE = `Usage: fixml [--organize] [--replace] [--fix-warnings] <xml-file>
-  --organize, -o      Apply logical organization
+const USAGE = `Usage: fixml [--replace] [--fix-warnings] <xml-file>
   --replace, -r       Replace original file
   --fix-warnings, -f  Fix XML warnings
   Default: preserve original structure, fix indentation/deduplication only
@@ -54,7 +53,6 @@ var builderPool = sync.Pool{
 // Command-line argument structure
 // Mirrors interface across all language implementations for consistency
 type Args struct {
-	organize    bool // Apply logical XML element organization
 	replace     bool
 	fixWarnings bool
 	file        string
@@ -66,8 +64,6 @@ func parseArgs() Args {
 	
 	for _, arg := range os.Args[1:] {
 		switch arg {
-		case "--organize", "-o":
-			args.organize = true
 		case "--replace", "-r":
 			args.replace = true
 		case "--fix-warnings", "-f":
@@ -150,7 +146,7 @@ func processAsText(args Args, content string, hasXMLDecl bool) error {
 	var output bytes.Buffer
 	output.Grow(len(content) + 100)
 	
-	shouldStripXMLDeclaration := args.organize && !args.fixWarnings
+	shouldStripXMLDeclaration := false
 	if args.fixWarnings && (shouldStripXMLDeclaration || !hasXMLDecl) {
 		output.WriteString(XML_DECLARATION)
 		if !hasXMLDecl {
@@ -218,7 +214,7 @@ func processAsText(args Args, content string, hasXMLDecl bool) error {
 				// Simple opening tag detection - avoid expensive checks when possible
 				if len(trimmed) > 0 && trimmed[0] == '<' && 
 				   !(len(trimmed) >= 2 && (trimmed[1] == '/' || trimmed[1] == '!' || trimmed[1] == '?')) &&
-				   !strings.HasSuffix(trimmed, "/>") {
+				   !strings.Contains(trimmed, "/>") {
 					// Only call isSelfContained for potential opening tags
 					isOpeningTag = !isSelfContained(trimmed)
 				}
@@ -279,9 +275,6 @@ func processAsText(args Args, content string, hasXMLDecl bool) error {
 	}
 	
 	modeText := " (preserving original structure)"
-	if args.organize {
-		modeText = " (with logical organization)"
-	}
 	fmt.Println(modeText)
 	
 	return nil
@@ -408,6 +401,7 @@ func normalizeWhitespacePreservingAttributes(s string) string {
 	inQuotes := false
 	var quoteChar byte
 	prevSpace := false
+	expectingAttrValue := false
 	
 	for i := 0; i < len(s); i++ {
 		c := s[i]
@@ -415,23 +409,47 @@ func normalizeWhitespacePreservingAttributes(s string) string {
 		if !inQuotes && (c == '"' || c == '\'') {
 			inQuotes = true
 			quoteChar = c
-			result.WriteByte(c)
+			expectingAttrValue = false
+			// Normalize all quotes to double quotes for consistent deduplication
+			result.WriteByte('"')
 			prevSpace = false
 		} else if inQuotes && c == quoteChar {
 			inQuotes = false
-			result.WriteByte(c)
+			// Normalize all quotes to double quotes for consistent deduplication
+			result.WriteByte('"')
 			prevSpace = false
 		} else if inQuotes {
 			// Inside quotes: preserve all whitespace
 			result.WriteByte(c)
 			prevSpace = false
+		} else if c == '=' && !inQuotes {
+			// Found attribute assignment, next non-space content might be unquoted value
+			result.WriteByte(c)
+			expectingAttrValue = true
+			prevSpace = false
+		} else if expectingAttrValue && c > WHITESPACE_THRESHOLD && c != '>' && c != '/' && c != '"' && c != '\'' {
+			// Found unquoted attribute value, add quotes around it
+			result.WriteByte('"')
+			
+			// Find the end of the unquoted value (until space, >, or /)
+			j := i
+			for j < len(s) && s[j] > WHITESPACE_THRESHOLD && s[j] != '>' && s[j] != '/' {
+				result.WriteByte(s[j])
+				j++
+			}
+			result.WriteByte('"')
+			i = j - 1 // -1 because the loop will increment
+			expectingAttrValue = false
+			prevSpace = false
 		} else if c <= WHITESPACE_THRESHOLD { // standardized whitespace check
+			expectingAttrValue = false
 			// Outside quotes: normalize whitespace
 			if !prevSpace {
 				result.WriteByte(' ')
 				prevSpace = true
 			}
 		} else {
+			expectingAttrValue = false
 			result.WriteByte(c)
 			prevSpace = false
 		}

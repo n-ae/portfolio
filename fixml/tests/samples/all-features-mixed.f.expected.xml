@@ -3,11 +3,11 @@
   <!-- comment -->
   <PropertyGroup Condition="true">
     <TargetFramework>net6.0</TargetFramework>
-      <Title>测试 &amp; test</Title>
-        <Data><![CDATA[<xml>content</xml>]]></Data>
-      </PropertyGroup>
-      <ItemGroup>
-        <PackageReference Include="Test"/>
-        <Compile Include="*.cs"/>
-      </ItemGroup>
-    </Project>
+    <Title>测试 &amp; test</Title>
+    <Data><![CDATA[<xml>content</xml>]]></Data>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Test"/>
+    <Compile Include="*.cs"/>
+  </ItemGroup>
+</Project>

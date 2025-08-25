@@ -1,4 +1,0 @@
-<root>
-  <test>Content with BOM at start</test>
-  <unicode>测试内容 🚀</unicode>
-</root>

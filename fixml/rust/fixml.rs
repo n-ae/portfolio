@@ -4,8 +4,7 @@ use std::fs;
 use std::process;
 
 // Standard constants - consistent across all implementations
-const USAGE: &str = "Usage: fixml [--organize] [--replace] [--fix-warnings] <xml-file>
-  --organize, -o      Apply logical organization
+const USAGE: &str = "Usage: fixml [--replace] [--fix-warnings] <xml-file>
   --replace, -r       Replace original file
   --fix-warnings, -f  Fix XML warnings
   Default: preserve original structure, fix indentation/deduplication only";
@@ -21,7 +20,6 @@ const IO_CHUNK_SIZE: usize = 65536;         // 64KB chunks for I/O operations
 
 #[derive(Default)]
 struct Args {
-    organize: bool,
     replace: bool,
     fix_warnings: bool,
     file: String,
@@ -34,7 +32,6 @@ fn parse_args() -> Args {
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
-            "--organize" | "-o" => parsed.organize = true,
             "--replace" | "-r" => parsed.replace = true,
             "--fix-warnings" | "-f" => parsed.fix_warnings = true,
             arg if !arg.starts_with('-') && parsed.file.is_empty() => {
@@ -137,49 +134,72 @@ fn is_self_contained(s: &str) -> bool {
     false
 }
 
-// Simplified whitespace normalization leveraging Rust's optimized string methods
 fn normalize_whitespace(s: &str) -> String {
-    // Quick check - if no quotes, use simple normalization
-    if !s.contains('"') && !s.contains('\'') {
-        // Optimized: avoid intermediate vector allocation
-        return s.split_whitespace().fold(String::new(), |mut acc, word| {
-            if !acc.is_empty() { acc.push(' '); }
-            acc.push_str(word);
-            acc
-        });
+    if s.is_empty() {
+        return s.to_string();
     }
     
-    // For quoted content, use simplified character iteration
     let mut result = String::with_capacity(s.len());
-    let mut chars = s.chars();
     let mut in_quotes = false;
     let mut quote_char = '\0';
-    let mut prev_was_space = false;
+    let mut prev_space = false;
+    let mut expecting_attr_value = false;
     
-    while let Some(c) = chars.next() {
+    let chars: Vec<char> = s.chars().collect();
+    let mut i = 0;
+    
+    while i < chars.len() {
+        let c = chars[i];
+        
         if !in_quotes && (c == '"' || c == '\'') {
             in_quotes = true;
             quote_char = c;
-            result.push(c);
-            prev_was_space = false;
+            expecting_attr_value = false;
+            // Normalize all quotes to double quotes for consistent deduplication
+            result.push('"');
+            prev_space = false;
         } else if in_quotes && c == quote_char {
             in_quotes = false;
-            result.push(c);
-            prev_was_space = false;
+            // Normalize all quotes to double quotes for consistent deduplication
+            result.push('"');
+            prev_space = false;
         } else if in_quotes {
-            // Inside quotes: preserve all characters
+            // Inside quotes: preserve all whitespace
             result.push(c);
-            prev_was_space = false;
-        } else if c.is_whitespace() {
+            prev_space = false;
+        } else if c == '=' && !in_quotes {
+            // Found attribute assignment, next non-space content might be unquoted value
+            result.push(c);
+            expecting_attr_value = true;
+            prev_space = false;
+        } else if expecting_attr_value && c > ' ' && c != '>' && c != '/' && c != '"' && c != '\'' {
+            // Found unquoted attribute value, add quotes around it
+            result.push('"');
+            
+            // Find the end of the unquoted value (until space, >, or /)
+            let mut j = i;
+            while j < chars.len() && chars[j] > ' ' && chars[j] != '>' && chars[j] != '/' {
+                result.push(chars[j]);
+                j += 1;
+            }
+            result.push('"');
+            i = j - 1; // -1 because the loop will increment
+            expecting_attr_value = false;
+            prev_space = false;
+        } else if c.is_ascii_whitespace() {
+            expecting_attr_value = false;
             // Outside quotes: normalize whitespace
-            if !prev_was_space {
+            if !prev_space {
                 result.push(' ');
-                prev_was_space = true;
+                prev_space = true;
             }
         } else {
+            expecting_attr_value = false;
             result.push(c);
-            prev_was_space = false;
+            prev_space = false;
         }
+        
+        i += 1;
     }
     
     result.trim().to_string()
@@ -353,11 +373,7 @@ fn process_file(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
         print!(" (removed {} duplicates)", duplicates_removed);
     }
     
-    let mode_text = if args.organize {
-        " (with logical organization)"
-    } else {
-        " (preserving original structure)"
-    };
+    let mode_text = " (preserving original structure)";
     
     println!("{}", mode_text);
     Ok(())

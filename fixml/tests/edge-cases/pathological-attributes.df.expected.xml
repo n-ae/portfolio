@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Attributes with extreme whitespace variations -->
+    <Compile Include = "  file1.cs  " Condition= "true" />
+    <Compile Include= "  file1.cs  "  Condition ="true"/>
+    <!-- Attributes with quotes variations -->
+    <Content Include='test.js' />
+    <!-- Empty attributes and values -->
+    <None Include="" />
+    <None Include="" attr="" />
+    <None Include="valid.txt" empty="" />
+    <!-- Attribute order variations -->
+    <Reference Include="Test" Version="1.0" Private="false" />
+    <!-- Numeric attribute values -->
+    <PackageReference Include="NumTest" Version="1.0.0" Priority="1" />
+    <PackageReference Include="NumTest" Version="1.0.0" Priority="01" />
+    <PackageReference Include="NumTest" Version="1.0.0" Priority="1.0" />
+  </ItemGroup>
+</Project>
