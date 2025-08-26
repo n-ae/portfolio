@@ -237,6 +237,30 @@ inline fn hashSimpleString(s: []const u8) u64 {
     return hasher.final();
 }
 
+/// Ultra-fast polynomial hash optimized for XML deduplication
+/// Uses rolling hash with whitespace normalization
+inline fn hashXmlContentFast(s: []const u8) u64 {
+    if (s.len == 0) return 0;
+
+    const POLY: u64 = 31;
+    var hash: u64 = 0;
+    var prev_space = false;
+
+    for (s) |c| {
+        if (isWhitespace(c)) {
+            if (!prev_space) {
+                hash = hash * POLY + ' ';
+                prev_space = true;
+            }
+        } else {
+            hash = hash * POLY + c;
+            prev_space = false;
+        }
+    }
+
+    return hash;
+}
+
 /// Ultra-optimized tag name extraction with comptime patterns
 /// Pre-computed lookup table for common XML patterns
 inline fn extractTagName(tag: []const u8) []const u8 {
@@ -245,23 +269,20 @@ inline fn extractTagName(tag: []const u8) []const u8 {
     const start = if (tag[1] == '/') @as(usize, 2) else @as(usize, 1);
     var end = start;
 
-    // Fast scan using unrolled loop for common cases
-    if (start + 16 <= tag.len) {
-        // Process 16 chars at once for better instruction throughput
-        comptime var unroll = 0;
-        inline while (unroll < 16) : (unroll += 1) {
-            const c = tag[end];
-            if (c == ' ' or c == '>' or c == '\t' or c == '/' or c == '=') break;
-            end += 1;
-            if (end >= tag.len) break;
-        }
-    } else {
-        // Fallback for short tags
-        while (end < tag.len) {
-            const c = tag[end];
-            if (c == ' ' or c == '>' or c == '\t' or c == '/' or c == '=') break;
-            end += 1;
-        }
+    // Comptime-optimized delimiter detection with bit operations
+    const DELIM_MASK = comptime blk: {
+        var mask: u256 = 0;
+        mask |= (@as(u256, 1) << ' '); // Space
+        mask |= (@as(u256, 1) << '>'); // Tag end
+        mask |= (@as(u256, 1) << '\t'); // Tab
+        mask |= (@as(u256, 1) << '/'); // Self-closing
+        mask |= (@as(u256, 1) << '='); // Attribute assignment
+        break :blk mask;
+    };
+
+    // Single bit test per character - much faster than multiple comparisons
+    while (end < tag.len and (DELIM_MASK >> tag[end]) & 1 == 0) {
+        end += 1;
     }
 
     return tag[start..end];
@@ -613,11 +634,11 @@ fn processLine(result: *std.ArrayList(u8), seen_hashes: *std.AutoHashMap(u64, vo
         indent_level.* = @max(0, indent_level.* - 1);
     }
 
-    // Fast hash-based deduplication - check AFTER indentation adjustment
+    // Optimized hash-based deduplication - eliminate redundant container check
     var is_duplicate = false;
     if (!is_container) {
-        // Smart hash selection: use fast path for simple containers, complex path for attributes
-        const content_hash = if (isSimpleContainer(trimmed))
+        // Single container check result reused for hash selection
+        const content_hash = if (is_container)
             hashSimpleString(trimmed)
         else
             hashNormalizedContent(trimmed);
@@ -629,14 +650,19 @@ fn processLine(result: *std.ArrayList(u8), seen_hashes: *std.AutoHashMap(u64, vo
         }
     }
 
-    // Only write line if not duplicate
+    // Only write line if not duplicate - optimized batch allocation
     if (!is_duplicate) {
-        // Apply indentation using comptime pre-computed strings (all levels covered)
         const indent_depth = @as(usize, @intCast(@min(indent_level.*, MAX_INDENT_LEVELS - 1)));
-        try result.appendSlice(allocator, INDENT_STRINGS[indent_depth]);
+        const indent_str = INDENT_STRINGS[indent_depth];
 
-        try result.appendSlice(allocator, trimmed);
-        try result.append(allocator, '\n');
+        // Single capacity check for better performance
+        const total_len = indent_str.len + trimmed.len + 1;
+        try result.ensureUnusedCapacity(allocator, total_len);
+
+        // Batch append without capacity checks for better cache locality
+        result.appendSliceAssumeCapacity(indent_str);
+        result.appendSliceAssumeCapacity(trimmed);
+        result.appendAssumeCapacity('\n');
     }
 
     // Adjust indent level for opening tags AFTER writing line
