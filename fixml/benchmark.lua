@@ -12,20 +12,44 @@ local function get_file_size(filename)
 end
 
 local function get_time()
-    local handle = io.popen("date +%s.%N")
-    local time_str = handle:read("*a"):match("([%d%.]+)")
-    handle:close()
-    return tonumber(time_str) or 0
+    -- Use higher precision timing with multiple attempts to reduce measurement error
+    local times = {}
+    for i = 1, 3 do
+        local handle = io.popen("date +%s.%N")
+        local time_str = handle:read("*a"):match("([%d%.]+)")
+        handle:close()
+        table.insert(times, tonumber(time_str) or 0)
+    end
+    -- Return median time for better stability
+    table.sort(times)
+    return times[2]
+end
+
+-- Warmup function to reduce cache/JIT effects
+local function warmup_impl(command, test_file, warmup_runs)
+    for i = 1, warmup_runs do
+        local output_file = test_file:gsub("%.xml$", ".organized.xml")
+        os.remove(output_file)
+        os.execute(command .. " " .. test_file .. " 2>/dev/null >/dev/null")
+        -- Small delay to prevent resource contention
+        os.execute("sleep 0.01")
+    end
 end
 
 local function benchmark_impl(name, command, test_file, iterations)
     local times = {}
     local success_count = 0
     
+    -- Warmup runs to reduce cache/JIT variance
+    warmup_impl(command, test_file, 3)
+    
     for i = 1, iterations do
         -- Clean up previous output
         local output_file = test_file:gsub("%.xml$", ".organized.xml")
         os.remove(output_file)
+        
+        -- Small delay to prevent resource contention
+        os.execute("sleep 0.01")
         
         local start_time = get_time()
         local result = os.execute(command .. " " .. test_file .. " 2>/dev/null >/dev/null")
@@ -38,6 +62,33 @@ local function benchmark_impl(name, command, test_file, iterations)
     end
     
     if #times == 0 then return nil end
+    
+    -- Remove outliers using IQR method for more stable results
+    table.sort(times)
+    local filtered_times = {}
+    
+    if #times >= 10 then
+        -- Calculate quartiles
+        local q1_idx = math.floor(#times * 0.25)
+        local q3_idx = math.floor(#times * 0.75)
+        local q1 = times[q1_idx]
+        local q3 = times[q3_idx]
+        local iqr = q3 - q1
+        local lower_bound = q1 - 1.5 * iqr
+        local upper_bound = q3 + 1.5 * iqr
+        
+        -- Filter out outliers
+        for _, time in ipairs(times) do
+            if time >= lower_bound and time <= upper_bound then
+                table.insert(filtered_times, time)
+            end
+        end
+        
+        -- Use filtered times if we have enough data points
+        if #filtered_times >= math.floor(#times * 0.6) then
+            times = filtered_times
+        end
+    end
     
     local sum = 0
     for _, time in ipairs(times) do
@@ -248,7 +299,7 @@ local function main()
     end
     
     local test_files = get_test_files(mode)
-    local iterations = mode == "quick" and 5 or (mode == "comprehensive" and 10 or 20)
+    local iterations = mode == "quick" and 15 or (mode == "comprehensive" and 30 or 50)
     
     print("FIXML Performance Benchmark")
     print(string.rep("=", 50))
