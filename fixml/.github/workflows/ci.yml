@@ -1,0 +1,179 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, fixml ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Zig
+        uses: korandoru/setup-zig@v1
+        with:
+          zig-version: 0.13.0
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup OCaml
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: 4.14.x
+
+      - name: Setup Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.4"
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            ~/.opam
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/Cargo.lock', '**/go.mod', '**/*.opam') }}
+
+      - name: Build all implementations
+        run: lua build_config.lua
+
+      - name: Run quick tests
+        run: lua test.lua quick
+
+      - name: Run Zig-specific tests
+        working-directory: zig
+        run: |
+          # Build with different optimization levels
+          zig build -Doptimize=Debug
+          zig build -Doptimize=ReleaseSafe  
+          zig build -Doptimize=ReleaseFast
+          
+          # Test the binary
+          ./zig-out/bin/fixml ../tests/samples/sample.xml
+          [ -f ../tests/samples/sample.organized.xml ] && echo "✅ Output file created successfully"
+
+  lint:
+    name: Lint and Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Zig
+        uses: korandoru/setup-zig@v1
+        with:
+          zig-version: 0.13.0
+
+      - name: Check Zig formatting
+        working-directory: zig
+        run: zig fmt --check src/main.zig
+
+      - name: Zig build check
+        working-directory: zig  
+        run: zig build -Doptimize=ReleaseFast
+
+  benchmark:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fixml')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need at least 2 commits for comparison
+
+      - name: Setup Zig
+        uses: korandoru/setup-zig@v1
+        with:
+          zig-version: 0.13.0
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup OCaml
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: 4.14.x
+
+      - name: Setup Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.4"
+
+      - name: Build current implementations
+        run: lua build_config.lua
+
+      - name: Run performance benchmark
+        run: |
+          echo "🚀 Running performance benchmarks..."
+          lua benchmark.lua quick HEAD~1 > benchmark_results.txt 2>&1
+          cat benchmark_results.txt
+
+      - name: Extract Zig performance
+        run: |
+          echo "## 📊 Performance Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          grep -A 10 "GIT COMPARISON ANALYSIS" benchmark_results.txt | head -15 >> $GITHUB_STEP_SUMMARY || echo "Benchmark comparison not available" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for performance regression
+          if grep -q "🔴" benchmark_results.txt; then
+            echo "⚠️ **Performance regression detected!**" >> $GITHUB_STEP_SUMMARY
+          elif grep -q "🟢" benchmark_results.txt; then
+            echo "✅ **Performance improved!**" >> $GITHUB_STEP_SUMMARY  
+          fi
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results
+          path: benchmark_results.txt
+          retention-days: 7
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'

@@ -1,0 +1,228 @@
+name: Publish Packages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  publish-homebrew:
+    name: Update Homebrew Formula
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get release info
+        id: release
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "tag_name=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag_name=v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Homebrew formula
+        run: |
+          cat > fixml.rb << EOF
+          class Fixml < Formula
+            desc "High-performance XML processor with smart deduplication and formatting"
+            homepage "https://github.com/${{ github.repository }}"
+            version "${{ steps.release.outputs.tag_name }}"
+            
+            if OS.mac? && Hardware::CPU.arm?
+              url "https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag_name }}/fixml-macos-aarch64"
+              sha256 "$(curl -sL "https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag_name }}/checksums.txt" | grep "fixml-macos-aarch64" | cut -d' ' -f1)"
+            elsif OS.mac?
+              url "https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag_name }}/fixml-macos-x86_64"
+              sha256 "$(curl -sL "https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag_name }}/checksums.txt" | grep "fixml-macos-x86_64" | cut -d' ' -f1)"
+            else
+              url "https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag_name }}/fixml-linux-x86_64"
+              sha256 "$(curl -sL "https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag_name }}/checksums.txt" | grep "fixml-linux-x86_64" | cut -d' ' -f1)"
+            end
+          
+            def install
+              bin.install Dir["*"].first => "fixml"
+            end
+          
+            test do
+              # Create a test XML file
+              (testpath/"test.xml").write <<~EOS
+                <?xml version="1.0" encoding="utf-8"?>
+                <root>
+                  <item>Test</item>
+                  <item>Test</item>
+                </root>
+              EOS
+              
+              system "#{bin}/fixml", "test.xml"
+              assert_predicate testpath/"test.organized.xml", :exist?
+            end
+          end
+          EOF
+
+      - name: Comment formula location
+        run: |
+          echo "## 🍺 Homebrew Formula Generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The Homebrew formula has been generated. To publish:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Fork https://github.com/Homebrew/homebrew-core" >> $GITHUB_STEP_SUMMARY  
+          echo "2. Add the formula to Formula/fixml.rb" >> $GITHUB_STEP_SUMMARY
+          echo "3. Create a pull request" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`ruby" >> $GITHUB_STEP_SUMMARY
+          cat fixml.rb >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  publish-aur:
+    name: Generate AUR Package  
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get release info
+        id: release
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "tag_name=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            echo "tag_name=v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate PKGBUILD
+        run: |
+          cat > PKGBUILD << EOF
+          # Maintainer: Bali Ibrahim <bali.ibrahim@example.com>
+          pkgname=fixml
+          pkgver=${{ steps.release.outputs.version }}
+          pkgrel=1
+          pkgdesc="High-performance XML processor with smart deduplication and formatting"
+          arch=('x86_64')
+          url="https://github.com/${{ github.repository }}"
+          license=('MIT')
+          depends=()
+          source=("\$pkgname-\$pkgver::https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag_name }}/fixml-linux-x86_64")
+          sha256sums=('SKIP')  # Will be updated with actual checksum
+
+          package() {
+              install -Dm755 "\$srcdir/\$pkgname-\$pkgver" "\$pkgdir/usr/bin/fixml"
+          }
+          EOF
+
+      - name: Generate .SRCINFO
+        run: |
+          cat > .SRCINFO << EOF
+          pkgbase = fixml
+          	pkgdesc = High-performance XML processor with smart deduplication and formatting
+          	pkgver = ${{ steps.release.outputs.version }}
+          	pkgrel = 1
+          	url = https://github.com/${{ github.repository }}
+          	arch = x86_64
+          	license = MIT
+          	source = fixml-${{ steps.release.outputs.version }}::https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag_name }}/fixml-linux-x86_64
+          	sha256sums = SKIP
+
+          pkgname = fixml
+          EOF
+
+      - name: Upload AUR files
+        uses: actions/upload-artifact@v3
+        with:
+          name: aur-package
+          path: |
+            PKGBUILD
+            .SRCINFO
+
+      - name: Comment AUR package info
+        run: |
+          echo "## 📦 AUR Package Generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "AUR package files have been generated. To publish:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download the aur-package artifact" >> $GITHUB_STEP_SUMMARY
+          echo "2. Update the sha256sum in PKGBUILD with the actual checksum" >> $GITHUB_STEP_SUMMARY
+          echo "3. Submit to AUR following the submission guidelines" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Package URL will be: https://aur.archlinux.org/packages/fixml/" >> $GITHUB_STEP_SUMMARY
+
+  publish-docker:
+    name: Publish Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get release info
+        id: release
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Dockerfile
+        run: |
+          cat > Dockerfile << EOF
+          FROM alpine:latest
+
+          # Install dependencies
+          RUN apk add --no-cache ca-certificates
+
+          # Download and install fixml binary
+          ADD https://github.com/${{ github.repository }}/releases/download/v${{ steps.release.outputs.version }}/fixml-linux-x86_64 /usr/local/bin/fixml
+          RUN chmod +x /usr/local/bin/fixml
+
+          # Create non-root user
+          RUN adduser -D -s /bin/sh fixml
+          USER fixml
+
+          ENTRYPOINT ["/usr/local/bin/fixml"]
+          CMD ["--help"]
+          EOF
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/fixml:latest
+            ghcr.io/${{ github.repository }}/fixml:v${{ steps.release.outputs.version }}
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Comment Docker info
+        run: |
+          echo "## 🐳 Docker Image Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Docker images have been published to:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`ghcr.io/${{ github.repository }}/fixml:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`ghcr.io/${{ github.repository }}/fixml:v${{ steps.release.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Usage:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker run --rm -v \$(pwd):/workspace ghcr.io/${{ github.repository }}/fixml:latest /workspace/input.xml" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
