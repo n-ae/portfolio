@@ -17,6 +17,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"os"
 	"strconv"
@@ -165,7 +166,7 @@ func processAsText(args Args, content string, hasXMLDecl bool) error {
 	if estimatedElements > MAX_HASH_CAPACITY {
 		estimatedElements = MAX_HASH_CAPACITY
 	}
-	seenElements := make(map[string]bool, estimatedElements)
+	seenElements := make(map[uint64]bool, estimatedElements)
 	duplicatesRemoved := 0
 	
 	// Pre-cache common indentation strings (standardized across all implementations)
@@ -200,12 +201,12 @@ func processAsText(args Args, content string, hasXMLDecl bool) error {
 				}
 				// Deduplication only for non-container lines
 				if !isContainer {
-					normalizedKey := normalizeWhitespacePreservingAttributes(trimmed)
-					if seenElements[normalizedKey] {
+					semanticHash := computeSemanticHash(trimmed)
+					if seenElements[semanticHash] {
 						duplicatesRemoved++
 						continue // Skip duplicate line - much cleaner than goto
 					}
-					seenElements[normalizedKey] = true
+					seenElements[semanticHash] = true
 				}
 				// Simplified tag detection
 				isClosingTag := len(trimmed) >= 2 && trimmed[0] == '<' && trimmed[1] == '/'
@@ -378,6 +379,94 @@ func isSelfContained(s string) bool {
 	}
 	
 	return false
+}
+
+// computeSemanticHash computes a hash representing the semantic content without allocating normalized strings
+func computeSemanticHash(s string) uint64 {
+	if len(s) == 0 {
+		return 0
+	}
+	
+	hash := fnv.New64a()
+	
+	// Quick check: if no quotes, use simpler hashing
+	if !containsQuotes(s) {
+		// Normalize simple whitespace while hashing
+		prevSpace := false
+		for i := 0; i < len(s); i++ {
+			c := s[i]
+			if c <= WHITESPACE_THRESHOLD {
+				if !prevSpace {
+					hash.Write([]byte{' '}) // Normalize to single space
+					prevSpace = true
+				}
+			} else {
+				hash.Write([]byte{c})
+				prevSpace = false
+			}
+		}
+		return hash.Sum64()
+	}
+	
+	// Handle quotes and attributes with streaming hash
+	inQuotes := false
+	var quoteChar byte
+	prevSpace := false
+	expectingAttrValue := false
+	
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		
+		if !inQuotes && (c == '"' || c == '\'') {
+			inQuotes = true
+			quoteChar = c
+			expectingAttrValue = false
+			// Always hash as double quote for semantic equivalence
+			hash.Write([]byte{'"'})
+			prevSpace = false
+		} else if inQuotes && c == quoteChar {
+			inQuotes = false
+			// Always hash as double quote for semantic equivalence
+			hash.Write([]byte{'"'})
+			prevSpace = false
+		} else if inQuotes {
+			// Inside quotes: preserve all content
+			hash.Write([]byte{c})
+			prevSpace = false
+		} else if c == '=' && !inQuotes {
+			// Found attribute assignment
+			hash.Write([]byte{c})
+			expectingAttrValue = true
+			prevSpace = false
+		} else if expectingAttrValue && c > WHITESPACE_THRESHOLD && c != '>' && c != '/' && c != '"' && c != '\'' {
+			// Unquoted attribute value - normalize by adding quotes
+			hash.Write([]byte{'"'})
+			
+			// Hash the unquoted value (until space, >, or /)
+			j := i
+			for j < len(s) && s[j] > WHITESPACE_THRESHOLD && s[j] != '>' && s[j] != '/' {
+				hash.Write([]byte{s[j]})
+				j++
+			}
+			hash.Write([]byte{'"'})
+			i = j - 1 // -1 because the loop will increment
+			expectingAttrValue = false
+			prevSpace = false
+		} else if c <= WHITESPACE_THRESHOLD {
+			expectingAttrValue = false
+			// Outside quotes: normalize whitespace
+			if !prevSpace {
+				hash.Write([]byte{' '})
+				prevSpace = true
+			}
+		} else {
+			expectingAttrValue = false
+			hash.Write([]byte{c})
+			prevSpace = false
+		}
+	}
+	
+	return hash.Sum64()
 }
 
 // normalizeWhitespacePreservingAttributes normalizes structural whitespace while preserving attribute values - optimized

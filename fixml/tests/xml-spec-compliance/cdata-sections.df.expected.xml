@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Test CDATA sections per XML specification -->
+<root>
+  <!-- Basic CDATA section -->
+  <basic_cdata><![CDATA[This is CDATA content]]></basic_cdata>
+  <!-- CDATA with markup -->
+  <markup_cdata><![CDATA[
+    This CDATA contains <tags> and &entities;
+    All markup is treated literally: <element attr="value"/>
+    Even quotes "double" and 'single' are literal
+  ]]></markup_cdata>
+  <!-- CDATA with special characters -->
+  <special_cdata><![CDATA[
+    Special characters: < > & " '
+    Mathematical symbols: ∑ ∫ ∂ ∆ ∇
+    Unicode: ελληνικά 中文 العربية 🌍
+    Programming: if (x < y && z > 0) { return "success"; }
+  ]]></special_cdata>
+  <!-- CDATA with whitespace -->
+  <whitespace_cdata><![CDATA[
+    
+    Whitespace is preserved in CDATA
+    Including   multiple   spaces
+    And	tabs
+    
+    And blank lines
+    
+  ]]></whitespace_cdata>
+  <!-- Mixed content with CDATA -->
+  <mixed_content>
+    Regular text content
+    <![CDATA[CDATA section with <markup>]]>
+    More regular content
+    <child>Child element</child>
+    <![CDATA[Another CDATA section]]>
+    Final text
+  </mixed_content>
+  <!-- CDATA in different positions -->
+  <cdata_start><![CDATA[CDATA at start]]> followed by text</cdata_start>
+  <cdata_middle>Text before <![CDATA[CDATA in middle]]> text after</cdata_middle>
+  <cdata_end>Text before <![CDATA[CDATA at end]]></cdata_end>
+  <!-- Empty CDATA -->
+  <empty_cdata><![CDATA[]]></empty_cdata>
+  <!-- CDATA with just whitespace -->
+  <whitespace_only_cdata><![CDATA[   ]]></whitespace_only_cdata>
+  <newline_only_cdata><![CDATA[
+]]></newline_only_cdata>
+  <!-- Complex CDATA content -->
+  <complex_cdata><![CDATA[
+    XML Example:
+    <?xml version="1.0"?>
+    <document>
+      <title>Test Document</title>
+      <content>
+        This is content with <emphasis>markup</emphasis>
+        And entities like &amp; &lt; &gt;
+      </content>
+    </document>
+    
+    JavaScript Example:
+    function test() {
+      if (x < 5 && y > 0) {
+        return "condition met";
+      }
+    }
+    
+    Regular expressions: /[a-zA-Z]+\d*/g
+  ]]></complex_cdata>
+  <!-- Self-closing elements cannot contain CDATA -->
+  <container>
+    <normal><![CDATA[CDATA in normal element]]></normal>
+    <self_closing/>
+  </container>
+  <!-- Multiple CDATA sections -->
+  <multiple>
+    <![CDATA[First CDATA section]]>
+    <![CDATA[Second CDATA section]]>
+    <![CDATA[Third CDATA section]]>
+  </multiple>
+</root>

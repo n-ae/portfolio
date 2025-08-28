@@ -75,6 +75,7 @@ let trim s =
   if start > finish then "" else String.sub s start (finish - start + 1)
 
 module StringSet = Set.Make(String)
+module IntSet = Set.Make(Int)
 
 (* Simple string-based XML declaration detection - no regex needed *)
 
@@ -90,82 +91,88 @@ let is_self_contained trimmed =
   len >= 7 && trimmed.[0] = '<' && trimmed.[len-1] = '>' &&
   String.contains trimmed '>' && String.rindex trimmed '<' > String.index trimmed '>'
 
-(* Optimized hybrid functional/imperative approach *)
-let normalize_whitespace s =
-  if String.length s = 0 then s
+(* Compute semantic hash without string allocation for better performance *)
+let compute_semantic_hash s =
+  if String.length s = 0 then 0
   else
-    let result = Buffer.create (String.length s) in
-    let in_quotes = ref false in
-    let quote_char = ref '\000' in
-    let prev_space = ref false in
-    let expecting_attr_value = ref false in
-    let i = ref 0 in
-    let len = String.length s in
-    
-    while !i < len do
-      let c = s.[!i] in
+    (* Simple hash for strings without quotes (most common case) *)
+    if not (String.contains s '"') && not (String.contains s '\'') then (
+      (* Use a simple string hash with normalized whitespace *)
+      let words = String.split_on_char ' ' (String.concat " " 
+        (List.filter (fun w -> w <> "") 
+        (List.map trim (String.split_on_char ' ' s)))) in
+      Hashtbl.hash (String.concat " " words)
+    ) else (
+      (* For complex strings with quotes, build hash efficiently *)
+      let hash_parts = Buffer.create (String.length s) in
+      let in_quotes = ref false in
+      let quote_char = ref '\000' in
+      let prev_space = ref false in
+      let expecting_attr_value = ref false in
+      let i = ref 0 in
+      let len = String.length s in
       
-      if not !in_quotes && (c = '"' || c = '\'') then (
-        in_quotes := true;
-        quote_char := c;
-        expecting_attr_value := false;
-        (* Normalize all quotes to double quotes for consistent deduplication *)
-        Buffer.add_char result '"';
-        prev_space := false
-      ) else if !in_quotes && c = !quote_char then (
-        in_quotes := false;
-        (* Normalize all quotes to double quotes for consistent deduplication *)
-        Buffer.add_char result '"';
-        prev_space := false
-      ) else if !in_quotes then (
-        (* Inside quotes: preserve all whitespace *)
-        Buffer.add_char result c;
-        prev_space := false
-      ) else if c = '=' && not !in_quotes then (
-        (* Found attribute assignment, next non-space content might be unquoted value *)
-        Buffer.add_char result c;
-        expecting_attr_value := true;
-        prev_space := false
-      ) else if !expecting_attr_value && c > ' ' && c <> '>' && c <> '/' && c <> '"' && c <> '\'' then (
-        (* Found unquoted attribute value, add quotes around it *)
-        Buffer.add_char result '"';
+      while !i < len do
+        let c = s.[!i] in
         
-        (* Find the end of the unquoted value (until space, >, or /) *)
-        let j = ref !i in
-        while !j < len && s.[!j] > ' ' && s.[!j] <> '>' && s.[!j] <> '/' do
-          Buffer.add_char result s.[!j];
-          incr j
-        done;
-        Buffer.add_char result '"';
-        i := !j - 1; (* -1 because the loop will increment *)
-        expecting_attr_value := false;
-        prev_space := false
-      ) else if c <= ' ' then (
-        expecting_attr_value := false;
-        (* Outside quotes: normalize whitespace *)
-        if not !prev_space then (
-          Buffer.add_char result ' ';
-          prev_space := true
-        )
-      ) else (
-        expecting_attr_value := false;
-        Buffer.add_char result c;
-        prev_space := false
-      );
+        if not !in_quotes && (c = '"' || c = '\'') then (
+          in_quotes := true;
+          quote_char := c;
+          expecting_attr_value := false;
+          (* Normalize quotes for semantic equivalence *)
+          Buffer.add_char hash_parts '"';
+          prev_space := false
+        ) else if !in_quotes && c = !quote_char then (
+          in_quotes := false;
+          (* Normalize quotes for semantic equivalence *)
+          Buffer.add_char hash_parts '"';
+          prev_space := false
+        ) else if !in_quotes then (
+          (* Preserve content inside quotes *)
+          Buffer.add_char hash_parts c;
+          prev_space := false
+        ) else if c = '=' && not !in_quotes then (
+          Buffer.add_char hash_parts c;
+          expecting_attr_value := true;
+          prev_space := false
+        ) else if !expecting_attr_value && c > ' ' && c <> '>' && c <> '/' && c <> '"' && c <> '\'' then (
+          (* Handle unquoted attribute values *)
+          Buffer.add_char hash_parts '"';
+          let j = ref !i in
+          while !j < len && s.[!j] > ' ' && s.[!j] <> '>' && s.[!j] <> '/' do
+            Buffer.add_char hash_parts s.[!j];
+            incr j
+          done;
+          Buffer.add_char hash_parts '"';
+          i := !j - 1;
+          expecting_attr_value := false;
+          prev_space := false
+        ) else if c <= ' ' then (
+          expecting_attr_value := false;
+          (* Normalize whitespace *)
+          if not !prev_space then (
+            Buffer.add_char hash_parts ' ';
+            prev_space := true
+          )
+        ) else (
+          expecting_attr_value := false;
+          Buffer.add_char hash_parts c;
+          prev_space := false
+        );
+        
+        incr i
+      done;
       
-      incr i
-    done;
-    
-    trim (Buffer.contents result)
+      Hashtbl.hash (trim (Buffer.contents hash_parts))
+    )
 
 (* Optimized XML processing with deduplication and indentation *)
 let process_xml_with_deduplication content =
   let lines = String.split_on_char '\n' content in
-  let estimated_size = String.length content + (String.length content lsr 2) + 1024 in
-  let result = Buffer.create estimated_size in
   let indent_level = ref 0 in
-  let seen_elements = ref StringSet.empty in
+  let seen_elements = ref IntSet.empty in
   let duplicates_removed = ref 0 in
+  let processed_lines = ref [] in
   
   (* Pre-allocate indentation buffer *)
   let max_indent = max_indent_levels in
@@ -176,27 +183,27 @@ let process_xml_with_deduplication content =
     let trimmed = trim line in
     if trimmed <> "" then (
       (* Cache expensive operations *)
-      let normalized_key = normalize_whitespace trimmed in
       let is_container = is_container_element trimmed in
+      let semantic_hash = if is_container then 0 else compute_semantic_hash trimmed in
       
-      if not is_container && StringSet.mem normalized_key !seen_elements then
+      if not is_container && IntSet.mem semantic_hash !seen_elements then
         incr duplicates_removed
       else (
         if not is_container then
-          seen_elements := StringSet.add normalized_key !seen_elements;
+          seen_elements := IntSet.add semantic_hash !seen_elements;
         
         (* Adjust indent for closing tags BEFORE applying indentation *)
         if String.length trimmed > 1 && trimmed.[0] = '<' && trimmed.[1] = '/' then
           indent_level := max 0 (!indent_level - 1);
         
-        (* Apply consistent 2-space indentation *)
+        (* Build indented line *)
         let spaces_needed = !indent_level * 2 in
         let spaces_clamped = min spaces_needed (max_indent * 2) in
+        let line_buffer = Buffer.create (spaces_clamped + String.length trimmed) in
         if spaces_clamped > 0 then
-          Buffer.add_subbytes result indent_buffer 0 spaces_clamped;
-        
-        Buffer.add_string result trimmed;
-        Buffer.add_char result '\n';
+          Buffer.add_subbytes line_buffer indent_buffer 0 spaces_clamped;
+        Buffer.add_string line_buffer trimmed;
+        processed_lines := (Buffer.contents line_buffer) :: !processed_lines;
         
         (* Determine if this is an opening tag using functional approach *)
         let check_opening_tag s =
@@ -221,7 +228,13 @@ let process_xml_with_deduplication content =
     )
   ) lines;
   
-  (Buffer.contents result, !duplicates_removed)
+  (* Join lines properly - add newlines between but not at end to match expected format *)
+  let final_content = 
+    match List.rev !processed_lines with
+    | [] -> ""
+    | lines -> String.concat "\n" lines
+  in
+  (final_content, !duplicates_removed)
 
 let get_output_filename input_file replace_mode =
   if replace_mode then

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestSuite name="XML-Spec-Compliance">
+  <ElementNameTests>
+    <!-- Valid element names -->
+    <ValidNames>
+      <element_with_underscore />
+      <element-with-dash />
+      <element.with.dots />
+      <element123 />
+      <_underscore_start />
+      <UPPERCASE />
+      <mixedCase />
+      <ελληνικά />
+      <中文 />
+    </ValidNames>
+    <!-- Reserved xml names (should be avoided but processor should handle) -->
+    <ReservedNames>
+      <!-- These are discouraged but not forbidden in content -->
+      <xmlElement>content</xmlElement>
+      <XMLElement>content</XMLElement>
+      <XmlElement>content</XmlElement>
+    </ReservedNames>
+  </ElementNameTests>
+</TestSuite>

@@ -1,16 +1,18 @@
-# FIXML Testing Suite Documentation
+# FIXML Test Suite
+
+Organized test structure for FIXML implementations across multiple languages.
 
 ## Overview
 
-The FIXML testing suite provides comprehensive validation for all 5 language implementations across multiple dimensions: functionality, performance, edge cases, and correctness. The test suite is designed to ensure consistent behavior across all implementations while validating the O(n) scaling characteristics.
+The FIXML testing suite provides comprehensive validation for all 5 language implementations across multiple dimensions: functionality, performance, edge cases, and XML specification compliance. Tests are now organized into logical categories for better maintainability.
 
 ## Test Architecture
 
 ### Test Matrix Coverage
 - **5 Languages**: Zig, Go, Rust, OCaml, Lua
-- **4 Operating Modes**: Default, Organize, Fix-warnings, Combined
-- **34+ Test Files**: Ranging from edge cases to performance benchmarks
-- **Total Test Cases**: 5 × 4 × 34+ = 680+ individual tests
+- **2 Operating Modes**: Default, Fix-warnings  
+- **53 Test Files**: Organized by category and purpose
+- **Total Test Cases**: 5 × 2 × 53 = 530 individual tests
 
 ### Test Execution Order
 Tests run in **performance order** (fastest to slowest) to minimize system load effects:
@@ -20,140 +22,76 @@ Tests run in **performance order** (fastest to slowest) to minimize system load 
 4. OCaml (functional approach)
 5. Lua (interpreted but optimized)
 
-## Test File Categories
+## Test Categories
 
-### Performance Benchmarks (`samples/`)
+### `functional/` - Core Functionality Tests
+- **Basic XML Structure**: `basic-xml-structure.xml` - Core XML parsing and organization
+- **Attribute Handling**: `attribute-handling-test.xml` - XML attribute processing
+- **CDATA Processing**: `cdata-content.xml`, `cdata-with-nested-xml.xml` - CDATA section handling
+- **Container Elements**: `container-elements-test.xml` - Nested element structures
+- **Duplicate Elements**: `duplicate-elements-test.xml` - Element deduplication
+- **Indentation**: `indentation-test.xml` - XML formatting and indentation
+- **Mixed Content**: `mixed-content.xml` - Text and element mixed content
+- **Namespaces**: `namespace-deep-mixed.xml` - XML namespace handling
+- **Special Characters**: `special-chars.xml`, `unicode-content.xml` - Character encoding
+- **XML Declarations**: `missing-xml-declaration.xml`, `xml-declaration-warnings-test.xml`
 
-#### Size Distribution for Scaling Tests
-```
-sample.xml                    0.9KB   - Minimal overhead testing
-medium-test.xml              48.8KB   - Medium file processing
-large-test.xml                3.2MB   - Large file scaling
-enterprise-benchmark.xml      971KB   - Real-world complexity
-large-benchmark.xml           549KB   - Performance validation  
-massive-benchmark.xml         2.4MB   - Maximum tested scale
-```
+### `performance/` - Performance and Scale Tests
+- **Enterprise Scale**: `enterprise-scale-benchmark.xml` - Large enterprise XML files
+- **Large Benchmarks**: `large-benchmark.xml`, `massive-scale-benchmark.xml` - Performance testing
+- **Deep Nesting**: `very-deep-nested-elements.xml`, `very-deep-nesting.xml` - Nested structure limits
 
-#### Edge Case Testing
-```
-missing-xml-declaration.xml      - XML declaration handling
-unicode-content.xml              - UTF-8 and special characters
-cdata-with-nested-xml.xml        - CDATA section preservation
-processing-instruction-test.xml  - PI handling (<?xml, <?...?>)
-comment-with-xml.xml             - Comment preservation
-whitespace-heavy.xml             - Extreme whitespace scenarios
-very-deep-nested-elements.xml    - Nesting depth limits (64 levels)
-very-deep-nesting.xml            - Maximum depth testing
-```
+### `regression/` - Bug Fix Validation Tests  
+- **Element Ordering**: `element-ordering-fix.xml` - Element order preservation
+- **Package Reference Duplication**: `packageref-duplication-bug.xml` - Specific MSBuild bug fixes
+- **Whitespace Duplication**: `whitespace-duplication-fix.xml` - Whitespace handling fixes
 
-#### Functional Testing
-```
-duplicate-packageref.xml         - Deduplication accuracy
-sample-with-duplicates.xml       - Basic duplicate detection
-whitespace-duplicates-test.xml   - Whitespace normalization
-attr-whitespace-test.xml         - Attribute whitespace handling
-multiple-attrs.xml               - Complex attribute scenarios
-test-attributes.xml              - Attribute preservation
-test-containers.xml              - Container element detection
-test-indent.xml                  - Indentation correctness
-```
+### `xml-spec-compliance/` - XML Specification Compliance
+- **Attribute Rules**: `attribute-quoting.xml`, `attribute-rules.xml` - XML attribute specifications
+- **CDATA Sections**: `cdata-sections.xml` - CDATA specification compliance
+- **Character Handling**: `character-encoding.xml`, `character-references.xml` - Character specifications
+- **Comments & PI**: `comments-and-pi.xml`, `comment-spaces.xml` - Comment and processing instruction handling
+- **Element Rules**: `element-name-rules.xml`, `empty-elements.xml` - Element naming and structure rules
+- **Whitespace**: `whitespace-handling.xml` - XML whitespace specification compliance
 
-#### Real-world Scenarios
-```
-wrong-element-order.xml          - Element reordering testing
-packageref-in-propertygroup.xml  - Complex MSBuild scenarios
-namespace-deep-mixed.xml         - XML namespace handling
-mixed-content.xml                - Mixed content preservation
-all-features-mixed.xml           - Comprehensive feature testing
-```
+### `edge-cases/` - Boundary Condition Tests
+- **Edge Cases**: `edge-case-elements.xml` - Unusual but valid XML constructs
 
-## Operating Modes
+## Test Modes
 
-### Default Mode (No flags)
-**Purpose**: Basic XML formatting and deduplication
-**Features**: 
-- Consistent 2-space indentation
-- Duplicate element removal
-- Structure preservation
-- Creates `.organized.xml` output
+### Quick Mode (`lua test.lua quick [language]`)
+Runs a curated subset of 16 core tests covering essential functionality.
 
-**Example**:
+### Spec Compliance Mode (`lua test.lua spec [language]`) 
+Runs XML specification compliance tests (22 tests).
+
+### Comprehensive Mode (`lua test.lua comprehensive [language]`)
+Runs all tests across all categories (53 tests total).
+
+## Test File Naming Convention
+
+- **Base Files**: `test-name.xml` - Original XML input
+- **Default Expected**: `test-name.d.expected.xml` - Expected output in default mode  
+- **Fix-Warnings Expected**: `test-name.f.expected.xml` - Expected output with fix-warnings mode
+- **Combined Expected**: `test-name.df.expected.xml` - Used when default and fix-warnings produce same output
+
+## Running Tests
+
 ```bash
-zig/fixml tests/samples/sample.xml
-# Creates: tests/samples/sample.organized.xml
-```
+# Quick test single language
+lua test.lua quick zig
 
-### Organize Mode (`--organize`)
-**Purpose**: Apply logical XML element organization
-**Features**:
-- Groups related elements together
-- Maintains semantic relationships
-- Optimizes for readability
-- May reorder elements for logical flow
+# Spec compliance all languages  
+lua test.lua spec all
 
-**Example**:
-```bash
-go/fixml --organize tests/samples/enterprise-benchmark.xml
-```
-
-### Fix-warnings Mode (`--fix-warnings`)
-**Purpose**: Apply XML best practices and fix warnings
-**Features**:
-- Adds XML declaration if missing
-- Ensures proper encoding declaration
-- Fixes common XML issues
-- Reports and corrects best practice violations
-
-**Example**:
-```bash
-rust/fixml --fix-warnings tests/samples/missing-xml-declaration.xml
-```
-
-### Combined Mode (`--organize --fix-warnings`)
-**Purpose**: Full processing with both organization and fixes
-**Features**:
-- All organize mode features
-- All fix-warnings mode features
-- Comprehensive XML optimization
-- Maximum processing applied
-
-**Example**:
-```bash
-ocaml/fixml --organize --fix-warnings tests/samples/massive-benchmark.xml
+# Full comprehensive test
+lua test.lua comprehensive all
 ```
 
 ## Testing Utilities
 
 ### `fel.sh` - File Comparison Tool
-
-**Purpose**: Precise XML file comparison with BOM and whitespace awareness
-
-**Features**:
-- BOM (Byte Order Mark) handling
-- Whitespace normalization for comparison
-- Line ending standardization
-- Structural difference identification
-
-**Usage**:
-```bash
-# Compare original vs processed
-./tests/fel.sh original.xml processed.organized.xml
-
-# Check for differences (empty output = identical)
-./tests/fel.sh expected.xml actual.xml
-
-# Example output on differences:
-# < Line only in first file
-# > Line only in second file
-```
-
-**Implementation Details**:
-```bash
-# Internal processing pipeline
-sed 's/^\xEF\xBB\xBF//; s/^[[:space:]]*//; s/[[:space:]]*$//' file1 | sort -u
-sed 's/^\xEF\xBB\xBF//; s/^[[:space:]]*//; s/[[:space:]]*$//' file2 | sort -u
-comm -3 <(processed_file1) <(processed_file2)
-```
+Precise XML file comparison with BOM and whitespace awareness for validating test results.
 
 ## Test Execution
 
@@ -174,7 +112,7 @@ lua test.lua quick
 
 ### Comprehensive Test Suite  
 **Purpose**: Complete validation before releases
-**Coverage**: All available XML files × 4 modes × 5 languages = 680+ tests
+**Coverage**: All available XML files × 4 modes × 5 languages = 1,620 tests
 **Duration**: ~2-3 minutes
 **Usage**:
 ```bash

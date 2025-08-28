@@ -34,7 +34,7 @@ end
 local function get_expected_file(file, mode)
 	local suffix = get_mode_suffix(mode)
 	local base_expected_file = file:gsub("%.([^%.]+)$", suffix .. ".expected.%1")
-	
+
 	-- For default and fix-warnings modes, check if df.expected exists
 	if mode == "" or mode == "--fix-warnings" then
 		local df_expected_file = file:gsub("%.([^%.]+)$", ".df.expected.%1")
@@ -42,7 +42,7 @@ local function get_expected_file(file, mode)
 			return df_expected_file
 		end
 	end
-	
+
 	return base_expected_file
 end
 
@@ -61,9 +61,11 @@ local function run_test(lang, mode, file)
 	end
 
 	local expected_file = get_expected_file(file, mode)
+
+	-- FIXML implementations create .organized.xml files automatically
 	local organized_file = file:gsub("%.([^%.]+)$", ".organized.%1")
 
-	-- Run tool
+	-- Run tool (no --output argument needed, file is created automatically)
 	local success, _ = execute_cmd(cmd .. " " .. mode .. " " .. file)
 	if not success then
 		return false
@@ -109,7 +111,18 @@ local function run_test(lang, mode, file)
 end
 
 local function get_test_files(mode)
-	if mode == "edge-cases" then
+	if mode == "spec" then
+		-- Spec compliance tests: xml-spec-compliance directory
+		local files = {}
+		local handle = io.popen("ls tests/xml-spec-compliance/*.xml 2>/dev/null")
+		for line in handle:lines() do
+			if not line:match("%.organized%.") and not line:match("%.expected%.") then
+				table.insert(files, line)
+			end
+		end
+		handle:close()
+		return files
+	elseif mode == "edge-cases" then
 		-- Edge cases: specialized tests for boundary conditions
 		local files = {}
 		local handle = io.popen("ls tests/edge-cases/*.xml 2>/dev/null")
@@ -121,9 +134,11 @@ local function get_test_files(mode)
 		handle:close()
 		return files
 	elseif mode == "comprehensive" or mode == "all" then
-		-- Comprehensive: all XML files from samples and edge-cases
+		-- Comprehensive: all XML files from functional, performance, regression, edge-cases, and xml-spec-compliance
 		local files = {}
-		local handle = io.popen("ls tests/samples/*.xml tests/edge-cases/*.xml 2>/dev/null")
+		local handle = io.popen(
+			"ls tests/functional/*.xml tests/performance/*.xml tests/regression/*.xml tests/edge-cases/*.xml tests/xml-spec-compliance/*.xml 2>/dev/null"
+		)
 		for line in handle:lines() do
 			if not line:match("%.organized%.") and not line:match("%.expected%.") then
 				table.insert(files, line)
@@ -132,9 +147,9 @@ local function get_test_files(mode)
 		handle:close()
 		return files
 	elseif mode ~= "quick" then
-		-- Standard comprehensive: just samples directory
+		-- Standard functional tests: just functional directory
 		local files = {}
-		local handle = io.popen("ls tests/samples/*.xml 2>/dev/null")
+		local handle = io.popen("ls tests/functional/*.xml 2>/dev/null")
 		for line in handle:lines() do
 			if not line:match("%.organized%.") and not line:match("%.expected%.") then
 				table.insert(files, line)
@@ -145,22 +160,22 @@ local function get_test_files(mode)
 	end
 
 	local quick_files = {
-		"tests/samples/sample.xml",
-		"tests/samples/sample-with-duplicates.xml",
-		"tests/samples/whitespace-duplicates-test.xml",
-		"tests/samples/test-warnings.xml",
-		"tests/samples/test-none-update.xml",
-		"tests/samples/packageref-in-propertygroup.xml",
-		"tests/samples/wrong-element-order.xml",
-		"tests/samples/duplicate-packageref.xml",
-		"tests/samples/cdata-with-nested-xml.xml",
-		"tests/samples/processing-instruction-test.xml",
-		"tests/samples/missing-xml-declaration.xml",
-		"tests/samples/attr-whitespace-test.xml",
-		"tests/samples/medium-test.xml",
-		"tests/samples/very-deep-nested-elements.xml",
-		"tests/samples/test-containers.xml",
-		"tests/samples/test-indent.xml",
+		"tests/functional/basic-xml-structure.xml",
+		"tests/functional/duplicate-elements-test.xml",
+		"tests/regression/whitespace-duplication-fix.xml",
+		"tests/functional/xml-declaration-warnings-test.xml",
+		"tests/functional/no-modifications-test.xml",
+		"tests/functional/packageref-in-propertygroup.xml",
+		"tests/regression/element-ordering-fix.xml",
+		"tests/regression/packageref-duplication-bug.xml",
+		"tests/functional/cdata-with-nested-xml.xml",
+		"tests/functional/processing-instruction.xml",
+		"tests/functional/missing-xml-declaration.xml",
+		"tests/functional/attr-whitespace-test.xml",
+		"tests/performance/medium-test.xml",
+		"tests/performance/very-deep-nested-elements.xml",
+		"tests/functional/container-elements-test.xml",
+		"tests/functional/indentation-test.xml",
 	}
 	local files = {}
 	for _, file in ipairs(quick_files) do
@@ -177,7 +192,7 @@ local function build_language(lang)
 		build_config.build_all_optimized()
 		return true
 	end
-	
+
 	-- For individual languages, use the shared build system
 	print("Building " .. lang .. "...")
 	build_config.build_all_optimized()
@@ -222,7 +237,7 @@ for _, lang in ipairs(languages) do
 	-- Use shared configuration to verify implementations
 	local available_implementations = build_config.verify_implementations()
 	local lang_available = false
-	
+
 	for _, impl in ipairs(available_implementations) do
 		local name = impl[1]
 		if name:lower() == lang then

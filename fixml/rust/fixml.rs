@@ -1,4 +1,5 @@
-use std::collections::HashSet;
+use std::collections::{HashSet, hash_map::DefaultHasher};
+use std::hash::{Hash, Hasher};
 use std::env;
 use std::fs;
 use std::process;
@@ -134,12 +135,25 @@ fn is_self_contained(s: &str) -> bool {
     false
 }
 
-fn normalize_whitespace(s: &str) -> String {
+// Compute semantic hash without full string allocation for better performance
+fn compute_semantic_hash(s: &str) -> u64 {
     if s.is_empty() {
-        return s.to_string();
+        return 0;
     }
     
-    let mut result = String::with_capacity(s.len());
+    let mut hasher = DefaultHasher::new();
+    
+    // Quick path for simple strings without quotes
+    if !s.contains('"') && !s.contains('\'') {
+        // Normalize whitespace efficiently for hashing
+        let words: Vec<&str> = s.split_ascii_whitespace().collect();
+        for word in words {
+            word.hash(&mut hasher);
+        }
+        return hasher.finish();
+    }
+    
+    // For complex strings with quotes, normalize semantically for hashing
     let mut in_quotes = false;
     let mut quote_char = '\0';
     let mut prev_space = false;
@@ -155,54 +169,52 @@ fn normalize_whitespace(s: &str) -> String {
             in_quotes = true;
             quote_char = c;
             expecting_attr_value = false;
-            // Normalize all quotes to double quotes for consistent deduplication
-            result.push('"');
+            // Hash normalized quote for semantic equivalence
+            '"'.hash(&mut hasher);
             prev_space = false;
         } else if in_quotes && c == quote_char {
             in_quotes = false;
-            // Normalize all quotes to double quotes for consistent deduplication
-            result.push('"');
+            // Hash normalized quote for semantic equivalence
+            '"'.hash(&mut hasher);
             prev_space = false;
         } else if in_quotes {
-            // Inside quotes: preserve all whitespace
-            result.push(c);
+            // Hash content inside quotes exactly
+            c.hash(&mut hasher);
             prev_space = false;
         } else if c == '=' && !in_quotes {
-            // Found attribute assignment, next non-space content might be unquoted value
-            result.push(c);
+            c.hash(&mut hasher);
             expecting_attr_value = true;
             prev_space = false;
         } else if expecting_attr_value && c > ' ' && c != '>' && c != '/' && c != '"' && c != '\'' {
-            // Found unquoted attribute value, add quotes around it
-            result.push('"');
+            // Hash unquoted attribute value with quotes for normalization
+            '"'.hash(&mut hasher);
             
-            // Find the end of the unquoted value (until space, >, or /)
             let mut j = i;
             while j < chars.len() && chars[j] > ' ' && chars[j] != '>' && chars[j] != '/' {
-                result.push(chars[j]);
+                chars[j].hash(&mut hasher);
                 j += 1;
             }
-            result.push('"');
-            i = j - 1; // -1 because the loop will increment
+            '"'.hash(&mut hasher);
+            i = j - 1;
             expecting_attr_value = false;
             prev_space = false;
         } else if c.is_ascii_whitespace() {
             expecting_attr_value = false;
-            // Outside quotes: normalize whitespace
+            // Hash normalized whitespace
             if !prev_space {
-                result.push(' ');
+                ' '.hash(&mut hasher);
                 prev_space = true;
             }
         } else {
             expecting_attr_value = false;
-            result.push(c);
+            c.hash(&mut hasher);
             prev_space = false;
         }
         
         i += 1;
     }
     
-    result.trim().to_string()
+    hasher.finish()
 }
 
 // Pre-computed indentation strings (standardized across all implementations)
@@ -227,7 +239,7 @@ static INDENT_STRINGS: [&str; 65] = [
 fn process_xml_with_deduplication(content: &str, strip_xml_declaration: bool) -> (String, usize) {
     let mut result = String::with_capacity(content.len() + content.len() / 4);
     let mut indent_level = 0i32;
-    let mut seen_elements = HashSet::with_capacity(std::cmp::min(
+    let mut seen_elements: HashSet<u64> = HashSet::with_capacity(std::cmp::min(
         std::cmp::max(content.len() / ESTIMATED_LINE_LENGTH, MIN_HASH_CAPACITY),
         MAX_HASH_CAPACITY
     ));
@@ -250,12 +262,12 @@ fn process_xml_with_deduplication(content: &str, strip_xml_declaration: bool) ->
 
         // Deduplication only for non-container lines
         if !is_container {
-            let normalized_key = normalize_whitespace(trimmed);
-            if seen_elements.contains(&normalized_key) {
+            let semantic_hash = compute_semantic_hash(trimmed);
+            if seen_elements.contains(&semantic_hash) {
                 duplicates_removed += 1;
                 continue; // Skip duplicate
             }
-            seen_elements.insert(normalized_key);
+            seen_elements.insert(semantic_hash);
         }
         
         // Adjust indent for closing tags BEFORE applying indentation

@@ -174,6 +174,55 @@ def normalize_whitespace_preserving_attributes(s: str) -> str:
     
     return ''.join(result).strip()
 
+def compute_semantic_hash(s: str) -> int:
+    """Compute hash representing semantic content with minimal string allocation
+    Optimized for Python using built-in hash with reduced temporary objects
+    """
+    if not s:
+        return hash('')
+    
+    # Quick path for simple strings without quotes
+    if '"' not in s and "'" not in s:
+        # Use list comprehension for efficiency - single pass, minimal allocation
+        words = s.split()
+        return hash(' '.join(words)) if words else hash('')
+    
+    # For complex strings with quotes, build normalized form efficiently
+    # Use list with pre-estimated capacity to reduce allocations
+    normalized_chars = []
+    in_quotes = False
+    quote_char = None
+    prev_space = False
+    
+    for c in s:
+        if not in_quotes and (c == '"' or c == "'"):
+            in_quotes = True
+            quote_char = c
+            # Normalize quote type for semantic equivalence
+            normalized_chars.append('"')
+            prev_space = False
+        elif in_quotes and c == quote_char:
+            in_quotes = False
+            # Normalize quote type for semantic equivalence
+            normalized_chars.append('"')
+            prev_space = False
+        elif in_quotes:
+            # Preserve content inside quotes exactly
+            normalized_chars.append(c)
+            prev_space = False
+        elif c.isspace():
+            # Normalize whitespace outside quotes
+            if not prev_space:
+                normalized_chars.append(' ')
+                prev_space = True
+        else:
+            # Regular characters
+            normalized_chars.append(c)
+            prev_space = False
+    
+    # Single join operation - more efficient than multiple string operations
+    return hash(''.join(normalized_chars).strip())
+
 def process_xml_with_deduplication(content: str) -> Tuple[str, int]:
     """Optimized O(n) XML processing with deduplication and indentation
     Returns processed content and number of duplicates removed
@@ -188,7 +237,7 @@ def process_xml_with_deduplication(content: str) -> Tuple[str, int]:
     indent_level = 0
     
     # Pre-size set for better performance (Python doesn't have explicit capacity, but this helps)
-    seen_elements: Set[str] = set()
+    seen_elements: Set[int] = set()
     duplicates_removed = 0
     
     # Pre-compute indentation strings for performance
@@ -204,11 +253,11 @@ def process_xml_with_deduplication(content: str) -> Tuple[str, int]:
         
         # Deduplication only for non-container lines
         if not is_container:
-            normalized_key = normalize_whitespace_preserving_attributes(trimmed)
-            if normalized_key in seen_elements:
+            semantic_hash = compute_semantic_hash(trimmed)
+            if semantic_hash in seen_elements:
                 duplicates_removed += 1
                 continue  # Skip duplicate
-            seen_elements.add(normalized_key)
+            seen_elements.add(semantic_hash)
         
         # Adjust indent for closing tags BEFORE applying indentation
         if trimmed.startswith('</'):

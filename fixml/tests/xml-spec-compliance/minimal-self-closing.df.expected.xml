@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Test for minimum self-closing tag requirements -->
+<root>
+  <!-- Test absolute minimum self-closing tags (2 chars + /> = 4 chars minimum) -->
+  <a/>
+  <b/>
+  <c/>
+  <!-- Test with spaces -->
+  <a />
+  <b />
+  <!-- Test longer names -->
+  <tag/>
+  <element/>
+  <component/>
+  <!-- Test with attributes -->
+  <a x="1"/>
+  <b y="2" z="3"/>
+  <!-- Test mixed -->
+  <short/>
+  <medium attr="val"/>
+  <longer-name-test/>
+  <with-multiple attr1="val1" attr2="val2"/>
+</root>

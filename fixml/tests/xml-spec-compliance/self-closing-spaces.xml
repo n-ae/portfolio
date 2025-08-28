@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Test spaces before /> preservation in default mode -->
+<root>
+  <element_with_underscore />
+  <element-with-dash />
+  <element.with.dots />
+  <element123 />
+  <_underscore_start />
+  <UPPERCASE />
+  <mixedCase />
+  <ValidAttributes attr1="value1" attr2="value2" />
+  <WithQuotes single='value' double="value" />
+  <EmptyAttributes empty="" />
+</root>

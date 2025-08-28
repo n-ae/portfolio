@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Test comments and processing instructions per XML specification -->
+<!-- This is a top-level comment -->
+<?stylesheet type="text/xsl" href="transform.xsl"?>
+<root>
+  <!-- Comment before content -->
+  <!-- Multi-line comment
+  spanning multiple
+  lines with various content -->
+  <element>
+    <!-- Nested comment -->
+    Content with <!-- inline comment --> more content
+  </element>
+  <!-- Comments with special characters -->
+  <!-- Comment with unicode: ελληνικά 中文 🌍 -->
+  <!-- Comment with entities: &amp; &lt; &gt; &quot; &apos; -->
+  <!-- Comment with symbols: @#$%^&*()_+-=[]{}|;:,.<>? -->
+  <!-- Processing instructions -->
+  <?xml-stylesheet type="text/css" href="style.css"?>
+  <?custom-instruction data="value" more="data"?>
+  <?php echo "Hello World"; ?>
+  <?target?>
+  <?target data?>
+  <with_pi>
+    <?local-pi instruction="value"?>
+    Content between PIs
+    <?another-pi?>
+  </with_pi>
+  <!-- Empty comment -->
+  <!---->
+  <!-- Comment with just whitespace -->
+  <!--   -->
+  <!--
+  -->
+  <!-- Processing instruction with no data -->
+  <?target?>
+  <!-- Mixed comments and PIs -->
+  <!-- Comment 1 -->
+  <?pi1 data="value"?>
+  <!-- Comment 2 -->
+  <?pi2?>
+  <!-- Comment 3 -->
+  <final_element>
+    <!-- Final comment -->
+    Final content
+    <?final-pi?>
+  </final_element>
+</root>
+<!-- Closing comment -->
+<?final-pi-after-root?>

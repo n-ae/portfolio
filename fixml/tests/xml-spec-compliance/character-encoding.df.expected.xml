@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Test character encoding per XML specification -->
+<root>
+  <!-- Basic ASCII characters -->
+  <ascii>ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789</ascii>
+  <!-- Special ASCII characters -->
+  <special_ascii>!@#$%^&amp;*()_+-=[]{}|;:,&lt;&gt;?/~`</special_ascii>
+  <!-- Unicode blocks -->
+  <unicode_blocks>
+    <!-- Latin Extended -->
+    <latin_extended>àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ</latin_extended>
+    <!-- Greek -->
+    <greek>αβγδεζηθικλμνξοπρστυφχψω ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ</greek>
+    <!-- Cyrillic -->
+    <cyrillic>абвгдеёжзийклмнопрстуфхцчшщъыьэюя АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ</cyrillic>
+    <!-- Arabic -->
+    <arabic>مرحبا بالعالم العربي الجميل</arabic>
+    <!-- Chinese -->
+    <chinese>你好世界这是中文测试内容</chinese>
+    <!-- Japanese -->
+    <japanese>こんにちは世界これは日本語のテスト内容です カタカナテスト</japanese>
+    <!-- Korean -->
+    <korean>안녕하세요 세계 이것은 한국어 테스트 내용입니다</korean>
+    <!-- Hebrew -->
+    <hebrew>שלום עולם זה תוכן בדיקה בעברית</hebrew>
+    <!-- Thai -->
+    <thai>สวัสดีชาวโลก นี่คือเนื้อหาทดสอบภาษาไทย</thai>
+  </unicode_blocks>
+  <!-- Mathematical symbols -->
+  <mathematical>∑ ∫ ∂ ∆ ∇ ∞ ≤ ≥ ≠ ≈ ± × ÷ √ ∈ ∉ ∪ ∩ ⊂ ⊃</mathematical>
+  <!-- Currency symbols -->
+  <currency>$ € £ ¥ ₽ ₹ ₩ ₪ ₫ ₡ ₦ ₨ ₱ ₵ ₴</currency>
+  <!-- Emoji (Unicode high planes) -->
+  <emoji>🌍🌎🌏🌐🌑🌒🌓🌔🌕🌖🌗🌘🌙🌚🌛🌜🌝🌞🌟🌠🌡️🌢🌣🌤️🌥️🌦️🌧️🌨️🌩️🌪️🌫️🌬️</emoji>
+  <!-- Character references -->
+  <character_references>
+    <!-- Numeric character references -->
+    <numeric>&#65;&#66;&#67;&#68;&#69;</numeric>
+    <!-- Hexadecimal character references -->
+    <hexadecimal>&#x41;&#x42;&#x43;&#x44;&#x45;</hexadecimal>
+    <!-- Named character references -->
+    <named>&amp; &lt; &gt; &quot; &apos;</named>
+    <!-- Mixed references -->
+    <mixed>A=&#65; B=&#x42; &amp;=&amp; &lt;=&#60; &gt;=&#x3E;</mixed>
+  </character_references>
+  <!-- Control characters (that are allowed) -->
+  <control_chars>
+    <!-- Tab, newline, carriage return are allowed -->
+    <tab>Content&#x09;with&#x09;tabs</tab>
+    <newline>Content&#x0A;with&#x0A;newlines</newline>
+    <cr>Content&#x0D;with&#x0D;carriage&#x0D;returns</cr>
+  </control_chars>
+  <!-- Line ending normalization test -->
+  <line_endings>
+    <unix_style>Line 1&#x0A;Line 2&#x0A;Line 3</unix_style>
+    <windows_style>Line 1&#x0D;&#x0A;Line 2&#x0D;&#x0A;Line 3</windows_style>
+    <mac_style>Line 1&#x0D;Line 2&#x0D;Line 3</mac_style>
+  </line_endings>
+  <!-- High Unicode values -->
+  <high_unicode>
+    <math_symbols>𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ</math_symbols>
+    <!-- Musical notation -->
+    <music>𝄞𝄢𝄫𝄪𝅘𝅥𝅘𝅥𝅮𝅘𝅥𝅯𝅘𝅥𝅰𝅘𝅥𝅱𝅘𝅥𝅲</music>
+  </high_unicode>
+  <!-- Attribute character encoding -->
+  <attr_encoding
+    ascii="Basic ASCII"
+    unicode="ελληνικά 中文 العربية"
+    numeric="&#65;&#66;&#67;"
+    hex="&#x41;&#x42;&#x43;"
+    named="&amp;&lt;&gt;&quot;&apos;"
+    emoji="🌍🌎🌏"
+    mixed="ASCII + ελληνικά + &#65; + 🌍">
+    Content with mixed encoding
+  </attr_encoding>
+</root>

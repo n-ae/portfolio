@@ -120,13 +120,24 @@ local function fast_trim(s)
 	end
 end
 
--- Normalize whitespace while preserving attribute values
-local function normalize_whitespace_preserving_attributes(s)
+-- Compute semantic hash without string allocation for performance
+local function compute_semantic_hash(s)
   if #s == 0 then
-    return s
+    return 0
   end
   
-  local result = {}
+  -- Simple hash for strings without quotes (most common case)
+  if not s:find('"') and not s:find("'") then
+    -- Use Lua's built-in string hashing with normalized whitespace
+    local words = {}
+    for word in s:gmatch("%S+") do
+      table.insert(words, word)
+    end
+    return string.format("%s", table.concat(words, " "))
+  end
+  
+  -- For complex strings with quotes, build hash efficiently
+  local hash_parts = {}
   local in_quotes = false
   local quote_char = nil
   local prev_space = false
@@ -140,54 +151,51 @@ local function normalize_whitespace_preserving_attributes(s)
       in_quotes = true
       quote_char = c
       expecting_attr_value = false
-      -- Normalize all quotes to double quotes for consistent deduplication
-      table.insert(result, '"')
+      -- Normalize quotes for semantic equivalence
+      table.insert(hash_parts, '"')
       prev_space = false
     elseif in_quotes and c == quote_char then
       in_quotes = false
-      -- Normalize all quotes to double quotes for consistent deduplication
-      table.insert(result, '"')
+      -- Normalize quotes for semantic equivalence
+      table.insert(hash_parts, '"')
       prev_space = false
     elseif in_quotes then
-      -- Inside quotes: preserve all whitespace
-      table.insert(result, c)
+      -- Preserve content inside quotes
+      table.insert(hash_parts, c)
       prev_space = false
     elseif c == '=' and not in_quotes then
-      -- Found attribute assignment, next non-space content might be unquoted value
-      table.insert(result, c)
+      table.insert(hash_parts, c)
       expecting_attr_value = true
       prev_space = false
     elseif expecting_attr_value and c:byte() > 32 and c ~= '>' and c ~= '/' and c ~= '"' and c ~= "'" then
-      -- Found unquoted attribute value, add quotes around it
-      table.insert(result, '"')
-      
-      -- Find the end of the unquoted value (until space, >, or /)
+      -- Handle unquoted attribute values
+      table.insert(hash_parts, '"')
       local j = i
       while j <= #s and s:sub(j, j):byte() > 32 and s:sub(j, j) ~= '>' and s:sub(j, j) ~= '/' do
-        table.insert(result, s:sub(j, j))
+        table.insert(hash_parts, s:sub(j, j))
         j = j + 1
       end
-      table.insert(result, '"')
-      i = j - 1 -- -1 because the loop will increment
+      table.insert(hash_parts, '"')
+      i = j - 1
       expecting_attr_value = false
       prev_space = false
     elseif c:byte() <= 32 then
       expecting_attr_value = false
-      -- Outside quotes: normalize whitespace
+      -- Normalize whitespace
       if not prev_space then
-        table.insert(result, ' ')
+        table.insert(hash_parts, ' ')
         prev_space = true
       end
     else
       expecting_attr_value = false
-      table.insert(result, c)
+      table.insert(hash_parts, c)
       prev_space = false
     end
     
     i = i + 1
   end
   
-  return fast_trim(table.concat(result))
+  return fast_trim(table.concat(hash_parts))
 end
 
 -- Lightweight self-contained element check without patterns
@@ -294,8 +302,8 @@ local function process_xml_file(replace_mode, fix_warnings, input_file)
 			                     trimmed:byte(1) == 60 and trimmed:byte(#trimmed) == 62 and 
 			                     not trimmed:find(" ", 2, true))
 			
-			-- Use normalized key for non-container elements (better deduplication)
-			local key = is_container and trimmed or normalize_whitespace_preserving_attributes(trimmed)
+			-- Use semantic hash for non-container elements (better deduplication)
+			local key = is_container and trimmed or compute_semantic_hash(trimmed)
 			
 			if not is_container and seen_elements[key] then
 				duplicates_removed = duplicates_removed + 1
