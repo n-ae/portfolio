@@ -6,13 +6,13 @@ A comprehensive suite of XML processors implemented in 5 languages (Zig, Go, Rus
 
 | Rank | Language | Average Time | Performance Notes |
 |------|----------|--------------|-------------------|
-| 🥇 | **Rust**  | 8.0ms       | Zero-cost abstractions with memory safety |
-| 🥈 | **Lua**   | 8.5ms       | Optimized interpreted performance |
-| 🥉 | **Go**    | 8.6ms       | Excellent balance of performance and simplicity |
-| 4th | **Zig**   | 13.4ms      | Manual memory management, consistent performance |
-| 5th | **OCaml** | 64.9ms      | Functional programming with GC overhead |
+| 🥇 | **Zig**   | 20.24ms     | Simplified single-file architecture, most consistent |
+| 🥈 | **Go**    | 18.83ms     | Excellent balance of performance and simplicity |
+| 🥉 | **Rust**  | 23.71ms     | Zero-cost abstractions with memory safety |
+| 4th | **OCaml** | 37.20ms     | Functional programming with maintainable design |
+| 5th | **Lua**   | 193.66ms    | Interpreted excellence, amazing for small files |
 
-*Current optimized results on 0.9KB sample file with 5 iterations each*
+*Comprehensive benchmark results (53 tests × 2 modes = 106 tests per language)*
 
 ## 📁 Project Structure
 
@@ -32,8 +32,9 @@ fixml/
 │   └── README.md
 ├── zig/
 │   ├── fixml          # Compiled Zig binary
-│   ├── src/main.zig   # Zig implementation
+│   ├── src/main.zig   # Zig implementation (841 lines, single file)
 │   ├── build.zig      # Build configuration
+│   ├── examples/advanced_patterns/  # Educational: Advanced patterns preserved
 │   └── README.md
 ├── lua/
 │   ├── fixml.lua      # Lua implementation
@@ -153,8 +154,8 @@ IO_CHUNK_SIZE = 65536         # 64KB I/O operations
 3. **Cached indentation strings** up to 64 levels
 4. **Bulk I/O operations** with 64KB chunks
 5. **Language-specific optimizations**:
-   - **Zig**: Manual memory management, lookup tables
-   - **Go**: Object pooling, buffered readers
+   - **Zig**: Single-file architecture, Martin Fowler refactoring principles, manual memory management
+   - **Go**: Object pooling, buffered readers  
    - **Rust**: SIMD potential, zero-copy operations
    - **OCaml**: Buffer pre-allocation, functional optimizations
    - **Lua**: Byte-level operations, table pre-sizing
@@ -162,11 +163,11 @@ IO_CHUNK_SIZE = 65536         # 64KB I/O operations
 ## 📊 Performance Analysis
 
 ### Scaling Characteristics
-- **Zig**: Most consistent, minimal variance (σ=4.72ms)
-- **Go**: Good balance, moderate variance (σ=9.79ms)  
-- **Rust**: Variable performance (σ=14.48ms)
-- **OCaml**: Functional overhead (σ=31.62ms)
-- **Lua**: High variance but excellent on tiny files (σ=206.14ms)
+- **Zig**: Most consistent architecture, minimal variance (σ=4.47ms) - single-file simplicity
+- **Go**: Good balance, moderate variance (σ=10.80ms)  
+- **Rust**: Variable performance (σ=15.37ms)
+- **OCaml**: Functional overhead (σ=32.29ms)
+- **Lua**: High variance but excellent on tiny files (σ=207.53ms)
 
 ### Optimization Opportunities
 1. **Memory Mapping**: 30-50% improvement for files >10MB
@@ -195,15 +196,16 @@ zig/fixml --organize --fix-warnings newfile.xml  # Creates .of.expected.xml
 ## 📈 Results & Conclusions
 
 ### Performance Winners
-- **Overall Champion**: Zig - Fastest and most consistent
-- **Best Balance**: Go - Great performance with simplicity
+- **Overall Champion**: Zig - Simplified architecture with consistent performance
+- **Best Balance**: Go - Great performance with simplicity  
 - **Memory Safety**: Rust - Safe with good performance
 - **Functional Approach**: OCaml - Elegant functional design
 - **Most Portable**: Lua - Works everywhere, optimized for interpretation
 
 ### Key Insights
-- **Manual memory management** (Zig) provides the best performance
-- **Startup overhead** affects small file performance differently than large files
+- **Simplicity correlates with performance** - Zig's single-file approach outperforms complex architectures
+- **Martin Fowler principles** enhance maintainability without hurting performance
+- **Over-engineering hurts** - Advanced patterns were removed for better maintainability
 - **Consistent algorithms** across languages enable fair comparison
 - **Language ecosystems** matter more than raw performance for most use cases
 

@@ -66,9 +66,9 @@ jobs:
           zig build -Doptimize=ReleaseSafe  
           zig build -Doptimize=ReleaseFast
           
-          # Test the binary
-          ./zig-out/bin/fixml ../tests/samples/sample.xml
-          [ -f ../tests/samples/sample.organized.xml ] && echo "✅ Output file created successfully"
+          # Test the binary - use existing test files from parent directory
+          ./zig-out/bin/fixml ../tests/functional/basic-xml-structure.xml
+          [ -f ../tests/functional/basic-xml-structure.organized.xml ] && echo "✅ Output file created successfully"
 
   lint:
     name: Lint and Format

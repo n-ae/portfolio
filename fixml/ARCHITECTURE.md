@@ -53,30 +53,33 @@ IO_CHUNK_SIZE = 65536         # 64KB chunks for bulk I/O operations
 ### Language-Specific Optimizations
 
 #### Zig Implementation (`zig/src/main.zig`)
-**Philosophy**: Maximum performance through systems programming
+**Philosophy**: Maintainable simplicity with systems programming performance
 
-- **Manual Memory Management**: Direct allocator control for minimal overhead
-- **Compile-time Lookup Tables**: O(1) character classification
-- **Hash-based Deduplication**: Capacity pre-sizing based on file analysis
-- **Zero-allocation Slicing**: Direct byte operations without string copies
+**Architecture**: Single-file design (841 lines) following Martin Fowler refactoring principles:
+- **Extract Method**: Complex operations broken into focused functions
+- **Replace Magic Numbers**: All constants explicitly named
+- **Introduce Parameter Object**: Related parameters grouped logically
+- **Remove Duplicate Code**: Common patterns extracted to utilities
 
 **Key Techniques:**
 ```zig
-// Compile-time lookup table generation
-const WHITESPACE_CHARS = blk: {
-    var chars = [_]bool{false} ** 256;
-    chars[' '] = true;
-    chars['\t'] = true;
-    chars['\r'] = true;
-    chars['\n'] = true;
-    break :blk chars;
-};
+// Named constants replace magic numbers
+const MIN_SELF_CONTAINED_LENGTH = 5;
+const CHUNK_SIZE_U64 = 8;
+const LARGE_STRING_THRESHOLD = 16;
+const ESTIMATED_LINE_LENGTH = 50;
 
-// Direct byte operations
-while (start < end and s[start] <= WHITESPACE_THRESHOLD) {
-    start += 1;
+// Extracted method for complex operations
+fn processElementLine(allocator: Allocator, line: []const u8, indent_level: *u8) ![]const u8 {
+    // Focused responsibility: handle single element processing
 }
 ```
+
+**Performance Optimizations:**
+- **Manual Memory Management**: Direct allocator control for minimal overhead
+- **Hash-based Deduplication**: FNV-1a with adaptive capacity sizing
+- **SIMD Processing**: 8-byte chunk processing with comptime unrolling
+- **Stack-allocated Buffers**: Pre-sized based on file analysis
 
 #### Go Implementation (`go/fixml.go`)
 **Philosophy**: Balance performance with Go idioms and safety
