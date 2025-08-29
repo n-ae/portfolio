@@ -150,6 +150,48 @@ const Args = struct {
     file: []const u8 = "",
 };
 
+/// Processing modes for strategy pattern
+const ProcessingMode = enum {
+    default,
+    fix_warnings,
+};
+
+/// Strategy functions for different modes
+fn defaultShouldAddXmlDeclaration(has_xml_decl: bool) bool {
+    _ = has_xml_decl;
+    return false;
+}
+
+fn fixWarningsShouldAddXmlDeclaration(has_xml_decl: bool) bool {
+    return !has_xml_decl;
+}
+
+/// Strategy pattern for processing behavior
+const ProcessingStrategy = struct {
+    should_add_xml_declaration: *const fn (has_xml_decl: bool) bool,
+    should_normalize_content: bool,
+
+    /// Default strategy - preserve original structure
+    const default_strategy = ProcessingStrategy{
+        .should_add_xml_declaration = &defaultShouldAddXmlDeclaration,
+        .should_normalize_content = false,
+    };
+
+    /// Fix warnings strategy - add missing declarations and normalize
+    const fix_warnings_strategy = ProcessingStrategy{
+        .should_add_xml_declaration = &fixWarningsShouldAddXmlDeclaration,
+        .should_normalize_content = true,
+    };
+
+    /// Get strategy for processing mode
+    fn getStrategy(mode: ProcessingMode) ProcessingStrategy {
+        return switch (mode) {
+            .default => default_strategy,
+            .fix_warnings => fix_warnings_strategy,
+        };
+    }
+};
+
 /// XML attribute structure for parsing
 const Attribute = struct {
     name: []const u8,
@@ -917,34 +959,32 @@ fn hashNormalizedContent(s: []const u8) u64 {
             }
         }
 
-        if (!has_special) {
-            // Fast path: normalize whitespace in chunk
-            var normalized_chunk: [chunk_size]u8 = undefined;
-            var out_idx: usize = 0;
+        if (has_special) break;
 
-            for (chunk) |c| {
-                if (isWhitespace(c)) {
-                    if (!prev_space and out_idx < chunk_size) {
-                        normalized_chunk[out_idx] = ' ';
-                        out_idx += 1;
-                        prev_space = true;
-                    }
-                } else {
-                    if (out_idx < chunk_size) {
-                        normalized_chunk[out_idx] = c;
-                        out_idx += 1;
-                    }
-                    prev_space = false;
+        // Fast path: normalize whitespace in chunk
+        var normalized_chunk: [chunk_size]u8 = undefined;
+        var out_idx: usize = 0;
+
+        for (chunk) |c| {
+            if (isWhitespace(c)) {
+                if (!prev_space and out_idx < chunk_size) {
+                    normalized_chunk[out_idx] = ' ';
+                    out_idx += 1;
+                    prev_space = true;
                 }
+            } else {
+                if (out_idx < chunk_size) {
+                    normalized_chunk[out_idx] = c;
+                    out_idx += 1;
+                }
+                prev_space = false;
             }
-
-            if (out_idx > 0) {
-                hasher.update(normalized_chunk[0..out_idx]);
-            }
-            i += chunk_size;
-        } else {
-            break; // Fall back to character-by-character processing
         }
+
+        if (out_idx > 0) {
+            hasher.update(normalized_chunk[0..out_idx]);
+        }
+        i += chunk_size;
     }
 
     // Character-by-character processing for remainder or special cases
@@ -1019,18 +1059,18 @@ fn hashNormalizedContent(s: []const u8) u64 {
 // XML PROCESSING FUNCTIONS
 // =============================================================================
 
-/// Check if content is a duplicate and mark it in the hash set
+/// Check if content is a duplicate and mark it in the hash set - optimized version
 fn checkAndMarkDuplicate(
     is_container: bool,
     trimmed: []const u8,
+    has_attributes: bool, // Pre-computed for performance
     seen_hashes: *HashMap(u64, void),
     duplicates_removed: *u32,
 ) !bool {
     // Skip structural container elements
     if (is_container) return false;
 
-    // Choose hash function based on content complexity
-    const has_attributes = std.mem.indexOf(u8, trimmed, "=") != null;
+    // Use pre-computed attribute flag to select hash function
     const content_hash = if (has_attributes)
         hashNormalizedContent(trimmed)
     else
@@ -1052,39 +1092,36 @@ fn normalizeXmlTagWithContent(allocator: Allocator, tag: []const u8, fix_warning
     // Check if this is a single-line element with content: <tag>content</tag>
     const first_gt = std.mem.indexOfScalar(u8, tag, '>');
     const last_lt = std.mem.lastIndexOfScalar(u8, tag, '<');
-
-    if (first_gt != null and last_lt != null and first_gt.? < last_lt.? and
-        tag[last_lt.? + 1] == '/' and std.mem.endsWith(u8, tag, ">"))
-    {
-        // This is a single-line element, normalize the content between tags
-        const opening_tag = tag[0 .. first_gt.? + 1];
-        const content = tag[first_gt.? + 1 .. last_lt.?];
-        const closing_tag = tag[last_lt.?..];
-
-        const normalized_opening = try normalizeTagOnly(allocator, opening_tag);
-        defer allocator.free(normalized_opening);
-
-        const normalized_content = if (fix_warnings)
-            try normalizeContent(allocator, content)
-        else
-            try allocator.dupe(u8, content);
-        defer allocator.free(normalized_content);
-
-        const normalized_closing = try normalizeTagOnly(allocator, closing_tag);
-        defer allocator.free(normalized_closing);
-
-        var result = ArrayList(u8){};
-        defer result.deinit(allocator);
-
-        try result.appendSlice(allocator, normalized_opening);
-        try result.appendSlice(allocator, normalized_content);
-        try result.appendSlice(allocator, normalized_closing);
-
-        return try result.toOwnedSlice(allocator);
-    } else {
+    if (first_gt == null or last_lt == null or first_gt.? >= last_lt.? or tag[last_lt.? + 1] != '/' or !std.mem.endsWith(u8, tag, ">")) {
         // Regular tag normalization
         return try normalizeTagOnly(allocator, tag);
     }
+
+    // This is a single-line element, normalize the content between tags
+    const opening_tag = tag[0 .. first_gt.? + 1];
+    const content = tag[first_gt.? + 1 .. last_lt.?];
+    const closing_tag = tag[last_lt.?..];
+
+    const normalized_opening = try normalizeTagOnly(allocator, opening_tag);
+    defer allocator.free(normalized_opening);
+
+    const normalized_content = if (fix_warnings)
+        try normalizeContent(allocator, content)
+    else
+        try allocator.dupe(u8, content);
+    defer allocator.free(normalized_content);
+
+    const normalized_closing = try normalizeTagOnly(allocator, closing_tag);
+    defer allocator.free(normalized_closing);
+
+    var result = ArrayList(u8){};
+    defer result.deinit(allocator);
+
+    try result.appendSlice(allocator, normalized_opening);
+    try result.appendSlice(allocator, normalized_content);
+    try result.appendSlice(allocator, normalized_closing);
+
+    return try result.toOwnedSlice(allocator);
 }
 
 /// Handle character processing outside quotes - Extract Method refactoring (inlined for performance)
@@ -1289,6 +1326,9 @@ fn processLine(
     // Fast comptime-optimized container detection - simple tags without attributes
     const is_container = isSimpleContainer(trimmed);
 
+    // Pre-compute attribute detection for performance optimization
+    const has_attributes = std.mem.indexOf(u8, trimmed, "=") != null;
+
     // Fast comptime-optimized tag type detection
     const tag_type = getTagType(trimmed);
     const is_closing_tag = tag_type == .closing;
@@ -1299,10 +1339,11 @@ fn processLine(
         indent_level.* = @max(0, indent_level.* - 1);
     }
 
-    // Check for and handle duplicates
+    // Check for and handle duplicates using pre-computed attribute flag
     const is_duplicate = try checkAndMarkDuplicate(
         is_container,
         trimmed,
+        has_attributes,
         seen_hashes,
         duplicates_removed,
     );
@@ -1312,13 +1353,13 @@ fn processLine(
         try writeIndentedLine(result, trimmed, indent_level.*, allocator, fix_warnings);
     }
 
+    if (!is_opening_tag) return;
     // Handle indentation for opening tags using simplified self-contained detection
-    if (is_opening_tag) {
-        // Check if this is a self-contained element: <tag>content</tag>
-        const should_indent = !isSelfContained(trimmed);
-        if (should_indent) {
-            indent_level.* += 1;
-        }
+
+    // Check if this is a self-contained element: <tag>content</tag>
+    const should_indent = !isSelfContained(trimmed);
+    if (should_indent) {
+        indent_level.* += 1;
     }
 }
 
@@ -1331,89 +1372,91 @@ const LineAnalysis = struct {
     hash: u64,
 
     fn analyze(trimmed: []const u8) LineAnalysis {
-        if (trimmed.len == 0) {
-            return LineAnalysis{
-                .tag_type = .other,
-                .is_container = false,
-                .is_self_contained = false,
-                .hash = 0,
-            };
-        }
+        var result = LineAnalysis{
+            .tag_type = .other,
+            .is_container = false,
+            .is_self_contained = false,
+            .hash = 0,
+        };
+
+        if (trimmed.len == 0) return result;
+        result.hash = computeSimpleHash(trimmed);
 
         // Single pass analysis combining all checks
-        var tag_type: TagType = .other;
-        var is_container = false;
-        var is_self_contained = false;
         var has_attributes = false;
 
         // Quick XML tag detection
-        if (trimmed.len >= 2 and trimmed[0] == '<' and trimmed[trimmed.len - 1] == '>') {
-            const second_char = trimmed[1];
+        if (trimmed.len < 2 or trimmed[0] != '<' or trimmed[trimmed.len - 1] != '>') {
+            return result;
+        }
 
-            // Determine tag type
-            switch (second_char) {
-                '/' => tag_type = .closing,
-                '!', '?' => tag_type = .comment,
-                else => {
-                    // Check for self-closing
-                    if (trimmed.len >= 3 and
-                        trimmed[trimmed.len - 2] == '/' and
-                        trimmed[trimmed.len - 1] == '>')
-                    {
-                        tag_type = .self_closing;
-                    } else {
-                        tag_type = .opening;
+        const second_char = trimmed[1];
 
-                        // Single-pass container and self-contained detection
-                        const tag_content = trimmed[1 .. trimmed.len - 1];
+        // Determine tag type
+        switch (second_char) {
+            '/' => {
+                result.tag_type = .closing;
 
-                        // Look for attributes (= symbol or excessive whitespace)
-                        var whitespace_count: u32 = 0;
-                        for (tag_content) |c| {
-                            if (c == '=') {
-                                has_attributes = true;
-                                break;
-                            }
-                            if (c == ' ' or c == '\t') {
-                                whitespace_count += 1;
-                                if (whitespace_count > 1) {
-                                    has_attributes = true;
-                                    break;
-                                }
-                            }
-                        }
+                return result;
+            },
+            '!', '?' => {
+                result.tag_type = .comment;
 
-                        is_container = !has_attributes;
+                return result;
+            },
+            else => {},
+        }
 
-                        // Self-contained check (only for opening tags)
-                        if (trimmed.len >= MIN_SELF_CONTAINED_LENGTH) {
-                            const first_gt = std.mem.indexOfScalar(u8, trimmed[1..], '>');
-                            const last_lt = std.mem.lastIndexOfScalar(u8, trimmed, '<');
+        // Check for self-closing
+        if (trimmed.len >= 3 and
+            trimmed[trimmed.len - 2] == '/' and
+            trimmed[trimmed.len - 1] == '>')
+        {
+            result.tag_type = .self_closing;
 
-                            if (first_gt != null and last_lt != null and
-                                first_gt.? + 1 < last_lt.? and
-                                last_lt.? + 1 < trimmed.len and
-                                trimmed[last_lt.? + 1] == '/')
-                            {
-                                const content_start = first_gt.? + 2;
-                                const content = trimmed[content_start..last_lt.?];
-                                is_self_contained = std.mem.indexOfScalar(u8, content, '<') == null;
-                            }
-                        }
-                    }
-                },
+            return result;
+        }
+
+        result.tag_type = .opening;
+
+        // Single-pass container and self-contained detection
+        const tag_content = trimmed[1 .. trimmed.len - 1];
+
+        // Look for attributes (= symbol or excessive whitespace)
+        var whitespace_count: u32 = 0;
+        for (tag_content) |c| {
+            if (c == '=') {
+                has_attributes = true;
+                break;
+            }
+            if (c == ' ' or c == '\t') {
+                whitespace_count += 1;
+                if (whitespace_count > 1) {
+                    has_attributes = true;
+                    break;
+                }
             }
         }
 
-        // Compute hash once
-        const hash = computeSimpleHash(trimmed);
+        result.is_container = !has_attributes;
 
-        return LineAnalysis{
-            .tag_type = tag_type,
-            .is_container = is_container,
-            .is_self_contained = is_self_contained,
-            .hash = hash,
-        };
+        // Self-contained check (only for opening tags)
+        if (trimmed.len < MIN_SELF_CONTAINED_LENGTH) return result;
+
+        const first_gt = std.mem.indexOfScalar(u8, trimmed[1..], '>');
+        const last_lt = std.mem.lastIndexOfScalar(u8, trimmed, '<');
+
+        if (first_gt != null and last_lt != null and
+            first_gt.? + 1 < last_lt.? and
+            last_lt.? + 1 < trimmed.len and
+            trimmed[last_lt.? + 1] == '/')
+        {
+            const content_start = first_gt.? + 2;
+            const content = trimmed[content_start..last_lt.?];
+            result.is_self_contained = std.mem.indexOfScalar(u8, content, '<') == null;
+        }
+
+        return result;
     }
 };
 
@@ -1539,16 +1582,51 @@ fn processXmlWithDeduplication(allocator: Allocator, content: []const u8, strip_
             continue;
         }
 
-        // Fast trimming inlined to avoid function call overhead
+        // Optimized trimming with reduced branching and early exit
         var trim_start = line_start;
         var trim_end = line_end;
 
-        // Fast forward scan for whitespace
+        // Fast forward scan - unrolled loop for better performance
+        while (trim_start + 4 <= trim_end) {
+            const chunk = content[trim_start .. trim_start + 4];
+            if (!isWhitespace(chunk[0])) break;
+            if (!isWhitespace(chunk[1])) {
+                trim_start += 1;
+                break;
+            }
+            if (!isWhitespace(chunk[2])) {
+                trim_start += 2;
+                break;
+            }
+            if (!isWhitespace(chunk[3])) {
+                trim_start += 3;
+                break;
+            }
+            trim_start += 4;
+        }
+        // Handle remaining bytes
         while (trim_start < trim_end and isWhitespace(content[trim_start])) {
             trim_start += 1;
         }
 
-        // Fast backward scan for whitespace
+        // Fast backward scan - similar optimization
+        while (trim_end > trim_start + 4) {
+            if (!isWhitespace(content[trim_end - 1])) break;
+            if (!isWhitespace(content[trim_end - 2])) {
+                trim_end -= 1;
+                break;
+            }
+            if (!isWhitespace(content[trim_end - 3])) {
+                trim_end -= 2;
+                break;
+            }
+            if (!isWhitespace(content[trim_end - 4])) {
+                trim_end -= 3;
+                break;
+            }
+            trim_end -= 4;
+        }
+        // Handle remaining bytes
         while (trim_end > trim_start and isWhitespace(content[trim_end - 1])) {
             trim_end -= 1;
         }
@@ -1630,13 +1708,14 @@ inline fn handleXmlDeclarationWarnings(has_xml_decl: bool, fix_warnings: bool) v
 }
 
 /// Build final output content with XML declaration if needed - Extract Method refactoring (inlined for performance)
-inline fn buildFinalContent(allocator: Allocator, process_result: ProcessResult, fix_warnings: bool, has_xml_decl: bool) !ArrayList(u8) {
+inline fn buildFinalContent(allocator: Allocator, process_result: ProcessResult, strategy: ProcessingStrategy, has_xml_decl: bool) !ArrayList(u8) {
     var final_content = ArrayList(u8){};
-    const final_capacity = process_result.content.len + if (fix_warnings and !has_xml_decl) XML_DECLARATION.len else 0;
+    const should_add_declaration = strategy.should_add_xml_declaration(has_xml_decl);
+    const final_capacity = process_result.content.len + if (should_add_declaration) XML_DECLARATION.len else 0;
     try final_content.ensureTotalCapacity(allocator, final_capacity);
 
-    if (fix_warnings and !has_xml_decl) {
-        // Add XML declaration only if it was originally missing
+    if (should_add_declaration) {
+        // Add XML declaration using strategy
         try final_content.appendSlice(allocator, XML_DECLARATION);
         print("🔧 Applied fixes:\n", .{});
         print("  ✓ Added XML declaration\n", .{});
@@ -1690,6 +1769,10 @@ fn getOutputFilename(allocator: Allocator, input_file: []const u8, replace_mode:
 
 /// Simplified main file processing function - Extract Method refactoring applied
 fn processFile(allocator: Allocator, args: Args) !void {
+    // Determine processing mode and get strategy
+    const mode: ProcessingMode = if (args.fix_warnings) .fix_warnings else .default;
+    const strategy = ProcessingStrategy.getStrategy(mode);
+
     // Read file with reasonable size limit for safety
     const config = ProcessingConfig.create(0);
     const max_file_size = config.max_file_size;
@@ -1711,8 +1794,8 @@ fn processFile(allocator: Allocator, args: Args) !void {
     const process_result = try processXmlWithDeduplication(allocator, cleaned_content, should_strip_xml_declaration, args.fix_warnings);
     defer allocator.free(process_result.content);
 
-    // Build final content
-    var final_content = try buildFinalContent(allocator, process_result, args.fix_warnings, has_xml_decl);
+    // Build final content using strategy
+    var final_content = try buildFinalContent(allocator, process_result, strategy, has_xml_decl);
     defer final_content.deinit(allocator);
 
     // Get output filename and write file

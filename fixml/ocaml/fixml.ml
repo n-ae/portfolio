@@ -13,10 +13,20 @@ let whitespace_threshold = 32     (* ASCII values <= this are whitespace *)
 let file_permissions = 0o644      (* Standard file permissions *)
 let io_chunk_size = 65536        (* 64KB chunks for I/O operations *)
 
+type processing_mode = 
+  | Default
+  | FixWarnings
+
 type args = {
   replace: bool; 
   fix_warnings: bool;
   file: string;
+}
+
+(* Strategy pattern for processing modes *)
+type processing_strategy = {
+  should_add_xml_declaration: bool -> bool;
+  should_normalize_content: bool;
 }
 
 let parse_args () =
@@ -34,6 +44,22 @@ let parse_args () =
     exit 1
   );
   !args
+
+(* Strategy implementations *)
+let default_strategy = {
+  should_add_xml_declaration = (fun has_xml_decl -> false);
+  should_normalize_content = false;
+}
+
+let fix_warnings_strategy = {
+  should_add_xml_declaration = (fun has_xml_decl -> not has_xml_decl);
+  should_normalize_content = true;
+}
+
+let get_strategy mode = 
+  match mode with
+  | Default -> default_strategy
+  | FixWarnings -> fix_warnings_strategy
 
 (* Optimized O(n) single-pass content cleaning *)
 let clean_content content =
@@ -88,8 +114,13 @@ let is_container_element trimmed =
 (* Simplified self-contained element detection - avoid double trimming *)
 let is_self_contained trimmed =
   let len = String.length trimmed in
-  len >= 7 && trimmed.[0] = '<' && trimmed.[len-1] = '>' &&
-  String.contains trimmed '>' && String.rindex trimmed '<' > String.index trimmed '>'
+  if len < 7 || trimmed.[0] <> '<' || trimmed.[len-1] <> '>' then false
+  else
+    try
+      let first_gt = String.index trimmed '>' in
+      let last_lt = String.rindex trimmed '<' in
+      first_gt < last_lt && last_lt > first_gt
+    with Not_found -> false
 
 (* Compute semantic hash without string allocation for better performance *)
 let compute_semantic_hash s =
@@ -172,7 +203,10 @@ let process_xml_with_deduplication content =
   let indent_level = ref 0 in
   let seen_elements = ref IntSet.empty in
   let duplicates_removed = ref 0 in
-  let processed_lines = ref [] in
+  
+  (* Use Buffer for memory efficiency instead of list accumulation *)
+  let result_buffer = Buffer.create (String.length content + String.length content / 8) in
+  let line_count = ref 0 in
   
   (* Pre-allocate indentation buffer *)
   let max_indent = max_indent_levels in
@@ -184,26 +218,34 @@ let process_xml_with_deduplication content =
     if trimmed <> "" then (
       (* Cache expensive operations *)
       let is_container = is_container_element trimmed in
-      let semantic_hash = if is_container then 0 else compute_semantic_hash trimmed in
+      (* Deduplicate all non-container elements consistently across modes *)
+      let should_deduplicate = not is_container in
+      let semantic_hash = if should_deduplicate then
+        compute_semantic_hash trimmed
+      else 0 in
       
-      if not is_container && IntSet.mem semantic_hash !seen_elements then
+      if should_deduplicate && IntSet.mem semantic_hash !seen_elements then
         incr duplicates_removed
       else (
-        if not is_container then
+        if should_deduplicate then
           seen_elements := IntSet.add semantic_hash !seen_elements;
         
         (* Adjust indent for closing tags BEFORE applying indentation *)
         if String.length trimmed > 1 && trimmed.[0] = '<' && trimmed.[1] = '/' then
           indent_level := max 0 (!indent_level - 1);
         
-        (* Build indented line *)
+        (* Add newline between lines (but not before first line) *)
+        if !line_count > 0 then Buffer.add_char result_buffer '\n';
+        
+        (* Add indentation *)
         let spaces_needed = !indent_level * 2 in
         let spaces_clamped = min spaces_needed (max_indent * 2) in
-        let line_buffer = Buffer.create (spaces_clamped + String.length trimmed) in
         if spaces_clamped > 0 then
-          Buffer.add_subbytes line_buffer indent_buffer 0 spaces_clamped;
-        Buffer.add_string line_buffer trimmed;
-        processed_lines := (Buffer.contents line_buffer) :: !processed_lines;
+          Buffer.add_subbytes result_buffer indent_buffer 0 spaces_clamped;
+        
+        (* Add content *)
+        Buffer.add_string result_buffer trimmed;
+        incr line_count;
         
         (* Determine if this is an opening tag using functional approach *)
         let check_opening_tag s =
@@ -228,13 +270,7 @@ let process_xml_with_deduplication content =
     )
   ) lines;
   
-  (* Join lines properly - add newlines between but not at end to match expected format *)
-  let final_content = 
-    match List.rev !processed_lines with
-    | [] -> ""
-    | lines -> String.concat "\n" lines
-  in
-  (final_content, !duplicates_removed)
+  (Buffer.contents result_buffer, !duplicates_removed)
 
 let get_output_filename input_file replace_mode =
   if replace_mode then
@@ -249,6 +285,10 @@ let get_output_filename input_file replace_mode =
         input_file ^ ".organized"
 
 let process_file args =
+  (* Determine processing mode and get strategy *)
+  let mode = if args.fix_warnings then FixWarnings else Default in
+  let strategy = get_strategy mode in
+  
   (* Read file with capacity hint *)
   let content = 
     let ic = open_in args.file in
@@ -279,8 +319,8 @@ let process_file args =
   let estimated_size = String.length cleaned_content + 100 in
   let final_content = Buffer.create estimated_size in
   
-  (* Add XML declaration if needed *)
-  if args.fix_warnings && not has_xml_decl then (
+  (* Add XML declaration if needed using strategy *)
+  if strategy.should_add_xml_declaration has_xml_decl then (
     Buffer.add_string final_content xml_declaration;
     Printf.printf "🔧 Applied fixes:\n";
     Printf.printf "  ✓ Added XML declaration\n";

@@ -26,9 +26,9 @@
   </container>
   <!-- Whitespace in tag definitions -->
   <normal attr="value">content</normal>
-  <with_spaces attr = "value" >content</with_spaces>
+  <with_spaces attr="value">content</with_spaces>
   <self_closing_normal attr="value"/>
-  <self_closing_spaces attr = "value" />
+  <self_closing_spaces attr="value"/>
   <!-- Leading/trailing whitespace in content -->
   <leading_space> content</leading_space>
   <trailing_space>content </trailing_space>

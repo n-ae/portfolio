@@ -5,11 +5,11 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- These should NOT be considered duplicates because attribute values are different -->
-    <Compile Include="  file.cs  " />
+    <Compile Include="  file.cs  "/>
     <!-- These should be considered duplicates because they are identical after normalization -->
-    <Content Include="same.js" />
+    <Content Include="same.js"/>
     <!-- Mixed case: different elements with same file should not be duplicates -->
-    <None Include=" test.xml " />
-    <EmbeddedResource Include="  test.xml " />
+    <None Include=" test.xml "/>
+    <EmbeddedResource Include="  test.xml "/>
   </ItemGroup>
 </Project>
