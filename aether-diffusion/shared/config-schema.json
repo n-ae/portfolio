@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Yahoo Fantasy Sports Configuration Schema",
+  "description": "Schema for validating shared configuration across all implementations",
+  "type": "object",
+  "required": ["api_mode", "yahoo_api", "mock_api", "rate_limiting", "caching", "logging", "error_codes"],
+  "properties": {
+    "api_mode": {
+      "type": "string",
+      "enum": ["mock", "real"],
+      "description": "API mode: 'mock' for development/testing, 'real' for production"
+    },
+    "yahoo_api": {
+      "type": "object",
+      "required": ["base_url", "consumer_key", "consumer_secret"],
+      "properties": {
+        "base_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Base URL for Yahoo Fantasy Sports API"
+        },
+        "consumer_key": {
+          "type": "string",
+          "minLength": 1,
+          "description": "OAuth consumer key"
+        },
+        "consumer_secret": {
+          "type": "string",
+          "minLength": 1,
+          "description": "OAuth consumer secret"
+        }
+      }
+    },
+    "mock_api": {
+      "type": "object",
+      "required": ["data_file", "simulate_delays", "delay_ms"],
+      "properties": {
+        "data_file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path to mock data JSON file"
+        },
+        "simulate_delays": {
+          "type": "boolean",
+          "description": "Whether to simulate API response delays"
+        },
+        "delay_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000,
+          "description": "Simulated delay in milliseconds"
+        }
+      }
+    },
+    "rate_limiting": {
+      "type": "object",
+      "required": ["enabled", "max_tokens", "refill_rate"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether rate limiting is enabled"
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000,
+          "description": "Maximum number of tokens in the bucket"
+        },
+        "refill_rate": {
+          "type": "number",
+          "minimum": 0.01,
+          "maximum": 100,
+          "description": "Token refill rate per second"
+        }
+      }
+    },
+    "caching": {
+      "type": "object",
+      "required": ["enabled", "ttl_seconds", "max_entries"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether caching is enabled"
+        },
+        "ttl_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400,
+          "description": "Cache TTL in seconds"
+        },
+        "max_entries": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000,
+          "description": "Maximum number of cache entries"
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "required": ["level", "format"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["debug", "info", "warn", "error"],
+          "description": "Logging level"
+        },
+        "format": {
+          "type": "string",
+          "enum": ["structured", "simple"],
+          "description": "Log output format"
+        }
+      }
+    },
+    "error_codes": {
+      "type": "object",
+      "patternProperties": {
+        "^[A-Z_]+$": {
+          "type": "object",
+          "required": ["code", "http_status", "message"],
+          "properties": {
+            "code": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999,
+              "description": "Unique error code"
+            },
+            "http_status": {
+              "type": "integer",
+              "minimum": 400,
+              "maximum": 599,
+              "description": "HTTP status code"
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Human-readable error message"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

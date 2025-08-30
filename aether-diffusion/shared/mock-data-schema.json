@@ -1,0 +1,187 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Yahoo Fantasy Sports Mock Data Schema",
+  "description": "Schema for validating mock data structure consistency",
+  "type": "object",
+  "required": ["games", "leagues", "teams", "players", "rosters"],
+  "properties": {
+    "games": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["game_key", "name", "code", "season", "type"],
+        "properties": {
+          "game_key": {
+            "type": "string",
+            "pattern": "^[a-z]+\\.\\d{4}$",
+            "description": "Unique game identifier (e.g., 'nfl.2024')"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable game name"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z]{3,4}$",
+            "description": "Game code (e.g., 'nfl', 'nba')"
+          },
+          "season": {
+            "type": "integer",
+            "minimum": 2020,
+            "maximum": 2030,
+            "description": "Season year"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["full", "pickem", "survivor"],
+            "description": "Game type"
+          }
+        }
+      }
+    },
+    "leagues": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z]+\\.\\d{4}$": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["league_key", "name", "num_teams", "current_week", "game_key"],
+            "properties": {
+              "league_key": {
+                "type": "string",
+                "pattern": "^\\d+\\.l\\.\\d+$",
+                "description": "Unique league identifier"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "League name"
+              },
+              "num_teams": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 20,
+                "description": "Number of teams in league"
+              },
+              "current_week": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20,
+                "description": "Current week number"
+              },
+              "game_key": {
+                "type": "string",
+                "description": "Reference to parent game"
+              }
+            }
+          }
+        }
+      }
+    },
+    "teams": {
+      "type": "object",
+      "patternProperties": {
+        "^\\d+\\.l\\.\\d+$": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["team_key", "name", "league_key"],
+            "properties": {
+              "team_key": {
+                "type": "string",
+                "pattern": "^\\d+\\.l\\.\\d+\\.t\\.\\d+$",
+                "description": "Unique team identifier"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Team name"
+              },
+              "waiver_priority": {
+                "type": ["integer", "null"],
+                "minimum": 1,
+                "maximum": 20,
+                "description": "Waiver wire priority"
+              },
+              "league_key": {
+                "type": "string",
+                "description": "Reference to parent league"
+              }
+            }
+          }
+        }
+      }
+    },
+    "players": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z]+\\.\\d{4}$": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["player_key", "full_name", "position", "team", "game_key"],
+            "properties": {
+              "player_key": {
+                "type": "string",
+                "pattern": "^\\d+\\.p\\.\\d+$",
+                "description": "Unique player identifier"
+              },
+              "full_name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Player's full name"
+              },
+              "position": {
+                "type": "string",
+                "pattern": "^[A-Z]{1,3}$",
+                "description": "Player position (QB, RB, WR, etc.)"
+              },
+              "team": {
+                "type": "string",
+                "pattern": "^[A-Z]{2,4}$",
+                "description": "Team abbreviation"
+              },
+              "game_key": {
+                "type": "string",
+                "description": "Reference to parent game"
+              }
+            }
+          }
+        }
+      }
+    },
+    "rosters": {
+      "type": "object",
+      "patternProperties": {
+        "^\\d+\\.l\\.\\d+\\.t\\.\\d+$": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["player_key", "full_name", "position", "team"],
+            "properties": {
+              "player_key": {
+                "type": "string",
+                "pattern": "^\\d+\\.p\\.\\d+$"
+              },
+              "full_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "position": {
+                "type": "string",
+                "pattern": "^[A-Z]{1,3}$"
+              },
+              "team": {
+                "type": "string",
+                "pattern": "^[A-Z]{2,4}$"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "api_mode": "mock",
+  "yahoo_api": {
+    "base_url": "https://fantasysports.yahooapis.com/fantasy/v2",
+    "consumer_key": "${YAHOO_CONSUMER_KEY}",
+    "consumer_secret": "${YAHOO_CONSUMER_SECRET}"
+  },
+  "mock_api": {
+    "data_file": "shared/mock-data.json",
+    "simulate_delays": true,
+    "delay_ms": 100
+  },
+  "rate_limiting": {
+    "enabled": true,
+    "max_tokens": 100,
+    "refill_rate": 0.83
+  },
+  "caching": {
+    "enabled": true,
+    "ttl_seconds": 300,
+    "max_entries": 1000
+  },
+  "logging": {
+    "level": "info",
+    "format": "structured"
+  },
+  "error_codes": {
+    "NOT_AUTHENTICATED": { "code": 1001, "http_status": 401, "message": "Not authenticated. Please set OAuth tokens." },
+    "RATE_LIMITED": { "code": 1002, "http_status": 429, "message": "Rate limit exceeded. Please try again later." },
+    "NETWORK_ERROR": { "code": 1003, "http_status": 502, "message": "Network error occurred. Please try again." },
+    "PARSE_ERROR": { "code": 1004, "http_status": 500, "message": "Failed to parse API response." },
+    "INVALID_REQUEST": { "code": 1005, "http_status": 400, "message": "Invalid request parameters." },
+    "NOT_FOUND": { "code": 1006, "http_status": 404, "message": "Requested resource not found." },
+    "INTERNAL_ERROR": { "code": 1007, "http_status": 500, "message": "Internal server error occurred." }
+  }
+}

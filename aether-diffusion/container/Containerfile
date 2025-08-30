@@ -1,0 +1,83 @@
+# Multi-stage build for Yahoo Fantasy API Zig wrapper
+# Uses official Alpine Linux with Zig for minimal container size
+
+# Build stage
+FROM alpine:3.19 AS builder
+
+# Install build dependencies
+RUN apk add --no-cache \
+    curl \
+    ca-certificates \
+    tar \
+    xz
+
+# Install Zig 0.15.1
+ENV ZIG_VERSION=0.15.1
+RUN curl -L -o /tmp/zig.tar.xz "https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz" && \
+    cd /opt && \
+    tar -xf /tmp/zig.tar.xz && \
+    ln -s "/opt/zig-x86_64-linux-${ZIG_VERSION}/zig" /usr/local/bin/zig && \
+    rm /tmp/zig.tar.xz && \
+    zig version
+
+# Set working directory
+WORKDIR /app
+
+# Copy source files
+COPY build.zig build.zig.zon ./
+COPY src/ ./src/
+COPY .env.example ./
+
+# Build the application
+RUN zig build -Doptimize=ReleaseFast
+
+# Runtime stage
+FROM alpine:3.19
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    ca-certificates \
+    tzdata \
+    wget
+
+# Create non-root user
+RUN addgroup -g 1001 -S yahooapi && \
+    adduser -u 1001 -S yahooapi -G yahooapi
+
+# Set working directory
+WORKDIR /app
+
+# Copy server binary from build stage
+COPY --from=builder /app/zig-out/bin/yahoo_fantasy_server ./yahoo-fantasy-api
+COPY --from=builder /app/.env.example ./
+
+# Change ownership to non-root user
+RUN chown -R yahooapi:yahooapi /app
+
+# Switch to non-root user
+USER yahooapi
+
+# Expose port (configurable via environment)
+EXPOSE 8080
+
+# Set default environment variables
+ENV PORT=8080
+ENV YAHOO_CONSUMER_KEY=""
+ENV YAHOO_CONSUMER_SECRET=""
+ENV YAHOO_ACCESS_TOKEN=""
+ENV YAHOO_ACCESS_TOKEN_SECRET=""
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/health || exit 1
+
+# Add labels for better container management
+LABEL maintainer="Yahoo Fantasy API Team" \
+      description="Yahoo Fantasy Sports API Zig wrapper service" \
+      version="1.0.0" \
+      org.opencontainers.image.source="https://github.com/your-username/aether-diffusion" \
+      org.opencontainers.image.description="Zig-based wrapper for Yahoo Fantasy Sports API" \
+      org.opencontainers.image.licenses="MIT"
+
+# Run the application
+CMD ["./yahoo-fantasy-api"]

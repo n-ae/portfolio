@@ -1,0 +1,62 @@
+# Zig build artifacts
+zig-cache/
+zig-out/
+.zig-cache/
+
+# Environment variables (contains sensitive API keys)
+.env
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Test artifacts
+.test_env
+test_results/
+coverage/
+
+# Documentation build
+docs/
+
+# Node modules (if any JS tooling is added)
+node_modules/
+
+# Python cache (if any Python tooling is added)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Rust artifacts (if any Rust tooling is added)
+target/
+Cargo.lock
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Container artifacts
+.container-build/
+container-logs/

@@ -1,0 +1,40 @@
+# Build artifacts
+zig-cache/
+.zig-cache/
+# Note: zig-out/ is included for simple container builds
+
+# Environment files (sensitive data)
+.env
+
+# Development files
+.git/
+.gitignore
+*.md
+docs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Test files
+test_results/
+coverage/
+
+# Container files (no need to copy into container)
+Containerfile
+.dockerignore
+docker-compose.yml
+
+# CI/CD files
+.github/
+.gitlab-ci.yml

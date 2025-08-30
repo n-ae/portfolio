@@ -1,0 +1,50 @@
+# Dev environment example configuration
+# Copy this file to terraform.tfvars and fill in your values
+
+# Basic configuration
+project_name = "aether-diffusion"
+environment  = "dev"
+
+# Cloud provider selection
+cloud_provider = "google"  # or "oracle"
+
+# Container image
+container_image = "ghcr.io/your-username/aether-diffusion:dev"
+
+# Google Cloud configuration (if using Google)
+google_project_id = "your-gcp-project-id"
+# region = "us-central1"  # Optional, defaults to us-central1
+
+# Oracle Cloud configuration (if using Oracle)  
+# oracle_compartment_id = "ocid1.compartment.oc1..your-compartment-id"
+# oracle_tenancy_id = "ocid1.tenancy.oc1..your-tenancy-id"
+# region = "us-ashburn-1"  # Optional, defaults to us-ashburn-1
+
+# Application configuration
+port = 8080
+log_level = "debug"
+
+# Environment variables (sensitive)
+environment_variables = {
+  YAHOO_CLIENT_ID = "your-yahoo-client-id"
+  YAHOO_CLIENT_SECRET = "your-yahoo-client-secret"
+  # Add other sensitive environment variables here
+}
+
+# Resource configuration (dev defaults - minimal resources)
+min_instances = 0
+max_instances = 3
+memory = "256Mi"
+cpu = "1000m"
+
+# Optional custom domain
+# custom_domain = "api-dev.yourdomain.com"
+
+# Monitoring (disabled for dev by default)
+enable_monitoring = false
+
+# Additional tags
+tags = {
+  owner = "dev-team"
+  cost-center = "development"
+}

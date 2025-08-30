@@ -1,0 +1,47 @@
+# Simplified container for testing - builds locally first
+FROM alpine:3.19
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    ca-certificates \
+    tzdata \
+    wget
+
+# Create non-root user
+RUN addgroup -g 1001 -S yahooapi && \
+    adduser -u 1001 -S yahooapi -G yahooapi
+
+# Set working directory
+WORKDIR /app
+
+# Copy pre-built binary (build locally first with: zig build -Doptimize=ReleaseFast)
+COPY zig-out/bin/yahoo_fantasy_server ./yahoo-fantasy-api
+COPY .env.example ./
+
+# Change ownership to non-root user
+RUN chown -R yahooapi:yahooapi /app
+
+# Switch to non-root user
+USER yahooapi
+
+# Expose port
+EXPOSE 8080
+
+# Set default environment variables
+ENV PORT=8080
+ENV YAHOO_CONSUMER_KEY=""
+ENV YAHOO_CONSUMER_SECRET=""
+ENV YAHOO_ACCESS_TOKEN=""
+ENV YAHOO_ACCESS_TOKEN_SECRET=""
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/health || exit 1
+
+# Add labels
+LABEL maintainer="Yahoo Fantasy API Team" \
+      description="Yahoo Fantasy Sports API Zig wrapper service" \
+      version="1.0.0"
+
+# Run the application
+CMD ["./yahoo-fantasy-api"]

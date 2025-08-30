@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  yahoo-fantasy-api:
+    build:
+      context: .
+      dockerfile: Containerfile
+    container_name: yahoo-fantasy-api
+    ports:
+      - "8080:8080"
+    environment:
+      # Set your Yahoo API credentials here or use .env file
+      - YAHOO_CONSUMER_KEY=${YAHOO_CONSUMER_KEY:-}
+      - YAHOO_CONSUMER_SECRET=${YAHOO_CONSUMER_SECRET:-}
+      - YAHOO_ACCESS_TOKEN=${YAHOO_ACCESS_TOKEN:-}
+      - YAHOO_ACCESS_TOKEN_SECRET=${YAHOO_ACCESS_TOKEN_SECRET:-}
+      - PORT=8080
+    volumes:
+      # Optional: mount .env file for development
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    networks:
+      - yahoo-api-network
+
+networks:
+  yahoo-api-network:
+    driver: bridge
