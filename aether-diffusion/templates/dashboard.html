@@ -1,0 +1,106 @@
+<!-- Statistics Section -->
+<div class="stats-grid" hx-get="/api/stats" hx-trigger="load" hx-swap="outerHTML">
+    <div class="stat-card">
+        <div class="stat-number">--</div>
+        <div class="stat-label">NBA Players</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">--</div>
+        <div class="stat-label">Teams with Players</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">--</div>
+        <div class="stat-label">Total NBA Teams</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">--</div>
+        <div class="stat-label">Position Assignments</div>
+    </div>
+</div>
+
+<!-- Actions Section -->
+<div class="section">
+    <h3>📊 Data Actions</h3>
+    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <a href="/api/export-csv" class="btn">📈 Export to CSV</a>
+        <button class="btn btn-secondary" 
+                hx-post="/api/refresh-data" 
+                hx-target="#refresh-status"
+                hx-indicator="#refresh-spinner">
+            🔄 Refresh from Yahoo API
+            <span id="refresh-spinner" class="htmx-indicator spinner"></span>
+        </button>
+        <button class="btn btn-secondary"
+                hx-get="/api/data-health"
+                hx-target="#health-status"
+                hx-swap="innerHTML">
+            🏥 Check Data Health
+        </button>
+    </div>
+    <div id="refresh-status"></div>
+    <div id="health-status"></div>
+</div>
+
+<!-- Search Section -->
+<div class="section">
+    <h3>🔍 Quick Search</h3>
+    <div class="form-group">
+        <input type="text" 
+               class="form-input" 
+               placeholder="Search players, teams, or positions..." 
+               hx-post="/api/players/search"
+               hx-target="#search-results" 
+               hx-trigger="keyup changed delay:500ms"
+               name="query">
+    </div>
+    <div id="search-results"></div>
+</div>
+
+<!-- Sample Players Section -->
+<div class="section">
+    <h3>🌟 Sample NBA Players</h3>
+    <div class="cards-grid" hx-get="/api/sample-players" hx-trigger="load" hx-swap="innerHTML">
+        <div class="card" style="text-align: center; padding: 40px;">
+            <div class="spinner" style="margin: 0 auto 20px;"></div>
+            <p>Loading sample players...</p>
+        </div>
+    </div>
+</div>
+
+<!-- API Information -->
+<div class="section">
+    <h3>🔗 API Endpoints</h3>
+    <p>Access NBA data programmatically with these endpoints:</p>
+    <div class="data-table-container" style="overflow-x: auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/api/players</code></td>
+                    <td>GET</td>
+                    <td>All NBA players (JSON)</td>
+                    <td><a href="/api/players" class="btn btn-small" target="_blank">Test</a></td>
+                </tr>
+                <tr>
+                    <td><code>/api/teams</code></td>
+                    <td>GET</td>
+                    <td>All NBA teams (JSON)</td>
+                    <td><a href="/api/teams" class="btn btn-small" target="_blank">Test</a></td>
+                </tr>
+                <tr>
+                    <td><code>/api/export-csv</code></td>
+                    <td>GET</td>
+                    <td>Export players (CSV)</td>
+                    <td><a href="/api/export-csv" class="btn btn-small">Download</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

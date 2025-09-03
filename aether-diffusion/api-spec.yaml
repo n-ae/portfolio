@@ -1,0 +1,425 @@
+# Fantasy Sports Database - Backend Agnostic API Specification
+# This specification ensures any backend (Go, Rust, Zig, etc.) can serve the HTMX frontend
+
+openapi: 3.0.0
+info:
+  title: Fantasy Sports Database API
+  version: 1.0.0
+  description: |
+    Backend-agnostic API for Fantasy Sports Database with HTMX frontend support.
+    Any implementation (Go, Rust, Zig, etc.) must conform to this specification.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  # Core Web Pages
+  /:
+    get:
+      summary: Dashboard page
+      description: Main dashboard with statistics and sample data
+      responses:
+        '200':
+          description: HTML dashboard page
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /players:
+    get:
+      summary: Players management page
+      description: Interactive players page with search and filtering
+      responses:
+        '200':
+          description: HTML players page
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /teams:
+    get:
+      summary: Teams management page
+      description: Interactive teams page with roster management
+      responses:
+        '200':
+          description: HTML teams page
+          content:
+            text/html:
+              schema:
+                type: string
+
+  # JSON API Endpoints
+  /api/players:
+    get:
+      summary: Get all players
+      description: Returns complete list of players in JSON format
+      parameters:
+        - name: team
+          in: query
+          description: Filter by team abbreviation
+          schema:
+            type: string
+        - name: position
+          in: query
+          description: Filter by position
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Search in player names
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Players per page
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: List of players
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayersResponse'
+
+  /api/teams:
+    get:
+      summary: Get all teams
+      description: Returns complete list of teams in JSON format
+      parameters:
+        - name: conference
+          in: query
+          description: Filter by conference
+          schema:
+            type: string
+            enum: [Eastern, Western]
+      responses:
+        '200':
+          description: List of teams
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamsResponse'
+
+  /api/stats:
+    get:
+      summary: Get system statistics
+      description: Returns HTML fragment for HTMX dashboard stats
+      responses:
+        '200':
+          description: HTML stats fragment
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/export-csv:
+    get:
+      summary: Export players to CSV
+      description: Downloads all players as CSV file
+      responses:
+        '200':
+          description: CSV file download
+          content:
+            text/csv:
+              schema:
+                type: string
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: attachment; filename=players_2025-08-31.csv
+
+  # HTMX Fragment Endpoints
+  /api/sample-players:
+    get:
+      summary: Sample players HTML fragment
+      description: Returns HTML fragment with sample players for HTMX
+      responses:
+        '200':
+          description: HTML players cards fragment
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/players/view/{view_type}:
+    get:
+      summary: Players view HTML fragment
+      description: Returns HTML fragment for different player view types
+      parameters:
+        - name: view_type
+          in: path
+          required: true
+          description: View type (table or cards)
+          schema:
+            type: string
+            enum: [table, cards]
+        - name: team
+          in: query
+          description: Filter by team
+          schema:
+            type: string
+        - name: position
+          in: query
+          description: Filter by position
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Search query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: HTML fragment for players view
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/players/search:
+    post:
+      summary: Search players
+      description: Search players and return HTML fragment
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: Search query
+      responses:
+        '200':
+          description: HTML fragment with search results
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/teams/view/{view_type}:
+    get:
+      summary: Teams view HTML fragment
+      description: Returns HTML fragment for different team view types
+      parameters:
+        - name: view_type
+          in: path
+          required: true
+          description: View type (table or cards)
+          schema:
+            type: string
+            enum: [table, cards]
+      responses:
+        '200':
+          description: HTML fragment for teams view
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/players/{id}:
+    get:
+      summary: Get player details
+      description: Returns HTML fragment with detailed player information
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Player ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: HTML fragment with player details
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/teams/{id}/roster:
+    get:
+      summary: Get team roster
+      description: Returns HTML fragment with team roster
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Team ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: HTML fragment with team roster
+          content:
+            text/html:
+              schema:
+                type: string
+
+components:
+  schemas:
+    Player:
+      type: object
+      required:
+        - id
+        - full_name
+        - first_name
+        - last_name
+        - team
+        - is_active
+      properties:
+        id:
+          type: integer
+          description: Unique player identifier
+        full_name:
+          type: string
+          description: Player's full name
+        first_name:
+          type: string
+          description: Player's first name
+        last_name:
+          type: string
+          description: Player's last name
+        team:
+          type: string
+          description: Team abbreviation (e.g., LAL, BOS)
+        position:
+          type: string
+          description: Player's primary position
+          example: PG
+        uniform_number:
+          type: string
+          description: Jersey number
+          example: "23"
+        is_active:
+          type: boolean
+          description: Whether player is currently active
+        yahoo_player_key:
+          type: string
+          description: Yahoo Sports API identifier
+          example: "466.p.5352"
+
+    Team:
+      type: object
+      required:
+        - id
+        - abbreviation
+        - full_name
+        - city
+        - conference
+        - division
+      properties:
+        id:
+          type: integer
+          description: Unique team identifier
+        abbreviation:
+          type: string
+          description: Team abbreviation
+          example: LAL
+        full_name:
+          type: string
+          description: Full team name
+          example: Los Angeles Lakers
+        city:
+          type: string
+          description: Team city
+          example: Los Angeles
+        conference:
+          type: string
+          enum: [Eastern, Western]
+          description: Conference name
+        division:
+          type: string
+          description: Division name
+          example: Pacific
+        player_count:
+          type: integer
+          description: Number of active players on roster
+        yahoo_team_key:
+          type: string
+          description: Yahoo Sports API identifier
+          example: "nba.t.13"
+
+    PlayersResponse:
+      type: object
+      required:
+        - players
+        - count
+      properties:
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/Player'
+        count:
+          type: integer
+          description: Total number of players
+        page:
+          type: integer
+          description: Current page number
+        total_pages:
+          type: integer
+          description: Total number of pages
+
+    TeamsResponse:
+      type: object
+      required:
+        - teams
+        - count
+      properties:
+        teams:
+          type: array
+          items:
+            $ref: '#/components/schemas/Team'
+        count:
+          type: integer
+          description: Total number of teams
+
+    Statistics:
+      type: object
+      properties:
+        total_players:
+          type: integer
+          description: Total number of players in database
+        active_players:
+          type: integer
+          description: Number of active players
+        total_teams:
+          type: integer
+          description: Total number of teams
+        teams_with_data:
+          type: integer
+          description: Number of teams with active players
+        total_positions:
+          type: integer
+          description: Total position assignments
+        last_updated:
+          type: string
+          format: date-time
+          description: When data was last updated
+
+# Standard HTTP Status Codes
+# 200: Success
+# 400: Bad Request (invalid parameters)
+# 404: Not Found (resource doesn't exist)
+# 500: Internal Server Error
+
+# HTMX-Specific Headers
+# HX-Request: "true" (indicates HTMX request)
+# HX-Target: Element ID to swap content into
+# HX-Swap: How to swap content (innerHTML, outerHTML, etc.)
+
+# CORS Headers (if needed for cross-origin requests)
+# Access-Control-Allow-Origin: *
+# Access-Control-Allow-Methods: GET, POST, OPTIONS
+# Access-Control-Allow-Headers: Content-Type, HX-Request
