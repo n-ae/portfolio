@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Test attribute rules per XML specification -->
+<root>
+  <!-- Basic attribute syntax -->
+  <basic attr="value">content</basic>
+  <multiple attr1="value1" attr2="value2" attr3="value3">content</multiple>
+  
+  <!-- Attribute name rules (same as element names) -->
+  <names 
+    letter="valid"
+    _underscore="valid"
+    with-dashes="valid"
+    with.periods="valid"
+    with123numbers="valid"
+    MixedCase="valid"
+    UPPERCASE="valid">content</names>
+    
+  <!-- Quote variations -->
+  <quotes 
+    double="double quotes"
+    single='single quotes'
+    mixed1="can contain 'single' in double"
+    mixed2='can contain "double" in single'>content</quotes>
+    
+  <!-- Empty attributes -->
+  <empty 
+    empty=""
+    also_empty=''
+    normal="value">content</empty>
+    
+  <!-- Whitespace in attribute values (preserved) -->
+  <whitespace 
+    spaces="  value with spaces  "
+    tabs="	value	with	tabs	"
+    mixed="  mixed   whitespace  	">content</whitespace>
+    
+  <!-- Special characters in attribute values -->
+  <special 
+    ampersand="value &amp; value"
+    less_than="value &lt; value"
+    greater_than="value &gt; value"
+    quotes_in_attr="value &quot; value"
+    apostrophe="value &apos; value">content</special>
+    
+  <!-- Character references in attributes -->
+  <char_refs 
+    numeric="&#65;&#66;&#67;"
+    hex="&#x41;&#x42;&#x43;"
+    combined="A=&#65; B=&#x42;">content</char_refs>
+    
+  <!-- Unicode in attribute names and values -->
+  <unicode 
+    ελληνικά="Greek attribute name"
+    中文="Chinese attribute name"
+    value="ελληνικά 中文 العربية 🌍">content</unicode>
+    
+  <!-- Long attribute values -->
+  <long 
+    very_long_value="This is a very long attribute value that tests the processing of extended content within attributes and ensures proper handling of boundary conditions and memory management scenarios">content</long>
+    
+  <!-- Many attributes -->
+  <many 
+    a1="v1" a2="v2" a3="v3" a4="v4" a5="v5"
+    b1="v1" b2="v2" b3="v3" b4="v4" b5="v5"
+    c1="v1" c2="v2" c3="v3" c4="v4" c5="v5"
+    d1="v1" d2="v2" d3="v3" d4="v4" d5="v5">content</many>
+    
+  <!-- Self-closing with attributes -->
+  <self_closing attr="value"/>
+  <sc_multiple attr1="val1" attr2="val2" attr3="val3"/>
+  <sc_empty empty="" normal="value"/>
+  <sc_special chars="&amp;&lt;&gt;&quot;&apos;"/>
+</root>

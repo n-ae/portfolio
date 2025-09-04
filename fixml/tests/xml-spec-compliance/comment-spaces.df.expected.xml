@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Test spaces before /> preservation in default mode -->
+<!-- Test absolute minimum self-closing tags (2 chars + /> = 4 chars minimum) -->
+<root>
+  <test/>
+</root>

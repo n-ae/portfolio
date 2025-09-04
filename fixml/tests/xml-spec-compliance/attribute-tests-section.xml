@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestSuite name="XML-Spec-Compliance">
+  <!-- Attribute Rules Tests -->
+  <AttributeTests>
+    <!-- Valid attributes -->
+    <ValidAttributes attr1="value1" attr2="value2" />
+    <WithQuotes single='value' double="value" />
+    <EmptyAttributes empty="" />
+    <!-- Attribute value normalization -->
+    <WhitespaceNormalization 
+      spaces="  value  with  spaces  "
+      tabs="&#x09;value&#x09;with&#x09;tabs&#x09;"
+      newlines="&#x0A;value&#x0A;with&#x0A;newlines&#x0A;" />
+    <!-- Special characters in attribute values -->
+    <SpecialChars 
+      ampersand="value&amp;with&amp;ampersands"
+      quotes="value&quot;with&quot;quotes"
+      apostrophe="value&apos;with&apos;apostrophes"
+      less="value&lt;with&lt;less"
+      greater="value&gt;with&gt;greater" />
+  </AttributeTests>
+</TestSuite>

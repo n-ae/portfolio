@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Test element name rules per XML specification -->
+<root>
+  <!-- Valid starting characters: letters, underscore, colon -->
+  <Letter>content</Letter>
+  <_underscore>content</_underscore>
+  <UPPERCASE>content</UPPERCASE>
+  <lowercase>content</lowercase>
+  <MixedCase>content</MixedCase>
+  <!-- Valid continuation characters: letters, digits, hyphens, periods, underscores -->
+  <element123>content</element123>
+  <element-with-dashes>content</element-with-dashes>
+  <element.with.periods>content</element.with.periods>
+  <element_with_underscores>content</element_with_underscores>
+  <mixed-123.test_name>content</mixed-123.test_name>
+  <!-- Unicode letters (valid per XML spec) -->
+  <ελληνικά>Greek element name</ελληνικά>
+  <中文>Chinese element name</中文>
+  <العربية>Arabic element name</العربية>
+  <!-- Reserved xml prefixes (discouraged but not forbidden for content) -->
+  <xmlElement>reserved prefix test</xmlElement>
+  <XMLElement>uppercase reserved</XMLElement>
+  <XmlElement>mixed case reserved</XmlElement>
+  <!-- Edge cases -->
+  <a>single letter</a>
+  <A>single uppercase</A>
+  <_>single underscore</_>
+  <VeryLongElementNameThatTestsProcessingBoundariesAndLimits>long name</VeryLongElementNameThatTestsProcessingBoundariesAndLimits>
+  <!-- Self-closing variants -->
+  <self-closing/>
+  <with_attributes attr="value"/>
+  <unicode_self_closing_ελληνικά/>
+</root>

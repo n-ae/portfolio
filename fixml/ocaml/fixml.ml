@@ -1,0 +1,364 @@
+(* Standard constants - consistent across all implementations *)
+let usage = "Usage: fixml [--replace] [--fix-warnings] <xml-file>
+  --replace, -r       Replace original file
+  --fix-warnings, -f  Fix XML warnings
+  Default: preserve original structure, fix indentation/deduplication only"
+
+let xml_declaration = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+let max_indent_levels = 64        (* Maximum nesting depth supported *)
+let estimated_line_length = 50    (* Average characters per line estimate *)
+let min_hash_capacity = 256       (* Minimum deduplication hash capacity *)
+let max_hash_capacity = 4096      (* Maximum deduplication hash capacity *)
+let whitespace_threshold = 32     (* ASCII values <= this are whitespace *)
+let file_permissions = 0o644      (* Standard file permissions *)
+let io_chunk_size = 65536        (* 64KB chunks for I/O operations *)
+
+type processing_mode = 
+  | Default
+  | FixWarnings
+
+type args = {
+  replace: bool; 
+  fix_warnings: bool;
+  file: string;
+}
+
+(* Strategy pattern for processing modes *)
+type processing_strategy = {
+  should_add_xml_declaration: bool -> bool;
+  should_normalize_content: bool;
+}
+
+let parse_args () =
+  let args = ref { replace = false; fix_warnings = false; file = "" } in
+  let set_file f = args := { !args with file = f } in
+  let spec = [
+    ("--replace", Arg.Unit (fun () -> args := { !args with replace = true }), "Replace original file");
+    ("-r", Arg.Unit (fun () -> args := { !args with replace = true }), "Replace original file");
+    ("--fix-warnings", Arg.Unit (fun () -> args := { !args with fix_warnings = true }), "Fix XML warnings");
+    ("-f", Arg.Unit (fun () -> args := { !args with fix_warnings = true }), "Fix XML warnings");
+  ] in
+  Arg.parse spec set_file usage;
+  if !args.file = "" then (
+    Printf.printf "%s\n" usage;
+    exit 1
+  );
+  !args
+
+(* Strategy implementations *)
+let default_strategy = {
+  should_add_xml_declaration = (fun has_xml_decl -> false);
+  should_normalize_content = false;
+}
+
+let fix_warnings_strategy = {
+  should_add_xml_declaration = (fun has_xml_decl -> not has_xml_decl);
+  should_normalize_content = true;
+}
+
+let get_strategy mode = 
+  match mode with
+  | Default -> default_strategy
+  | FixWarnings -> fix_warnings_strategy
+
+(* Optimized O(n) single-pass content cleaning *)
+let clean_content content =
+  let len = String.length content in
+  if len = 0 then content
+  else
+    let result = Buffer.create len in
+    let i = ref 0 in
+    (* Skip BOM if present *)
+    if len >= 3 && content.[0] = '\239' && content.[1] = '\187' && content.[2] = '\191' then
+      i := 3;
+    
+    while !i < len do
+      if !i < len - 1 && content.[!i] = '\r' && content.[!i + 1] = '\n' then (
+        Buffer.add_char result '\n';
+        i := !i + 2
+      ) else if content.[!i] = '\r' then (
+        Buffer.add_char result '\n';
+        incr i
+      ) else (
+        Buffer.add_char result content.[!i];
+        incr i
+      )
+    done;
+    Buffer.contents result
+
+(* Simplified trim using functional approach *)
+let trim s =
+  let is_space c = c <= ' ' in
+  let len = String.length s in
+  let rec find_start i =
+    if i >= len || not (is_space s.[i]) then i else find_start (i + 1)
+  in
+  let rec find_end i =
+    if i < 0 || not (is_space s.[i]) then i else find_end (i - 1)
+  in
+  let start = find_start 0 in
+  let finish = find_end (len - 1) in
+  if start > finish then "" else String.sub s start (finish - start + 1)
+
+module StringSet = Set.Make(String)
+module IntSet = Set.Make(Int)
+
+(* Simple string-based XML declaration detection - no regex needed *)
+
+(* Simplified container element detection - avoid double trimming *)
+let is_container_element trimmed =
+  let len = String.length trimmed in
+  len >= 3 && trimmed.[0] = '<' && trimmed.[len-1] = '>' && 
+  not (String.contains trimmed ' ') && not (String.contains trimmed '=')
+
+(* Simplified self-contained element detection - avoid double trimming *)
+let is_self_contained trimmed =
+  let len = String.length trimmed in
+  if len < 7 || trimmed.[0] <> '<' || trimmed.[len-1] <> '>' then false
+  else
+    try
+      let first_gt = String.index trimmed '>' in
+      let last_lt = String.rindex trimmed '<' in
+      first_gt < last_lt && last_lt > first_gt
+    with Not_found -> false
+
+(* Compute semantic hash without string allocation for better performance *)
+let compute_semantic_hash s =
+  if String.length s = 0 then 0
+  else
+    (* Simple hash for strings without quotes (most common case) *)
+    if not (String.contains s '"') && not (String.contains s '\'') then (
+      (* Use a simple string hash with normalized whitespace *)
+      let words = String.split_on_char ' ' (String.concat " " 
+        (List.filter (fun w -> w <> "") 
+        (List.map trim (String.split_on_char ' ' s)))) in
+      Hashtbl.hash (String.concat " " words)
+    ) else (
+      (* For complex strings with quotes, build hash efficiently *)
+      let hash_parts = Buffer.create (String.length s) in
+      let in_quotes = ref false in
+      let quote_char = ref '\000' in
+      let prev_space = ref false in
+      let expecting_attr_value = ref false in
+      let i = ref 0 in
+      let len = String.length s in
+      
+      while !i < len do
+        let c = s.[!i] in
+        
+        if not !in_quotes && (c = '"' || c = '\'') then (
+          in_quotes := true;
+          quote_char := c;
+          expecting_attr_value := false;
+          (* Normalize quotes for semantic equivalence *)
+          Buffer.add_char hash_parts '"';
+          prev_space := false
+        ) else if !in_quotes && c = !quote_char then (
+          in_quotes := false;
+          (* Normalize quotes for semantic equivalence *)
+          Buffer.add_char hash_parts '"';
+          prev_space := false
+        ) else if !in_quotes then (
+          (* Preserve content inside quotes *)
+          Buffer.add_char hash_parts c;
+          prev_space := false
+        ) else if c = '=' && not !in_quotes then (
+          Buffer.add_char hash_parts c;
+          expecting_attr_value := true;
+          prev_space := false
+        ) else if !expecting_attr_value && c > ' ' && c <> '>' && c <> '/' && c <> '"' && c <> '\'' then (
+          (* Handle unquoted attribute values *)
+          Buffer.add_char hash_parts '"';
+          let j = ref !i in
+          while !j < len && s.[!j] > ' ' && s.[!j] <> '>' && s.[!j] <> '/' do
+            Buffer.add_char hash_parts s.[!j];
+            incr j
+          done;
+          Buffer.add_char hash_parts '"';
+          i := !j - 1;
+          expecting_attr_value := false;
+          prev_space := false
+        ) else if c <= ' ' then (
+          expecting_attr_value := false;
+          (* Normalize whitespace *)
+          if not !prev_space then (
+            Buffer.add_char hash_parts ' ';
+            prev_space := true
+          )
+        ) else (
+          expecting_attr_value := false;
+          Buffer.add_char hash_parts c;
+          prev_space := false
+        );
+        
+        incr i
+      done;
+      
+      Hashtbl.hash (trim (Buffer.contents hash_parts))
+    )
+
+(* Optimized XML processing with deduplication and indentation *)
+let process_xml_with_deduplication content =
+  let lines = String.split_on_char '\n' content in
+  let indent_level = ref 0 in
+  let seen_elements = ref IntSet.empty in
+  let duplicates_removed = ref 0 in
+  
+  (* Use Buffer for memory efficiency instead of list accumulation *)
+  let result_buffer = Buffer.create (String.length content + String.length content / 8) in
+  let line_count = ref 0 in
+  
+  (* Pre-allocate indentation buffer *)
+  let max_indent = max_indent_levels in
+  let indent_buffer = Bytes.create (max_indent * 2) in
+  Bytes.fill indent_buffer 0 (max_indent * 2) ' ';
+  
+  List.iter (fun line ->
+    let trimmed = trim line in
+    if trimmed <> "" then (
+      (* Cache expensive operations *)
+      let is_container = is_container_element trimmed in
+      (* Deduplicate all non-container elements consistently across modes *)
+      let should_deduplicate = not is_container in
+      let semantic_hash = if should_deduplicate then
+        compute_semantic_hash trimmed
+      else 0 in
+      
+      if should_deduplicate && IntSet.mem semantic_hash !seen_elements then
+        incr duplicates_removed
+      else (
+        if should_deduplicate then
+          seen_elements := IntSet.add semantic_hash !seen_elements;
+        
+        (* Adjust indent for closing tags BEFORE applying indentation *)
+        if String.length trimmed > 1 && trimmed.[0] = '<' && trimmed.[1] = '/' then
+          indent_level := max 0 (!indent_level - 1);
+        
+        (* Add newline between lines (but not before first line) *)
+        if !line_count > 0 then Buffer.add_char result_buffer '\n';
+        
+        (* Add indentation *)
+        let spaces_needed = !indent_level * 2 in
+        let spaces_clamped = min spaces_needed (max_indent * 2) in
+        if spaces_clamped > 0 then
+          Buffer.add_subbytes result_buffer indent_buffer 0 spaces_clamped;
+        
+        (* Add content *)
+        Buffer.add_string result_buffer trimmed;
+        incr line_count;
+        
+        (* Determine if this is an opening tag using functional approach *)
+        let check_opening_tag s =
+          let len = String.length s in
+          len > 0 && s.[0] = '<' &&
+          not (len > 1 && s.[1] = '/') &&
+          not (len > 1 && s.[1] = '?') &&
+          not (len >= 2 && String.sub s (len - 2) 2 = "/>") &&
+          not (is_self_contained s)
+        in
+        let is_opening_tag = check_opening_tag trimmed in
+        
+        if is_opening_tag then (
+          incr indent_level;
+          (* Warn about exceeding maximum indent levels but continue processing *)
+          if !indent_level > max_indent_levels then (
+            Printf.eprintf "⚠️  Warning: XML nesting exceeds maximum supported depth of %d levels. Indentation may be incorrect.\n" max_indent_levels;
+            flush_all ()
+          )
+        )
+      )
+    )
+  ) lines;
+  
+  (Buffer.contents result_buffer, !duplicates_removed)
+
+let get_output_filename input_file replace_mode =
+  if replace_mode then
+    Printf.sprintf "%s.tmp.%d" input_file (int_of_float (Unix.time ()))
+  else
+    match String.rindex_opt input_file '.' with
+    | Some dot_pos ->
+        let name = String.sub input_file 0 dot_pos in
+        let ext = String.sub input_file (dot_pos + 1) (String.length input_file - dot_pos - 1) in
+        Printf.sprintf "%s.organized.%s" name ext
+    | None ->
+        input_file ^ ".organized"
+
+let process_file args =
+  (* Determine processing mode and get strategy *)
+  let mode = if args.fix_warnings then FixWarnings else Default in
+  let strategy = get_strategy mode in
+  
+  (* Read file with capacity hint *)
+  let content = 
+    let ic = open_in args.file in
+    let len = in_channel_length ic in
+    let content = really_input_string ic len in
+    close_in ic;
+    content in
+  
+  let cleaned_content = clean_content content in
+  let has_xml_decl = 
+    try
+      let _ = Str.search_forward (Str.regexp_string "<?xml") cleaned_content 0 in true
+    with Not_found -> false in
+  
+  (* Show warnings *)
+  if not has_xml_decl then (
+    Printf.printf "⚠️  XML Best Practice Warnings:\n";
+    Printf.printf "  [XML] Missing XML declaration\n";
+    Printf.printf "    Fix: Add <?xml version=\"1.0\" encoding=\"utf-8\"?> at the top\n";
+    Printf.printf "\n";
+    if not args.fix_warnings then (
+      Printf.printf "Use --fix-warnings flag to automatically apply fixes\n";
+      Printf.printf "\n"
+    )
+  );
+  
+  (* Process content with pre-allocation *)
+  let estimated_size = String.length cleaned_content + 100 in
+  let final_content = Buffer.create estimated_size in
+  
+  (* Add XML declaration if needed using strategy *)
+  if strategy.should_add_xml_declaration has_xml_decl then (
+    Buffer.add_string final_content xml_declaration;
+    Printf.printf "🔧 Applied fixes:\n";
+    Printf.printf "  ✓ Added XML declaration\n";
+    Printf.printf "\n"
+  );
+  
+  (* Process XML content with deduplication *)
+  let (processed_content, duplicates_removed) = process_xml_with_deduplication cleaned_content in
+  Buffer.add_string final_content processed_content;
+  
+  (* Write output *)
+  let output_filename = get_output_filename args.file args.replace in
+  let oc = open_out output_filename in
+  output_string oc (Buffer.contents final_content);
+  close_out oc;
+  
+  (* Handle file replacement *)
+  if args.replace then (
+    Sys.rename output_filename args.file;
+    Printf.printf "Original file replaced: %s" args.file
+  ) else (
+    Printf.printf "Organized project saved to: %s" output_filename
+  );
+  
+  if duplicates_removed > 0 then
+    Printf.printf " (removed %d duplicates)" duplicates_removed;
+  
+  let mode_text = " (preserving original structure)" in
+  Printf.printf "%s\n" mode_text
+
+let () =
+  try
+    let args = parse_args () in
+    process_file args
+  with
+  | Sys_error msg -> 
+      Printf.eprintf "Error: %s\n" msg;
+      exit 1
+  | e ->
+      Printf.eprintf "Error: %s\n" (Printexc.to_string e);
+      exit 1

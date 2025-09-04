@@ -1,0 +1,31 @@
+# Go build artifacts
+*.o
+*.a
+*.so
+
+# Local executables
+fixml
+*.exe
+
+# Go module cache
+go.sum
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories (vendor/)
+vendor/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/

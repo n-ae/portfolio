@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Test whitespace handling per XML specification -->
+<root>
+  <!-- Whitespace preservation in element content -->
+  <preserved_spaces>   Content   with   multiple   spaces   </preserved_spaces>
+  <preserved_tabs>	Content	with	tabs	</preserved_tabs>
+  <preserved_newlines>
+    Content
+    with
+    newlines
+  </preserved_newlines>
+  <!-- Mixed whitespace -->
+  <mixed_whitespace>
+    Content with mixed whitespace
+  </mixed_whitespace>
+  <!-- Empty elements with whitespace -->
+  <empty_with_spaces>   </empty_with_spaces>
+  <empty_with_tabs>		</empty_with_tabs>
+  <empty_with_newlines>
+  </empty_with_newlines>
+  <!-- Whitespace around tags -->
+  <container>
+    <child1>content1</child1>
+    <child2>content2</child2>
+    <child3>content3</child3>
+  </container>
+  <!-- Whitespace in tag definitions -->
+  <normal attr="value">content</normal>
+  <with_spaces attr="value">content</with_spaces>
+  <self_closing_normal attr="value"/>
+  <self_closing_spaces attr="value"/>
+  <!-- Leading/trailing whitespace in content -->
+  <leading_space> content</leading_space>
+  <trailing_space>content </trailing_space>
+  <both_spaces> content </both_spaces>
+  <!-- Nested elements with whitespace -->
+  <outer>
+    <inner>
+      <deep>   deep content   </deep>
+    </inner>
+  </outer>
+  <!-- Character references for whitespace -->
+  <char_refs>&#x20;&#x09;&#x0A;&#x0D;</char_refs>
+  <!-- Significant vs insignificant whitespace -->
+  <significant>
+    This whitespace
+    is significant
+    to the content
+  </significant>
+  <structural>
+    <child1/>
+    <child2/>
+    <child3/>
+  </structural>
+</root>

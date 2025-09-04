@@ -1,0 +1,49 @@
+Use the maintainable-architect agent to conduct a comprehensive maintainability assessment of this Zig-based ctx CLI project.
+
+Analyze the current state of the codebase focusing on:
+
+1. **Architecture & Design**:
+   - Module separation and responsibilities
+   - Dependencies and coupling
+   - Code organization and structure
+   - Parameter-driven design vs binary proliferation
+
+2. **Testing Strategy**:
+   - Test coverage and organization
+   - Test file structure and naming conventions
+   - Test runner architecture
+   - CI/CD integration capabilities
+
+3. **Code Quality**:
+   - Function complexity and readability
+   - Memory management patterns
+   - Error handling consistency
+   - Documentation quality
+
+4. **Maintainability Factors**:
+   - Ease of adding new features
+   - Build system simplicity
+   - Development workflow efficiency
+   - Container infrastructure
+
+5. **Technical Debt & Risks**:
+   - Potential maintenance issues
+   - Scalability concerns
+   - Documentation gaps
+   - Improvement opportunities
+
+Please provide your assessment in CSV format with the same structure as the existing reports in the reports/ directory. Each finding should include:
+- Category (Architecture, Testing, Code_Quality, Documentation, Build_System, Performance, Security, Technical_Debt)
+- Priority (P1=Critical, P2=High, P3=Medium, P4=Low)
+- Component (specific file or area)
+- Finding (brief description)
+- Impact (effect on maintainability)
+- Recommendation (suggested improvement)
+- Effort (Small, Medium, Large)
+- Status (Identified, In_Progress, Resolved)
+
+Save the assessment to: reports/maintainability_assessment.YYYY-MM-DDTHH-MM-SSZ.csv
+
+Use the current ISO 8601 UTC timestamp for the filename (e.g., maintainability_assessment.2025-08-18T10-52-30Z.csv).
+
+Focus on the current state after the recent test file restructuring and build system simplification. Consider both strengths and areas for improvement from a long-term maintainability perspective. Try as best to come up with improvements.

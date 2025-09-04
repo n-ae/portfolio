@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestSuite name="XML-Spec-Compliance">
+  <ElementNameTests>
+    <ValidNames>
+      <element_with_underscore />
+      <element-with-dash />
+      <element.with.dots />
+    </ValidNames>
+  </ElementNameTests>
+  <SelfClosingTests>
+    <!-- These should be considered duplicates -->
+    <empty></empty>
+    <empty/>
+    <empty ></empty>
+    <empty />
+    <!-- These might trigger deduplication issues -->
+    <element_with_underscore />
+    <element-with-dash />
+    <element.with.dots />
+  </SelfClosingTests>
+</TestSuite>

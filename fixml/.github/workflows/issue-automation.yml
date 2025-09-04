@@ -1,0 +1,139 @@
+name: Issue Automation
+
+on:
+  issues:
+    types: [opened, labeled]
+  pull_request:
+    types: [opened, ready_for_review]
+
+jobs:
+  auto-label:
+    name: Auto-label Issues and PRs
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    
+    steps:
+      - name: Label performance issues
+        if: github.event_name == 'issues' && contains(github.event.issue.title, 'performance')
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['performance', 'enhancement']
+            });
+
+      - name: Label bug reports
+        if: github.event_name == 'issues' && (contains(github.event.issue.title, 'bug') || contains(github.event.issue.title, 'error') || contains(github.event.issue.title, 'fail'))
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['bug', 'needs-investigation']
+            });
+
+      - name: Label Zig-specific issues
+        if: github.event_name == 'issues' && contains(github.event.issue.title, 'zig')
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['zig', 'language-specific']
+            });
+
+      - name: Welcome new contributors
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const author = context.payload.pull_request.user.login;
+            const message = `👋 Thank you for your contribution to FIXML, @${author}!
+            
+            This project maintains high performance standards. Your PR will be automatically tested for:
+            - ✅ Correctness (all 138+ tests must pass)
+            - ⚡ Performance (benchmarked against current baseline)
+            - 🧹 Code quality (formatting and best practices)
+            
+            The CI will provide detailed feedback on performance impact. Please ensure your changes don't introduce performance regressions.
+            
+            If you're making changes to the Zig implementation, please verify:
+            - [ ] Code follows Martin Fowler refactoring principles
+            - [ ] All constants use named values (no magic numbers)
+            - [ ] Functions have single responsibilities
+            - [ ] Memory usage remains optimal
+            
+            Thanks again! 🚀`;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: message
+            });
+
+  performance-check:
+    name: Check Performance Label
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'performance'
+    
+    steps:
+      - name: Comment on performance issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const message = `🚀 **Performance Issue Detected**
+            
+            Thank you for reporting a performance issue! To help us investigate:
+            
+            ## 📊 Please provide:
+            1. **File size** and **complexity** of XML being processed
+            2. **Current performance** (processing time)
+            3. **Expected performance** (target processing time)
+            4. **System specs** (OS, CPU, memory)
+            5. **Command used** and any flags
+            
+            ## 🔧 Debugging steps you can try:
+            1. Run with different optimization levels:
+               \`\`\`bash
+               # Try different builds
+               zig build -Doptimize=ReleaseFast
+               zig build -Doptimize=ReleaseSafe
+               \`\`\`
+            
+            2. Profile memory usage:
+               \`\`\`bash
+               # On Linux
+               valgrind --tool=massif ./zig-out/bin/fixml large-file.xml
+               
+               # On macOS  
+               time ./zig-out/bin/fixml large-file.xml
+               \`\`\`
+            
+            3. Compare with other implementations:
+               \`\`\`bash
+               lua benchmark.lua quick  # Benchmark all implementations
+               \`\`\`
+            
+            ## 🎯 Performance targets:
+            - **Small files** (<10KB): <20ms
+            - **Medium files** (10KB-1MB): <100ms
+            - **Large files** (>1MB): Linear scaling O(n)
+            
+            Our current benchmarks show ~20ms average processing time. Let's get this optimized! 💪`;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: message
+            });

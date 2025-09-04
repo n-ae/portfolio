@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- XML Specification Compliance Test Suite -->
+<!-- Based on W3C XML Specification: https://www.w3.org/TR/xml/ -->
+<TestSuite name="XML-Spec-Compliance">
+  
+  <!-- Element Name Rules Tests -->
+  <ElementNameTests>
+    <!-- Valid element names -->
+    <ValidNames>
+      <element_with_underscore />
+      <element-with-dash />
+      <element.with.dots />
+      <element123 />
+      <_underscore_start />
+      <UPPERCASE />
+      <mixedCase />
+      <ελληνικά />
+      <中文 />
+    </ValidNames>
+    
+    <!-- Reserved xml names (should be avoided but processor should handle) -->
+    <ReservedNames>
+      <!-- These are discouraged but not forbidden in content -->
+      <xmlElement>content</xmlElement>
+      <XMLElement>content</XMLElement>
+      <XmlElement>content</XmlElement>
+    </ReservedNames>
+  </ElementNameTests>
+
+  <!-- Attribute Rules Tests -->
+  <AttributeTests>
+    <!-- Valid attributes -->
+    <ValidAttributes attr1="value1" attr2="value2" />
+    <WithQuotes single='value' double="value" />
+    <EmptyAttributes empty="" />
+  </AttributeTests>
+</TestSuite>

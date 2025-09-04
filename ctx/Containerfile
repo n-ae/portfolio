@@ -1,0 +1,63 @@
+# Containerfile for Podman - ctx CLI testing
+# Optimized for Podman features like buildah, better caching, and rootless containers
+
+ARG BASE_IMAGE=alpine:3.22
+FROM ${BASE_IMAGE} AS zig-base
+
+# Install Zig and build dependencies using Alpine packages
+RUN apk add --no-cache \
+    zig \
+    && zig version
+
+###############################################################################
+
+FROM zig-base AS builder
+
+WORKDIR /build
+
+# Copy dependency files first for better layer caching
+COPY build.zig.zon build.zig ./
+
+# Initialize Zig dependencies (cached layer)
+RUN zig build --help > /dev/null || true
+
+COPY src/ ./src/
+COPY scripts/ ./scripts/
+
+# Build optimized release
+RUN zig build --release=fast \
+    && echo "✅ Build completed successfully"
+
+###############################################################################
+
+# Production runtime image
+FROM ${BASE_IMAGE} AS runtime
+# FROM scratch AS runtime
+
+LABEL org.opencontainers.image.title="ctx"
+LABEL org.opencontainers.image.description="Context Session Manager - CLI tool for saving and restoring development contexts"
+LABEL org.opencontainers.image.source="https://github.com/n-ae/portfolio"
+LABEL org.opencontainers.image.vendor="n-ae"
+
+# Create non-root user for security
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+RUN addgroup -g ${GROUP_ID} ctx \
+    && adduser -D -s /bin/sh -G ctx -u ${USER_ID} ctx
+
+# Copy binaries from builder
+COPY --from=builder --chown=ctx:ctx /build/zig-out/bin/ /usr/local/bin/
+
+# Set up user environment
+USER ctx
+WORKDIR /home/ctx
+
+# Verify installation
+RUN ctx version && echo "✅ ctx CLI ready"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD ctx version || exit 1
+
+ENTRYPOINT ["ctx"]
+CMD ["--help"]

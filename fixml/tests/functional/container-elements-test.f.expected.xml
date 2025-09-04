@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <section>
+    <item>A</item>
+    <item>B</item>
+  </section>
+  <section>
+    <item>C</item>
+  </section>
+  <group>
+    <member>X</member>
+  </group>
+  <group>
+    <member>Y</member>
+  </group>
+</root>
