@@ -1,0 +1,1 @@
+wsl fresh-install.sh
