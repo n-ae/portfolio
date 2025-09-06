@@ -1,0 +1,112 @@
+<!-- Teams Management Controls -->
+<div class="section">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <div class="form-group" style="margin: 0; min-width: 200px;">
+                <input type="text" 
+                       class="form-input" 
+                       placeholder="Search teams..." 
+                       hx-post="/api/teams/search"
+                       hx-target="#teams-list" 
+                       hx-trigger="keyup changed delay:300ms"
+                       name="query">
+            </div>
+            <select class="form-input" 
+                    style="width: auto; min-width: 150px;"
+                    hx-get="/api/teams/filter"
+                    hx-target="#teams-list"
+                    hx-trigger="change"
+                    name="conference">
+                <option value="">All Conferences</option>
+                <option value="Eastern">Eastern</option>
+                <option value="Western">Western</option>
+            </select>
+        </div>
+        <div>
+            <button class="btn btn-small"
+                    hx-get="/api/teams/view/table"
+                    hx-target="#teams-list">
+                📊 Table View
+            </button>
+            <button class="btn btn-small"
+                    hx-get="/api/teams/view/cards"
+                    hx-target="#teams-list">
+                🃏 Card View
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Conference Statistics -->
+<div class="stats-grid" hx-get="/api/teams/stats" hx-trigger="load" hx-swap="outerHTML">
+    <div class="stat-card">
+        <div class="stat-number">--</div>
+        <div class="stat-label">Total Teams</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">--</div>
+        <div class="stat-label">Eastern Conference</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">--</div>
+        <div class="stat-label">Western Conference</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">--</div>
+        <div class="stat-label">Avg Players Per Team</div>
+    </div>
+</div>
+
+<!-- Teams List -->
+<div class="section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>🏀 NBA Teams</h3>
+        <span class="stat-label">Total: <span id="team-count">--</span></span>
+    </div>
+    
+    <div id="teams-list" hx-get="/api/teams/view/cards" hx-trigger="load">
+        <!-- Teams will be loaded here -->
+        <div class="card" style="text-align: center; padding: 40px;">
+            <div class="spinner" style="margin: 0 auto 20px;"></div>
+            <p>Loading teams...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Team Roster Modal -->
+<div id="team-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="section" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 id="team-modal-title">Team Roster</h3>
+            <button class="btn btn-small" onclick="closeTeamModal()">✖ Close</button>
+        </div>
+        <div id="team-modal-content">
+            <!-- Team roster will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Conference View Toggle -->
+<div class="section">
+    <h3>📊 Conference Breakdown</h3>
+    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <button class="btn btn-small"
+                hx-get="/api/teams/conference/eastern"
+                hx-target="#conference-view">
+            Eastern Conference
+        </button>
+        <button class="btn btn-small"
+                hx-get="/api/teams/conference/western"
+                hx-target="#conference-view">
+            Western Conference
+        </button>
+        <button class="btn btn-small"
+                hx-get="/api/teams/divisions"
+                hx-target="#conference-view">
+            By Division
+        </button>
+    </div>
+    <div id="conference-view" hx-get="/api/teams/divisions" hx-trigger="load">
+        <!-- Conference/Division view will be loaded here -->
+    </div>
+</div>

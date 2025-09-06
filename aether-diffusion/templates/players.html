@@ -1,0 +1,126 @@
+<!-- Players Management Controls -->
+<div class="section">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <div class="form-group" style="margin: 0; min-width: 200px;">
+                <input type="text" 
+                       class="form-input" 
+                       placeholder="Search players..." 
+                       hx-post="/api/players/search"
+                       hx-target="#players-list" 
+                       hx-trigger="keyup changed delay:300ms"
+                       name="query">
+            </div>
+            <select class="form-input" 
+                    style="width: auto; min-width: 150px;"
+                    hx-get="/api/players/filter"
+                    hx-target="#players-list"
+                    hx-trigger="change"
+                    name="team">
+                <option value="">All Teams</option>
+                <!-- Team options will be loaded dynamically -->
+            </select>
+            <select class="form-input" 
+                    style="width: auto; min-width: 120px;"
+                    hx-get="/api/players/filter"
+                    hx-target="#players-list"
+                    hx-trigger="change"
+                    name="position">
+                <option value="">All Positions</option>
+                <option value="PG">PG</option>
+                <option value="SG">SG</option>
+                <option value="SF">SF</option>
+                <option value="PF">PF</option>
+                <option value="C">C</option>
+            </select>
+        </div>
+        <div>
+            <button class="btn btn-small"
+                    hx-get="/api/players/view/table"
+                    hx-target="#players-list">
+                📊 Table View
+            </button>
+            <button class="btn btn-small"
+                    hx-get="/api/players/view/cards"
+                    hx-target="#players-list">
+                🃏 Card View
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Players Statistics -->
+<div class="stats-grid" hx-get="/api/players/stats" hx-trigger="load" hx-swap="outerHTML">
+    <div class="stat-card">
+        <div class="stat-number">--</div>
+        <div class="stat-label">Total Players</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">--</div>
+        <div class="stat-label">Active Players</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">--</div>
+        <div class="stat-label">Avg Per Team</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">--</div>
+        <div class="stat-label">With Positions</div>
+    </div>
+</div>
+
+<!-- Players List -->
+<div class="section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>👥 NBA Players</h3>
+        <span class="stat-label">Total: <span id="player-count">--</span></span>
+    </div>
+    
+    <div id="players-list" hx-get="/api/players/view/table" hx-trigger="load">
+        <!-- Players will be loaded here -->
+        <div class="card" style="text-align: center; padding: 40px;">
+            <div class="spinner" style="margin: 0 auto 20px;"></div>
+            <p>Loading players...</p>
+        </div>
+    </div>
+    
+    <!-- Pagination -->
+    <div id="pagination-controls" style="text-align: center; margin-top: 30px;">
+        <button class="btn btn-small" 
+                hx-get="/api/players/page/1"
+                hx-target="#players-list">
+            ⏮ First
+        </button>
+        <button class="btn btn-small" 
+                hx-get="/api/players/page/prev"
+                hx-target="#players-list">
+            ⬅ Previous
+        </button>
+        <span style="margin: 0 20px; color: rgba(255,255,255,0.8);">
+            Page <span id="current-page">1</span> of <span id="total-pages">--</span>
+        </span>
+        <button class="btn btn-small" 
+                hx-get="/api/players/page/next"
+                hx-target="#players-list">
+            Next ➡
+        </button>
+        <button class="btn btn-small" 
+                hx-get="/api/players/page/last"
+                hx-target="#players-list">
+            Last ⏭
+        </button>
+    </div>
+</div>
+
+<!-- Player Details Modal (initially hidden) -->
+<div id="player-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="section" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 id="modal-title">Player Details</h3>
+            <button class="btn btn-small" onclick="closeModal()">✖ Close</button>
+        </div>
+        <div id="modal-content">
+            <!-- Player details will be loaded here -->
+        </div>
+    </div>
+</div>

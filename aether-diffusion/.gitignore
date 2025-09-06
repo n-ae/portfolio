@@ -3,8 +3,37 @@ zig-cache/
 zig-out/
 .zig-cache/
 
-# Environment variables (contains sensitive API keys)
+# Environment variables and secrets
 .env
+.env.local
+.env.development
+.env.test
+.env.production
+*.env
+
+# OAuth tokens and credentials
+oauth_tokens.json
+credentials.json
+tokens/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+players.db
+fantasy.db
+
+# Log files
+*.log
+logs/
+debug.log
+error.log
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
 
 # OS generated files
 .DS_Store
@@ -15,7 +44,7 @@ zig-out/
 ehthumbs.db
 Thumbs.db
 
-# Editor files
+# Editor and IDE files
 .vscode/
 .idea/
 *.swp
@@ -51,6 +80,7 @@ __pycache__/
 # Rust artifacts (if any Rust tooling is added)
 target/
 Cargo.lock
+.vim/
 
 # Backup files
 *.bak
@@ -60,3 +90,100 @@ Cargo.lock
 # Container artifacts
 .container-build/
 container-logs/
+backup/
+
+# Archive files for testing
+*.tar.gz
+*.zip
+*.rar
+
+# ngrok files
+ngrok
+ngrok.exe
+ngrok.yml
+
+# Node.js (for any potential frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Rust
+target/
+Cargo.lock
+
+# Go
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# Zig
+zig-cache/
+zig-out/
+
+# Lua
+luac.out
+
+# OCaml
+*.cmi
+*.cmo
+*.cmx
+*.o
+*.a
+.depend
+_build/
+
+# C/C++
+*.o
+*.a
+*.so
+*.exe
+
+# Test results and performance data
+test-results.csv
+benchmark-results.json
+performance-*.json
+
+# Docker
+docker-compose.override.yml
+
+# Personal notes
+notes.md
+todo.md
+scratch.md

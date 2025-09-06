@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Fantasy Sports Database</title>
+    
+    <!-- HTMX Core -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    
+    <!-- Backend-Agnostic Configuration -->
+    <script>
+        // API Configuration - automatically detects backend
+        window.FantasyDB = {
+            apiBase: '', // Uses relative URLs - works with any backend
+            version: '1.0.0',
+            
+            // Standardized API endpoints (backend agnostic)
+            endpoints: {
+                players: '/api/players',
+                teams: '/api/teams', 
+                stats: '/api/stats',
+                exportCsv: '/api/export-csv',
+                samplePlayers: '/api/sample-players',
+                playersView: '/api/players/view',
+                teamsView: '/api/teams/view',
+                playerDetails: '/api/players',
+                teamRoster: '/api/teams'
+            },
+            
+            // Current page tracking
+            currentPage: 'home'
+        };
+    </script>
+    
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="/styles.css">
+    
+    <!-- Custom Page Styles -->
+    <!-- PLACEHOLDER: Custom styles can be injected here by any backend -->
+</head>
+<body>
+    <div class="container">
+        <!-- Backend-Agnostic Navigation -->
+        <nav class="nav-tabs">
+            <a href="/" class="nav-tab" id="nav-home">🏠 Dashboard</a>
+            <a href="/players" class="nav-tab" id="nav-players">👥 Players</a>
+            <a href="/teams" class="nav-tab" id="nav-teams">🏀 Teams</a>
+        </nav>
+        
+        <!-- Page Title (updated by JavaScript) -->
+        <h1 id="main-title">Fantasy Sports Database</h1>
+        
+        <!-- Main Content Area -->
+        <main id="main-content">
+            <!-- PLACEHOLDER: Main content injected here by backend or HTMX -->
+            <div class="section" style="text-align: center; padding: 60px;">
+                <div class="spinner" style="margin: 0 auto 20px;"></div>
+                <p>Loading Fantasy Sports Database...</p>
+                <p style="margin-top: 10px; color: rgba(255,255,255,0.7);">
+                    Backend: <span id="backend-info">Detecting...</span>
+                </p>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Last Updated: <span id="last-updated">--</span></p>
+            <p>🚀 Fantasy Sports Database System - Backend Agnostic HTMX Frontend</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">
+                <span id="system-info">API: <span id="api-status">Connecting...</span></span>
+            </p>
+        </footer>
+    </div>
+    
+    <!-- Backend-Agnostic JavaScript -->
+    <script>
+        // Detect current page and update navigation
+        function updateNavigation() {
+            const path = window.location.pathname;
+            const navTabs = document.querySelectorAll('.nav-tab');
+            
+            // Remove active class from all tabs
+            navTabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Add active class based on current path
+            if (path === '/' || path === '') {
+                document.getElementById('nav-home').classList.add('active');
+                window.FantasyDB.currentPage = 'home';
+            } else if (path.startsWith('/players')) {
+                document.getElementById('nav-players').classList.add('active');
+                window.FantasyDB.currentPage = 'players';
+            } else if (path.startsWith('/teams')) {
+                document.getElementById('nav-teams').classList.add('active');
+                window.FantasyDB.currentPage = 'teams';
+            }
+        }
+        
+        // Update page title based on content
+        function updateTitle(title) {
+            document.getElementById('page-title').textContent = title + ' - Fantasy Sports Database';
+            document.getElementById('main-title').textContent = title;
+        }
+        
+        // Detect backend type from response headers or API
+        function detectBackend() {
+            fetch('/api/stats')
+                .then(response => {
+                    const server = response.headers.get('Server') || 'Unknown';
+                    const backend = server.includes('Go') ? 'Go' : 
+                                   server.includes('Rust') ? 'Rust' :
+                                   server.includes('Zig') ? 'Zig' : 'Unknown';
+                    
+                    document.getElementById('backend-info').textContent = backend;
+                    document.getElementById('api-status').textContent = 'Connected ✅';
+                })
+                .catch(() => {
+                    document.getElementById('backend-info').textContent = 'Unknown';
+                    document.getElementById('api-status').textContent = 'Error ❌';
+                });
+        }
+        
+        // Global HTMX configuration
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize navigation
+            updateNavigation();
+            
+            // Detect backend
+            detectBackend();
+            
+            // Update timestamp
+            document.getElementById('last-updated').textContent = new Date().toLocaleString();
+            
+            // Auto-refresh timestamp every minute
+            setInterval(() => {
+                document.getElementById('last-updated').textContent = new Date().toLocaleString();
+            }, 60000);
+        });
+        
+        // HTMX event listeners
+        document.body.addEventListener('htmx:configRequest', function(evt) {
+            evt.detail.headers['X-Requested-With'] = 'XMLHttpRequest';
+        });
+        
+        document.body.addEventListener('htmx:beforeRequest', function(evt) {
+            evt.target.classList.add('loading');
+        });
+        
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+            evt.target.classList.remove('loading');
+        });
+        
+        document.body.addEventListener('htmx:responseError', function(evt) {
+            console.error('HTMX Request Error:', evt.detail);
+            evt.target.innerHTML = '<div class="message message-error">Failed to load content. Please check if the backend server is running.</div>';
+        });
+        
+        // Utility functions for backends to use
+        window.FantasyDB.utils = {
+            updateTitle: updateTitle,
+            updateNavigation: updateNavigation,
+            showMessage: function(message, type = 'info') {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message message-${type}`;
+                messageDiv.textContent = message;
+                document.getElementById('main-content').prepend(messageDiv);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => messageDiv.remove(), 5000);
+            }
+        };
+        
+        // Global functions for modals and interactions
+        function showPlayerDetails(playerId) {
+            htmx.ajax('GET', window.FantasyDB.endpoints.playerDetails + '/' + playerId, {
+                target: '#modal-content',
+                swap: 'innerHTML'
+            });
+            document.getElementById('player-modal').style.display = 'flex';
+        }
+        
+        function showTeamRoster(teamId, teamName) {
+            document.getElementById('team-modal-title').textContent = teamName + ' Roster';
+            htmx.ajax('GET', window.FantasyDB.endpoints.teamRoster + '/' + teamId + '/roster', {
+                target: '#team-modal-content', 
+                swap: 'innerHTML'
+            });
+            document.getElementById('team-modal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            const modals = document.querySelectorAll('[id$="-modal"]');
+            modals.forEach(modal => modal.style.display = 'none');
+        }
+        
+        // Global keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+    
+    <!-- PLACEHOLDER: Additional scripts can be injected here by any backend -->
+</body>
+</html>
