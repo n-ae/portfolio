@@ -6,13 +6,13 @@ sudo apt-get dist-upgrade
 sudo mkdir -p /usr/local/share/ca-certificates/my-custom-ca
 sudo cp ../../zscaler-root-ca.crt /usr/local/share/ca-certificates/my-custom-ca/
 sudo update-ca-certificates
+
 echo 'export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt' >> ~/.bashrc
 source ~/.bashrc
 sudo apt-get install git
 sudo apt-get install curl
 sudo apt install build-essential
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
 
 echo >> ~/.bashrc
 echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.bashrc
