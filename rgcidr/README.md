@@ -64,7 +64,7 @@ pub fn main() !void {
 
     // Parse patterns
     const pattern = try rgcidr.parsePattern("192.168.0.0/16", false);
-    
+
     // Check if IP matches
     const ip = try rgcidr.parseIPv4("192.168.1.100");
     if (pattern.matchesIPv4(ip)) {
@@ -74,7 +74,7 @@ pub fn main() !void {
     // Scan text for IP addresses
     var scanner = rgcidr.IpScanner.init(allocator);
     defer scanner.deinit();
-    
+
     const line = "Server 192.168.1.50 responded";
     const ips = try scanner.scanIPv4(line);
     for (ips) |found_ip| {
@@ -86,11 +86,11 @@ pub fn main() !void {
     // Multiple patterns with optimized matching
     var patterns = try rgcidr.parseMultiplePatterns(
         "10.0.0.0/8,192.168.0.0/16 172.16.0.0/12",
-        false, 
+        false,
         allocator
     );
     defer patterns.deinit();
-    
+
     const test_ip = try rgcidr.parseIPv4("10.1.1.1");
     const is_private = patterns.matchesIPv4(test_ip);
 }

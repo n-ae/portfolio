@@ -374,12 +374,11 @@ fn scanLineStartForMatch(line: []const u8, patterns: rgcidr.MultiplePatterns, ha
 /// Uses hint-based scanning similar to C implementation's scan_with_hints
 fn scanLineForMatchWithEarlyExit(line: []const u8, patterns: rgcidr.MultiplePatterns, has_any_ip: *bool) !bool {
     // Fast path: skip obviously non-IP lines
-    if (line.len < 7) return false; // Minimum IPv4 is "1.1.1.1" (7 chars)
+    if (line.len < 2) return false; // Minimum IP is "::" (2 chars)
     
     var i: usize = 0;
-    const lookahead_limit = if (line.len >= LOOKAHEAD_LIMIT) line.len - LOOKAHEAD_LIMIT else 0;
     
-    while (i < lookahead_limit) {
+    while (i < line.len) {
         // IPv4 hint detection (mirrors C IPV4_HINT macro)
         if (std.ascii.isDigit(line[i])) {
             const has_dot_at_1 = (i + 1 < line.len and line[i + 1] == '.');
@@ -427,8 +426,8 @@ fn scanLineForMatchWithEarlyExit(line: []const u8, patterns: rgcidr.MultiplePatt
                 j += 1;
             }
             
-            // Only try IPv6 if it contains colons and is reasonable length
-            if (j > i + 2 and std.mem.indexOfScalar(u8, line[i..j], ':') != null) {
+            // Only try IPv6 if it contains colons
+            if (j > i and std.mem.indexOfScalar(u8, line[i..j], ':') != null) {
                 if (rgcidr.parseIPv6(line[i..j])) |ip| {
                     has_any_ip.* = true;
                     if (patterns.matchesIPv6(ip)) {

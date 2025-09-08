@@ -144,16 +144,44 @@ pub fn build(b: *std.Build) void {
 
     // --- Lua helper steps (profiling & benchmarks) ---
     const profile_step = b.step("profile", "Run Lua profiling script");
-    profile_step.dependOn(&b.addSystemCommand(&.{"lua", "scripts/profile.lua"}).step);
+    profile_step.dependOn(&b.addSystemCommand(&.{ "lua", "scripts/profile.lua" }).step);
+
+    // Zig-based detailed profiling
+    const profile_detailed_step = b.step("profile-detailed", "Run detailed Zig profiling");
+    const profile_exe = b.addExecutable(.{
+        .name = "profile_detailed",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("scripts/profile_detailed.zig"),
+            .target = target,
+            .optimize = .ReleaseFast,
+            .imports = &.{.{ .name = "rgcidr", .module = mod }},
+        }),
+    });
+    const profile_run = b.addRunArtifact(profile_exe);
+    profile_detailed_step.dependOn(&profile_run.step);
+
+    // Realistic benchmark
+    const bench_realistic_step = b.step("bench-realistic", "Run realistic performance benchmarks");
+    const bench_realistic_exe = b.addExecutable(.{
+        .name = "benchmark_realistic",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("scripts/benchmark_realistic.zig"),
+            .target = target,
+            .optimize = .ReleaseFast,
+            .imports = &.{.{ .name = "rgcidr", .module = mod }},
+        }),
+    });
+    const bench_realistic_run = b.addRunArtifact(bench_realistic_exe);
+    bench_realistic_step.dependOn(&bench_realistic_run.step);
 
     const bench_step = b.step("bench", "Run micro-benchmark (Lua)");
-    bench_step.dependOn(&b.addSystemCommand(&.{"lua", "scripts/bench_early_exit.lua"}).step);
+    bench_step.dependOn(&b.addSystemCommand(&.{ "lua", "scripts/bench_early_exit.lua" }).step);
 
     const bench_adv_step = b.step("bench-advanced", "Run advanced benchmark suite (Lua)");
-    bench_adv_step.dependOn(&b.addSystemCommand(&.{"lua", "scripts/bench_advanced.lua"}).step);
+    bench_adv_step.dependOn(&b.addSystemCommand(&.{ "lua", "scripts/bench_advanced.lua" }).step);
 
     const bench_regression_step = b.step("bench-regression", "Compare performance vs main branch");
-    bench_regression_step.dependOn(&b.addSystemCommand(&.{"lua", "scripts/bench_regression.lua"}).step);
+    bench_regression_step.dependOn(&b.addSystemCommand(&.{ "lua", "scripts/bench_regression.lua" }).step);
 
     // --- Example executable demonstrating API usage ---
     const example_exe = b.addExecutable(.{
@@ -168,6 +196,20 @@ pub fn build(b: *std.Build) void {
     const example_run = b.addRunArtifact(example_exe);
     const example_step = b.step("example", "Run API example");
     example_step.dependOn(&example_run.step);
+
+    // Test IPv6 parsing
+    const test_ipv6_exe = b.addExecutable(.{
+        .name = "test_ipv6",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("test_ipv6.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{ .{ .name = "rgcidr", .module = mod } },
+        }),
+    });
+    const test_ipv6_run = b.addRunArtifact(test_ipv6_exe);
+    const test_ipv6_step = b.step("test-ipv6", "Test IPv6 parsing");
+    test_ipv6_step.dependOn(&test_ipv6_run.step);
 
     // Just like flags, top level steps are also listed in the `--help` menu.
     //
