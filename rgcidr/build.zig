@@ -152,6 +152,9 @@ pub fn build(b: *std.Build) void {
     const bench_adv_step = b.step("bench-advanced", "Run advanced benchmark suite (Lua)");
     bench_adv_step.dependOn(&b.addSystemCommand(&.{"lua", "scripts/bench_advanced.lua"}).step);
 
+    const bench_regression_step = b.step("bench-regression", "Compare performance vs main branch");
+    bench_regression_step.dependOn(&b.addSystemCommand(&.{"lua", "scripts/bench_regression.lua"}).step);
+
     // --- Example executable demonstrating API usage ---
     const example_exe = b.addExecutable(.{
         .name = "example",

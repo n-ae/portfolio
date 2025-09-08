@@ -438,7 +438,7 @@ local function run_tests()
         print("\nBuilding rgcidr...")
     end
     
-    local build_output, build_exit = run_command("zig build")
+    local build_output, build_exit = run_command("zig build -Doptimize=ReleaseFast")
     if build_exit ~= 0 then
         if not csv_mode then
             print("Build failed!")

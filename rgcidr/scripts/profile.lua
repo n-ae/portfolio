@@ -7,7 +7,7 @@ local infile = arg[1] or "tests/data/test_input.txt"
 local pattern = arg[2] or "192.168.0.0/16"
 
 print("Building rgcidr ...")
-os.execute("zig build --summary all > /dev/null")
+os.execute("zig build -Doptimize=ReleaseFast --summary all > /dev/null")
 
 local exe = "./zig-out/bin/rgcidr"
 print(string.format("Profiling: %s %s %s", exe, pattern, infile))

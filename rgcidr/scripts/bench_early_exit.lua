@@ -6,7 +6,7 @@
 local COUNT = tonumber(arg[1] or "5")
 
 print("Building rgcidr ...")
-os.execute("zig build --summary all > /dev/null")
+os.execute("zig build -Doptimize=ReleaseFast --summary all > /dev/null")
 
 local exe = "./zig-out/bin/rgcidr"
 local pattern = "192.168.0.0/16"

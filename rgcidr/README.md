@@ -39,13 +39,13 @@ exe.root_module.addImport("rgcidr", rgcidr.module("rgcidr"));
 ### As a CLI Tool
 
 ```bash
-# Clone and build
+# Clone and build (always use ReleaseFast for optimal performance)
 git clone https://github.com/yourusername/rgcidr
 cd rgcidr
 zig build -Doptimize=ReleaseFast
 
 # Install to system
-zig build install --prefix ~/.local
+zig build install --prefix ~/.local -Doptimize=ReleaseFast
 
 # Or use directly
 ./zig-out/bin/rgcidr
@@ -152,6 +152,27 @@ The Zig implementation achieves excellent performance through:
 
 Benchmarks show performance within 1.1-1.2x of the C implementation.
 
+### Regression Testing
+
+The project includes automated regression testing to detect performance regressions:
+
+```bash
+# Compare current branch vs main
+zig build bench-regression
+
+# Compare against specific branch
+lua scripts/bench_regression.lua develop
+
+# Get CSV output for CI/CD
+lua scripts/bench_regression.lua main --csv
+```
+
+Regression testing:
+- Automatically stashes/restores uncommitted changes
+- Builds both versions with ReleaseFast optimization
+- Compares benchmark results and flags regressions >5%
+- Exits with error code 1 if significant regressions detected
+
 ## Building from Source
 
 ```bash
@@ -166,8 +187,19 @@ zig build -Doptimize=ReleaseSafe    # Safety checks
 # Run tests
 zig build test
 
-# Run benchmarks
+# Run benchmarks (automatically uses ReleaseFast)
 zig build bench
+zig build bench-advanced
+
+# Regression testing (compare against main branch)
+zig build bench-regression
+
+# Manual regression testing
+lua scripts/bench_regression.lua [baseline-branch] [--csv]
+lua scripts/bench_regression.lua develop --csv  # Compare against develop branch
+
+# Note: For accurate performance testing, always use ReleaseFast:
+zig build -Doptimize=ReleaseFast
 lua scripts/test.lua --benchmark
 ```
 
