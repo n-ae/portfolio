@@ -183,33 +183,21 @@ pub fn build(b: *std.Build) void {
     const bench_regression_step = b.step("bench-regression", "Compare performance vs main branch");
     bench_regression_step.dependOn(&b.addSystemCommand(&.{ "lua", "scripts/bench_regression.lua" }).step);
 
-    // --- Example executable demonstrating API usage ---
-    const example_exe = b.addExecutable(.{
-        .name = "example",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("example.zig"),
-            .target = target,
-            .optimize = optimize,
-            .imports = &.{ .{ .name = "rgcidr", .module = mod } },
-        }),
-    });
-    const example_run = b.addRunArtifact(example_exe);
-    const example_step = b.step("example", "Run API example");
-    example_step.dependOn(&example_run.step);
+    // Comprehensive testing
+    const test_all_step = b.step("test-all", "Run comprehensive test suite with grepcidr comparison");
+    test_all_step.dependOn(&b.addSystemCommand(&.{ "lua", "scripts/test_all.lua" }).step);
 
-    // Test IPv6 parsing
-    const test_ipv6_exe = b.addExecutable(.{
-        .name = "test_ipv6",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("test_ipv6.zig"),
-            .target = target,
-            .optimize = optimize,
-            .imports = &.{ .{ .name = "rgcidr", .module = mod } },
-        }),
-    });
-    const test_ipv6_run = b.addRunArtifact(test_ipv6_exe);
-    const test_ipv6_step = b.step("test-ipv6", "Test IPv6 parsing");
-    test_ipv6_step.dependOn(&test_ipv6_run.step);
+    const compare_step = b.step("compare", "Compare functionality with grepcidr");
+    compare_step.dependOn(&b.addSystemCommand(&.{ "lua", "scripts/test_compare.lua" }).step);
+
+    const bench_compare_step = b.step("bench-compare", "Benchmark against grepcidr");
+    bench_compare_step.dependOn(&b.addSystemCommand(&.{ "lua", "scripts/bench_compare.lua" }).step);
+
+    // --- Additional test and benchmark steps ---
+    
+    // RFC compliance test
+    const test_rfc_step = b.step("test-rfc", "Run RFC compliance tests");
+    test_rfc_step.dependOn(&b.addSystemCommand(&.{ "lua", "scripts/test_rfc.lua" }).step);
 
     // Just like flags, top level steps are also listed in the `--help` menu.
     //

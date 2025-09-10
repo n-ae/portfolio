@@ -178,6 +178,10 @@ fn processContent(content: []const u8, patterns: rgcidr.MultiplePatterns, count_
     const stdout_file = std.fs.File{ .handle = 1 };
     
     while (lines.next()) |line| {
+        // Skip empty trailing line caused by final newline
+        if (line.len == 0 and lines.rest().len == 0) {
+            continue;
+        }
         // C-style optimized line scanning with early termination
         var has_matching_ip = false;
         var has_any_ip = false;
@@ -356,15 +360,27 @@ fn scanLineStartForMatch(line: []const u8, patterns: rgcidr.MultiplePatterns, ha
             j += 1;
         }
         
-        // Only try IPv6 if it contains colons and is long enough
-        if (j > i + 2 and std.mem.indexOfScalar(u8, line[i..j], ':') != null) {
-            if (rgcidr.parseIPv6(line[i..j])) |ip| {
-                has_any_ip.* = true;
-                if (patterns.matchesIPv6(ip)) {
-                    return true; // Early exit on first match!
+            // Only try IPv6 if it contains colons and is long enough
+            if (j > i + 2 and std.mem.indexOfScalar(u8, line[i..j], ':') != null) {
+                // Check if we stopped at an invalid boundary
+                var valid_extraction = true;
+                if (j < line.len) {
+                    const next_char = line[j];
+                    // If we stopped at a letter that's not valid hex, reject
+                    if (std.ascii.isAlphabetic(next_char) and !std.ascii.isHex(next_char)) {
+                        valid_extraction = false;
+                    }
                 }
-            } else |_| {}
-        }
+                
+                if (valid_extraction) {
+                    if (rgcidr.parseIPv6(line[i..j])) |ip| {
+                        has_any_ip.* = true;
+                        if (patterns.matchesIPv6(ip)) {
+                            return true; // Early exit on first match!
+                        }
+                    } else |_| {}
+                }
+            }
     }
     
     return false;
@@ -428,12 +444,24 @@ fn scanLineForMatchWithEarlyExit(line: []const u8, patterns: rgcidr.MultiplePatt
             
             // Only try IPv6 if it contains colons
             if (j > i and std.mem.indexOfScalar(u8, line[i..j], ':') != null) {
-                if (rgcidr.parseIPv6(line[i..j])) |ip| {
-                    has_any_ip.* = true;
-                    if (patterns.matchesIPv6(ip)) {
-                        return true; // Early exit on first match!
+                // Check if we stopped at an invalid boundary
+                var valid_extraction = true;
+                if (j < line.len) {
+                    const next_char = line[j];
+                    // If we stopped at a letter that's not valid hex, reject
+                    if (std.ascii.isAlphabetic(next_char) and !std.ascii.isHex(next_char)) {
+                        valid_extraction = false;
                     }
-                } else |_| {}
+                }
+                
+                if (valid_extraction) {
+                    if (rgcidr.parseIPv6(line[i..j])) |ip| {
+                        has_any_ip.* = true;
+                        if (patterns.matchesIPv6(ip)) {
+                            return true; // Early exit on first match!
+                        }
+                    } else |_| {}
+                }
             }
             
             i = j;

@@ -927,7 +927,8 @@ pub fn parsePattern(pattern_str: []const u8, strict_align: bool) IpParseError!Pa
 }
 
 // IPv6 field character validation using compile-time lookup table
-const IPV6_FIELD = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz:.";
+// Only hex digits (0-9, a-f, A-F), colons, and dots (for embedded IPv4)
+const IPV6_FIELD = "0123456789abcdefABCDEF:.";
 const IPV6_LOOKUP: [256]bool = blk: {
     var lookup = [_]bool{false} ** 256;
     for (IPV6_FIELD) |c| {
@@ -971,7 +972,8 @@ inline fn ipv6HintStandalone(p: []const u8, pos: usize) bool {
 }
 
 // IPv4 field character validation using compile-time lookup table
-const IPV4_FIELD = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.";
+// Only digits and dots for IPv4
+const IPV4_FIELD = "0123456789.";
 const IPV4_LOOKUP: [256]bool = blk: {
     var lookup = [_]bool{false} ** 256;
     for (IPV4_FIELD) |c| {
@@ -1101,9 +1103,23 @@ pub const IpScanner = struct {
 
                 const potential_ip = line[i..j];
                 if (std.mem.indexOfScalar(u8, potential_ip, ':')) |_| {
-                    if (parseIPv6(potential_ip)) |ip| {
-                        try self.ipv6_buffer.append(self.allocator, ip);
-                    } else |_| {}
+                    // Check if we have a valid boundary
+                    // If the next character is alphanumeric and we stopped scanning,
+                    // it means we hit an invalid character that looks like it could be part of IPv6
+                    var valid_extraction = true;
+                    if (j < line.len) {
+                        const next_char = line[j];
+                        // If we stopped at a letter (not valid hex), the whole field is invalid
+                        if (std.ascii.isAlphabetic(next_char) and !std.ascii.isHex(next_char)) {
+                            valid_extraction = false;
+                        }
+                    }
+                    
+                    if (valid_extraction) {
+                        if (parseIPv6(potential_ip)) |ip| {
+                            try self.ipv6_buffer.append(self.allocator, ip);
+                        } else |_| {}
+                    }
                 }
 
                 i = j;
